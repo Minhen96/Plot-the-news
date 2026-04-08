@@ -2,15 +2,17 @@
 
 ## Stack
 
-| Layer | Technology |
-|-------|-----------|
-| Frontend | Next.js (App Router), React |
-| Styling | Tailwind CSS + custom design system |
-| AI | Anthropic Claude (`@anthropic-ai/sdk`) |
-| Auth/Wallet | Privy (`@privy-io/react-auth`) — email/social/MetaMask, embedded wallet |
-| Blockchain | DCAI L3 on Base, `ethers.js` |
-| Database | PostgreSQL (Supabase + Prisma) |
-| News | GNews API (real-time scenario seeding) |
+| Layer | Technology | What it does |
+|-------|-----------|-------------|
+| Frontend + Backend | Next.js (App Router) | All pages users see + all API routes. One codebase, no separate server. |
+| Styling | Tailwind CSS | Utility classes for the Illuminated Editorial design system |
+| AI | Anthropic Claude | Generates stories, choices, simulations, and multi-agent analysis |
+| Auth/Wallet | Privy | Users log in with Google/email/MetaMask. Auto-creates a wallet for them. |
+| Blockchain | DCAI L3 + ethers.js | Stores prediction hashes permanently on-chain |
+| Database | Supabase (Postgres) | Stores everything off-chain: stories, scenes, predictions, users |
+| News | GNews API | Fetches real today's news headlines to seed fresh scenarios |
+
+> There is no separate backend server. Everything lives inside Next.js API routes (`/api/...`).
 
 ---
 
@@ -27,6 +29,23 @@ Database (PostgreSQL / Supabase)
         ↓
 DCAI L3 Network
 ```
+
+---
+
+## AI System — When Each Module Runs
+
+| Module | Runs when | Stored in DB | Per what |
+|--------|-----------|-------------|---------|
+| Scenario Generator | Admin calls `/api/stories/generate` | Yes | Per story |
+| Narrative Scenes | Same time as scenario generation | Yes | Per story × role |
+| Preset Choices | Same time as scenario generation | Yes | Per story × role |
+| "Beat the AI" pick | Same time as scenario generation | Yes (hidden) | Per story |
+| Preset Simulation | After user submits preset prediction | Yes, cached | Per story × choice × role |
+| Custom Simulation | After user submits custom prediction | Yes | Per prediction (unique) |
+| Multi-Agent Analysis | Async after any prediction (background) | Yes | Per story × choice/text |
+| Custom Prediction Evaluation | At story resolution | Yes | Per custom prediction |
+
+**Key rule:** Everything pre-generated is cached — users never wait on page load. Simulation runs once per unique choice and is then cached for all future users who pick the same option. Custom predictions always generate fresh (they're unique). Analysis is always async.
 
 ---
 
@@ -60,17 +79,21 @@ Input: scenario + selected role
 Role (Stabilizer / Aggressor / Analyst) is injected into prompt — same event, different strategic options.
 
 ### Module 3 — Simulation Engine
-Input: scenario + chosen option + **role** (role shapes how the actor executes the choice)
+Input: scenario + chosen option (preset label OR custom text) + role
+
+Output uses **3 phases** (not Day 1/3/7):
 ```json
-// Output
 {
   "timeline": [
-    { "day": 1, "event": "...", "emoji": "💥" },
-    { "day": 3, "event": "...", "emoji": "⚠️" },
-    { "day": 7, "event": "...", "emoji": "✅" }
+    { "phase": "short", "label": "Short-term",  "timeframe": "Hours to days",    "event": "...", "emoji": "🟡" },
+    { "phase": "mid",   "label": "Mid-term",    "timeframe": "Weeks to months",  "event": "...", "emoji": "🟠" },
+    { "phase": "long",  "label": "Long-term",   "timeframe": "Months to years",  "event": "...", "emoji": "🔴" }
   ]
 }
 ```
+
+For **preset choices**: simulation is cached after first run — all users who pick the same option see the same simulation instantly.
+For **custom predictions**: simulation is always generated fresh (each custom text is unique).
 
 ### Module 4 — Multi-Agent Analysis (3 AI personas → Judge)
 
@@ -96,6 +119,21 @@ Input: scenario + chosen option + **role** (role shapes how the actor executes t
 Claude makes its own prediction on each scenario (stored server-side, hidden from user until after they lock). Revealed post-lock with comparison.
 - User agrees with Claude + correct → normal points
 - User disagrees with Claude + correct → 2× bonus
+
+### Module 6 — Custom Prediction Evaluation (runs at story resolution)
+When a story resolves and a user had submitted a custom prediction, AI reads:
+- The user's custom text
+- The actual resolved outcome
+
+Returns:
+```json
+{
+  "verdict": "correct" | "partially_correct" | "incorrect",
+  "reasoning": "Your prediction aligned with X but missed Y...",
+  "score": 0-100
+}
+```
+Score maps to points: 80-100 = correct (+15pts), 40-79 = partial (+7pts), 0-39 = incorrect (+2pts participation).
 
 ### Streaming Narrative Text
 Narrative scenes are **pre-generated** and stored in DB (not re-generated per user). The typewriter effect is purely frontend — fetch the stored text, then render it character by character with a setInterval. No SSE needed.
@@ -129,8 +167,10 @@ This saves tokens and avoids per-user AI latency on the narrative page.
 | `/api/stories/[id]/scenes` | GET | Narrative scenes for story × role (`?role=stabilizer`) |
 | `/api/stories/[id]/options` | GET | Prediction options for story × role |
 | `/api/stories/generate` | POST | Admin: generate scenario from GNews headline |
-| `/api/predict` | POST | Submit prediction → hash → store → trigger async analysis |
+| `/api/predict` | POST | Submit prediction (preset or custom) → hash → store → trigger async analysis |
+| `/api/predict/simulate` | POST | Generate simulation for custom prediction text |
 | `/api/analysis/[storyId]/[optionId]` | GET | Poll for multi-agent analysis (status: pending/ready) |
+| `/api/stories/[id]/votes` | GET | Live vote counts per preset option for this story |
 | `/api/leaderboard` | GET | Reputation rankings |
 | `/api/history/[address]` | GET | User prediction history |
 | `/api/admin/resolve` | POST | **Admin only** — resolve story, set outcome, call recordOutcome() on-chain |
@@ -201,22 +241,28 @@ role_key        TEXT    -- which role sees this option (or null = all roles)
 label           TEXT    -- short choice title
 description     TEXT    -- 1-2 sentence description
 probability     TEXT    -- AI-estimated e.g. "40%"
+vote_count      INT     DEFAULT 0   -- incremented on each prediction submit
 ```
 
 ### `predictions`
 ```sql
-id              TEXT PRIMARY KEY
-user_address    TEXT
-story_id        TEXT REFERENCES stories(id)
-option_id       TEXT REFERENCES prediction_options(id)
-role_key        TEXT    -- role the user played
-confidence      INT     -- 1-100
-hash            TEXT    -- keccak256
-tx_hash         TEXT    -- DCAI L3 tx
-resolved        BOOL
-correct         BOOL
-beat_ai         BOOL
-created_at      TIMESTAMP
+id                  TEXT PRIMARY KEY
+user_address        TEXT
+story_id            TEXT REFERENCES stories(id)
+option_id           TEXT REFERENCES prediction_options(id)  -- NULL if custom
+custom_prediction   TEXT    -- user's free-text prediction (NULL if preset)
+is_custom           BOOL    DEFAULT false
+role_key            TEXT    -- role the user played
+confidence          INT     -- 1-100
+hash                TEXT    -- keccak256
+tx_hash             TEXT    -- DCAI L3 tx
+resolved            BOOL    DEFAULT false
+correct             BOOL
+custom_verdict      TEXT    -- 'correct' | 'partially_correct' | 'incorrect' (custom only)
+custom_score        INT     -- 0-100 AI evaluation score (custom only)
+beat_ai             BOOL
+crowd_champion      BOOL    -- true if user picked the most-chosen option
+created_at          TIMESTAMP
 ```
 
 ### `users`
@@ -231,15 +277,35 @@ on_chain_synced BOOL
 ```
 
 ### `analyses`
-Stores multi-agent analysis per story × option — pre-computed async after first prediction.
+Stores multi-agent analysis per story × option. Shared for preset options (cached). Unique per custom prediction.
 ```sql
 id              TEXT PRIMARY KEY
 story_id        TEXT REFERENCES stories(id)
-option_id       TEXT
+option_id       TEXT        -- NULL if custom
+prediction_id   TEXT        -- set if custom (links to specific user prediction)
+is_custom       BOOL        DEFAULT false
 factors         TEXT[]
-evidence        JSONB   -- [{title, year, relevance}]
+evidence        JSONB       -- [{title, year, relevance}]
 reasoning       TEXT
-status          TEXT    -- 'pending' | 'ready'
+status          TEXT        -- 'pending' | 'ready'
+created_at      TIMESTAMP
+```
+
+### `simulations`
+Cached simulation results. Preset options share one simulation; custom predictions each have their own.
+```sql
+id              TEXT PRIMARY KEY
+story_id        TEXT REFERENCES stories(id)
+option_id       TEXT        -- NULL if custom
+prediction_id   TEXT        -- set if custom
+role_key        TEXT
+is_custom       BOOL        DEFAULT false
+short_term      TEXT        -- Short-term event description
+short_emoji     TEXT
+mid_term        TEXT        -- Mid-term event description
+mid_emoji       TEXT
+long_term       TEXT        -- Long-term event description
+long_emoji      TEXT
 created_at      TIMESTAMP
 ```
 
@@ -487,10 +553,10 @@ Badge IDs: `1 = Analyst`, `2 = Strategist`, `3 = Oracle`
 3. Compile: Solidity compiler tab → `0.8.20` → Compile
 4. Deploy: Deploy tab → Environment: **Injected Provider (MetaMask)**
 5. In MetaMask: switch network to DCAI L3
-   - Network name: `DCAI L3 on Base`
-   - RPC URL: `https://rpc.dcai-l3.skybutter.com`
-   - Chain ID: `12553`
-   - Explorer: `https://explorer.dcai-l3.skybutter.com`
+   - Network name: `DCAI L3 Testnet`
+   - RPC URL: `http://139.180.140.143/rpc/`
+   - Chain ID: `18441`
+   - Explorer: `http://139.180.140.143/`
 6. Click **Deploy** → confirm in MetaMask
 7. Copy the deployed contract address → paste into `.env.local` as `NEXT_PUBLIC_REGISTRY_ADDRESS`
 8. **Save the deployer wallet's private key** → also goes in `.env.local` as `ADMIN_PRIVATE_KEY`
@@ -704,8 +770,8 @@ See `design_system.md` for full token set and component rules.
 1.  GNews API → Claude → new scenario stored in DB
 2.  User logs in via Privy (email/Google/MetaMask)
 3.  User reads Chronicle → clicks scenario
-4.  Selects role → AI generates role-aware choices
-5.  In-game narrative streams via SSE (typewriter effect)
+4.  Selects role → fetches pre-generated role-aware choices from DB
+5.  In-game narrative fetched from DB → rendered as typewriter effect (frontend only, no SSE)
 6.  User selects prediction + confidence
 7.  Backend hashes: keccak256(address + storyId + choiceId + confidence + ts)
 8.  Optimistic UI shows proof card immediately

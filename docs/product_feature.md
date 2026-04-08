@@ -101,10 +101,16 @@ This is the immersive storytelling layer before the decision point.
 
 - **Critical Event badge** (e.g. "STRAIT OF HORMUZ")
 - Headline: `MAKE YOUR PREDICTION` (display font, all caps)
-- **3 choice cards** in a row, each with:
+- **3 preset choice cards** in a row, each with:
   - Icon
   - Choice title (e.g. "Strategic De-escalation")
   - 1-2 sentence description
+  - Community vote count shown below (e.g. "42% of predictors chose this")
+- **4th option — "Write Your Own Prediction"** card:
+  - Text input field for free-form prediction
+  - Placeholder: "Describe what you think will happen..."
+  - Gets its own AI-generated simulation when submitted
+  - Counted separately — does not compete in Crowd Champion contest
 - **Confidence slider:** `Confidence Level (0-100%)` — Cautious ←→ Absolute
 - CTA button: `🔒 Lock Prediction on L3` (primary green)
 - Below: Character briefing card with portrait + quote providing context
@@ -130,13 +136,19 @@ Brief, dramatic, then transitions to outcome or continues narrative.
 - **"STORY RESOLVED" badge** (green pill, top)
 - Headline: `Strategic Verdict: [Outcome Title]`
 - Pull quote in italic serif
-- **Hero image** — cinematic resolution scene (AI-generated)
+- **Hero image** — cinematic resolution scene
 - Verdict overlay card on image: outcome label + date
 - Right sidebar: floating speech bubble with key quote
+- **3-Phase Simulation Timeline** (replaces Day 1/3/7):
+  - 🟡 **Short-term** — Immediate reaction (hours to days)
+  - 🟠 **Mid-term** — Developing consequences (weeks to months)
+  - 🔴 **Long-term** — Lasting structural impact (months to years)
+  - Each phase shown as a panel with emoji + event description
 - **AI Analytical Mirror section:**
-  - `The Reality:` — bullet points comparing simulated vs actual trajectory
-  - Each bullet: plain summary of what actually unfolded
-- Right panel: **On-Chain Verified** badge + `+15 Reputation Gained`
+  - `The Reality:` — bullet points comparing prediction vs actual trajectory
+  - If user wrote a custom prediction: AI shows "Your prediction was [correct/partially correct/incorrect] because..."
+- Right panel: **On-Chain Verified** badge + reputation delta
+- **Crowd Results** — shows which option was most chosen + who wins Crowd Champion badge
 - Bottom: "Deepen Your Context" — links to real documents/sources
 - CTAs: `Explore Next Story` + `Share Prediction`
 
@@ -175,9 +187,11 @@ Brief, dramatic, then transitions to outcome or continues narrative.
 - Click-to-advance progression
 
 ### 4. Decision Engine
-- 3 choices generated per role
+- 3 preset choices generated per role, each showing live community vote count
+- 4th option: free-text custom prediction input
 - Confidence slider (0–100%)
 - Contextual character briefing shown below choices
+- Custom predictions get their own AI simulation — not grouped with preset options
 
 ### 5. Proof of Intent (Blockchain)
 - Hash: `keccak256(userAddress + scenarioId + choiceId + confidence + timestamp)`
@@ -194,18 +208,26 @@ Brief, dramatic, then transitions to outcome or continues narrative.
 
 | Action | Points |
 |--------|--------|
-| Correct prediction | +10 base |
+| Correct prediction (preset) | +10 base |
+| Correct custom prediction | +15 base (harder, so more points) |
 | High-confidence correct | +bonus |
-| Participation | +2 |
+| Crowd Champion (most-chosen option) | +5 |
+| Participation (any prediction) | +2 |
 
-| Badge | Criteria |
-|-------|----------|
-| First Foresight | First prediction |
-| Pattern Seeker | 5 predictions |
-| Diplomat | Role-specific achievement |
-| Analyst | 10 predictions |
-| Strategist | >70% accuracy |
-| Oracle | >90% accuracy |
+| Badge | Criteria | Type |
+|-------|----------|------|
+| First Foresight | First prediction | Accuracy |
+| Pattern Seeker | 5 predictions | Accuracy |
+| Diplomat | Role-specific achievement | Accuracy |
+| Analyst | 10 predictions | Accuracy |
+| Strategist | >70% accuracy | Accuracy |
+| Oracle | >90% accuracy | Accuracy |
+| Crowd Champion | Picked the most-chosen option when story resolves | Popularity |
+| Contrarian | Picked the least-chosen option but was correct | Special |
+
+**Two ways to win:**
+- **Accuracy badges** — be right (contrarian or not)
+- **Crowd Champion** — read crowd sentiment correctly (separate skill)
 
 ### 8. Proof Archive / Journal
 - Full prediction history with proof IDs

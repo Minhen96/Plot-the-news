@@ -1,5 +1,28 @@
 # FutureLens — Hackathon Build Guide
 
+## Blockchain Journey — Full Timeline
+
+**Before hackathon starts:**
+1. Create a MetaMask wallet → this is your admin wallet
+2. Add DCAI L3 to MetaMask (Chain ID `18441`, RPC `http://139.180.140.143/rpc/`)
+3. Claim free tDCAI from faucet → `POST http://139.180.140.143/faucet/request`
+4. Open Remix IDE → paste `FutureLensRegistry` contract → deploy → copy address to `.env.local`
+5. Save deployer wallet private key to `.env.local` as `ADMIN_PRIVATE_KEY`
+6. Get RPC API key from organiser at workshop
+
+**During the hackathon (every user prediction):**
+1. User logs in via Privy → gets a wallet address
+2. User locks prediction → Privy wallet signs `registerPrediction()` → txHash on DCAI L3
+3. Proof card shows txHash → clickable on explorer
+
+**Night before demo:**
+1. Team calls `POST /api/admin/resolve` with admin secret key
+2. Backend admin wallet calls `recordOutcome()` on DCAI L3
+3. Oracle's Archive now has a real verified story with a real on-chain proof
+4. Copy the explorer URL → paste into demo notes → ready for judges to click
+
+---
+
 ## The One Flow to Make Perfect
 ```
 Chronicle → Role → In-Game Narrative → Decision → L3 Lock → Simulation → Outcome → Proof
@@ -24,9 +47,12 @@ Build less. Make this one flow flawless.
 | P2 | Live news via GNews API | "This is from today's news" |
 | P2 | On-chain badges / SBT mint | Extra blockchain depth |
 | P2 | Beat the AI mechanic | Competitive layer |
+| P2 | Custom prediction input + simulation | Creative personalisation |
+| P2 | Crowd Champion badge (most-chosen option) | Social / crowd mechanic |
+| P3 | Custom prediction AI evaluation at resolve | Needed for custom accuracy scoring |
 | P3 | Profile / Journal page | Nice-to-have |
 | P3 | Prediction countdown timer | Urgency |
-| P3 | Real-time prediction counter | Alive feel |
+| P3 | Real-time vote count per option | Alive feel |
 
 ---
 
@@ -76,20 +102,35 @@ Return JSON with exactly 3 role-appropriate strategic choices:
 }
 ```
 
-### Simulation Engine (role-influenced)
+### Simulation Engine (preset or custom — role-influenced)
 ```
 Scenario: {{situation}}
 User role: {{role}} ({{roleDescription}})
-User chose: {{choiceLabel}} — {{choiceDescription}}
+Prediction: {{choiceLabel OR custom text}}
 
-Simulate how THIS actor ({{role}}) would execute this choice and the 7-day consequences.
+Simulate 3 phases of consequences if this prediction/action occurs.
 Return JSON:
 {
   "timeline": [
-    { "day": 1, "event": "<what happens>", "emoji": "<emoji>" },
-    { "day": 3, "event": "<what happens>", "emoji": "<emoji>" },
-    { "day": 7, "event": "<resolution>", "emoji": "<emoji>" }
+    { "phase": "short", "label": "Short-term",  "timeframe": "Hours to days",   "event": "<immediate reaction>", "emoji": "<emoji>" },
+    { "phase": "mid",   "label": "Mid-term",    "timeframe": "Weeks to months", "event": "<developing impact>",  "emoji": "<emoji>" },
+    { "phase": "long",  "label": "Long-term",   "timeframe": "Months to years", "event": "<lasting change>",     "emoji": "<emoji>" }
   ]
+}
+```
+
+### Custom Prediction Evaluation (runs at story resolution)
+```
+Story: {{situation}}
+Resolved outcome: {{resolvedOutcome}}
+User's custom prediction: "{{customPredictionText}}"
+
+Evaluate how accurate this prediction was.
+Return JSON:
+{
+  "verdict": "correct" | "partially_correct" | "incorrect",
+  "reasoning": "<2 sentences explaining why>",
+  "score": <0-100>
 }
 ```
 
