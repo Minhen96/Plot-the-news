@@ -1,70 +1,116 @@
-"use client";
+import Link from 'next/link'
+import AuthButton from './AuthButton'
+import MobileNav from './MobileNav'
 
-import { useState, useEffect } from "react";
-import Link from "next/link";
-import { connectWallet, shortenAddress } from "@/lib/wallet";
+interface HeaderProps {
+  brand?: 'editorial' | 'futurelens'
+  variant?: 'hub' | 'article'
+  activeCategory?: string
+}
 
-export default function Header() {
-  const [address, setAddress] = useState<string | null>(null);
-  const [mounted, setMounted] = useState(false);
+const NAV_TABS = [
+  { label: 'World',       href: '/?category=world',        category: 'world' },
+  { label: 'Politics',    href: '/?category=politics',     category: 'politics' },
+  { label: 'Economy',     href: '/?category=economy',      category: 'economy' },
+  { label: 'Culture',     href: '/?category=culture',      category: 'culture' },
+  { label: 'Science',     href: '/?category=science',      category: 'science' },
+  { label: 'Health',      href: '/?category=health',       category: 'health' },
+  { label: 'Sports',      href: '/?category=sports',       category: 'sports' },
+  { label: 'Opinion',     href: '/?category=opinion',      category: 'opinion' },
+  { label: 'Interactive', href: '/story/strait-of-hormuz', category: null },
+]
 
-  useEffect(() => {
-    setMounted(true);
-    const saved = localStorage.getItem("walletAddress");
-    if (saved) setAddress(saved);
-  }, []);
-
-  async function handleConnect() {
-    const addr = await connectWallet();
-    if (addr) {
-      setAddress(addr);
-      localStorage.setItem("walletAddress", addr);
-    }
-  }
-
-  if (!mounted) return null;
-
+function NavTabs({ activeCategory }: { activeCategory?: string }) {
   return (
-    <header className="sticky top-0 z-50 border-b border-zinc-200 bg-white/80 backdrop-blur-md">
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
-        <Link href="/" className="flex items-center gap-2">
-          <span className="text-2xl">&#x1f4dc;</span>
-          <span className="text-xl font-bold tracking-tight text-zinc-900">
-            Chronicle<span className="text-amber-600">Chain</span>
-          </span>
-        </Link>
-
-        <nav className="hidden items-center gap-6 md:flex">
+    <>
+      {NAV_TABS.map((tab) => {
+        const isActive = tab.category !== null && tab.category === activeCategory
+        return (
           <Link
-            href="/"
-            className="text-sm font-medium text-zinc-600 transition hover:text-zinc-900"
+            key={tab.href}
+            href={tab.href}
+            className={`transition-colors ${
+              isActive
+                ? 'text-primary border-b-2 border-primary pb-1'
+                : 'hover:text-primary'
+            }`}
           >
-            Stories
+            {tab.label}
           </Link>
-          <Link
-            href="/leaderboard"
-            className="text-sm font-medium text-zinc-600 transition hover:text-zinc-900"
-          >
-            Leaderboard
-          </Link>
-        </nav>
+        )
+      })}
+    </>
+  )
+}
 
-        <div className="flex items-center gap-3">
-          {address ? (
-            <div className="flex items-center gap-2 rounded-full bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-700 ring-1 ring-emerald-200">
-              <span className="h-2 w-2 rounded-full bg-emerald-500" />
-              {shortenAddress(address)}
-            </div>
-          ) : (
-            <button
-              onClick={handleConnect}
-              className="rounded-full bg-zinc-900 px-5 py-2 text-sm font-medium text-white transition hover:bg-zinc-700"
-            >
-              Connect Wallet
-            </button>
-          )}
+// Compact sticky nav — used on Article, Archive, Profile pages
+function ArticleNav({ brand }: { brand: 'editorial' | 'futurelens' }) {
+  const wordmark = brand === 'editorial' ? 'The Illuminated Editorial' : 'FutureLens'
+  return (
+    <nav className="w-full sticky top-0 z-50 bg-surface-container-low border-b border-outline-variant/10 py-5 px-6 md:px-12">
+      <div className="flex flex-col items-center gap-4 max-w-screen-2xl mx-auto">
+        <div className="flex items-center justify-between w-full">
+          <Link href="/" className="text-on-surface hover:text-primary transition-all flex items-center gap-2 font-label font-black uppercase tracking-[0.2em] text-[10px]">
+            <span className="text-lg">←</span> 
+          </Link>
+          <Link href="/">
+            <h1 className="text-3xl md:text-5xl font-black text-on-surface font-body italic">
+              {wordmark}
+            </h1>
+          </Link>
+          <div className="flex items-center gap-4">
+            <Link href="/archive" className="text-[10px] font-label font-black uppercase tracking-widest opacity-60 hover:opacity-100 hover:text-primary transition-all hidden md:block">
+              Archive
+            </Link>
+            <AuthButton />
+          </div>
         </div>
       </div>
+    </nav>
+  )
+}
+
+// Full broadsheet masthead — used on Chronicle Hub only
+function HubMasthead({ brand, activeCategory }: { brand: 'editorial' | 'futurelens'; activeCategory?: string }) {
+  const date = new Date().toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  })
+  return (
+    <header>
+      <div className="flex justify-between items-center text-[10px] font-label font-bold tracking-widest uppercase mb-4 text-on-background/60">
+        <span>{date}</span>
+        <span className="hidden md:block">The Living Chronicle</span>
+        <div className="flex items-center gap-5">
+          <Link href="/archive" className="hover:text-primary transition-colors hidden md:block">Archive</Link>
+          <Link href="/profile" className="hover:text-primary transition-colors hidden md:block">Profile</Link>
+          <AuthButton />
+          <MobileNav activeCategory={activeCategory} />
+        </div>
+      </div>
+      <div className="border-t-4 border-on-background mb-2" />
+      <h1
+        className={`text-center font-headline font-extrabold tracking-tighter italic leading-none my-4 ${
+          brand === 'editorial'
+            ? 'text-7xl md:text-[7rem] text-on-background'
+            : 'text-5xl md:text-7xl text-primary'
+        }`}
+      >
+        {brand === 'editorial' ? 'The Illuminated Editorial' : 'FutureLens'}
+      </h1>
+      <div className="border-t border-on-background mb-4" />
+      {brand === 'editorial' && (
+        <nav className="hidden md:flex flex-wrap justify-center gap-x-8 gap-y-2 font-label uppercase text-[10px] md:text-xs tracking-[0.2em] font-black border-b border-on-background/10 pb-4">
+          <NavTabs activeCategory={activeCategory ?? 'world'} />
+        </nav>
+      )}
     </header>
-  );
+  )
+}
+
+export default function Header({ brand = 'editorial', variant = 'hub', activeCategory }: HeaderProps) {
+  if (variant === 'article') return <ArticleNav brand={brand} />
+  return <HubMasthead brand={brand} activeCategory={activeCategory} />
 }

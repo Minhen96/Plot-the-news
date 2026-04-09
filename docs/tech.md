@@ -10,7 +10,7 @@
 | Auth/Wallet | Privy | Users log in with Google/email/MetaMask. Auto-creates a wallet for them. |
 | Blockchain | DCAI L3 + ethers.js | Stores prediction hashes permanently on-chain |
 | Database | Supabase (Postgres) | Stores everything off-chain: stories, scenes, predictions, users |
-| News | GNews API | Fetches real today's news headlines to seed fresh scenarios |
+| News | newsdata.io API | Fetches real-time news; results cached in Supabase to preserve API credits |
 
 > There is no separate backend server. Everything lives inside Next.js API routes (`/api/...`).
 
@@ -23,9 +23,9 @@ Frontend (Next.js App Router)
         ↓
 API Routes (Next.js)
         ↓
-AI Service Layer (Claude — multi-agent)     News Service (GNews API)
-        ↓
-Database (PostgreSQL / Supabase)
+AI Service Layer (Claude — multi-agent)     News Service (newsdata.io)
+        ↓                                           ↓
+Database (PostgreSQL / Supabase) ←── news_cache (saves API credits)
         ↓
 DCAI L3 Network
 ```
@@ -166,7 +166,8 @@ This saves tokens and avoids per-user AI latency on the narrative page.
 | `/api/stories/[id]/roles` | GET | Roles for this story |
 | `/api/stories/[id]/scenes` | GET | Narrative scenes for story × role (`?role=stabilizer`) |
 | `/api/stories/[id]/options` | GET | Prediction options for story × role |
-| `/api/stories/generate` | POST | Admin: generate scenario from GNews headline |
+| `/api/news/feed` | GET | Paginated news feed (serves from DB cache; falls back to newsdata.io) |
+| `/api/stories/generate` | POST | Admin: generate scenario from newsdata.io headline |
 | `/api/predict` | POST | Submit prediction (preset or custom) → hash → store → trigger async analysis |
 | `/api/predict/simulate` | POST | Generate simulation for custom prediction text |
 | `/api/analysis/[storyId]/[optionId]` | GET | Poll for multi-agent analysis (status: pending/ready) |
@@ -177,20 +178,52 @@ This saves tokens and avoids per-user AI latency on the narrative page.
 
 ---
 
-## Live News Pipeline (GNews API)
+## Live News Pipeline (newsdata.io)
 
 ```
-GET https://gnews.io/api/v4/top-headlines?category=world&token=...
-→ POST /api/stories/generate
-→ Claude: extract scenario JSON
-→ Store in DB → appears in Chronicle
+Newsdata.io API call (/latest?category=world&...)
+        ↓
+Check news_cache table in Supabase
+  → Cache hit (< 12h old): return cached rows, no API call
+  → Cache miss: fetch from newsdata.io, upsert into news_cache, return rows
+        ↓
+Chronicle Hub renders articles
+        ↓
+POST /api/stories/generate (admin only)
+→ Claude: extract scenario JSON from headline
+→ Store in stories table → appears in Chronicle
 ```
 
-Run manually during hackathon to seed fresh scenarios. Demonstrates real-world utility — judges see today's news, not pre-baked content.
+**Credit preservation strategy:**
+- Free tier: 200 req/day. Page load = 4 calls (latest, lastWeek, market, crypto).
+- With DB cache: 4 calls per 12-hour window per category, not per page load.
+- Category switches, infinite scroll pagination, and dev server restarts all hit the cache instead of the API.
+- Cache TTL is stored per row (`fetched_at`) — expired rows are re-fetched and replaced.
 
 ---
 
 ## Database Schema
+
+### `news_cache`
+Caches newsdata.io results. Checked before every API call — if rows for a given `cache_key` exist and `fetched_at` is within the TTL (12h), the API is not called.
+```sql
+id          TEXT PRIMARY KEY   -- article_id from newsdata
+cache_key   TEXT NOT NULL      -- e.g. 'latest:world', 'market', 'crypto', 'lastweek:politics'
+title       TEXT
+description TEXT
+url         TEXT
+image_url   TEXT
+published_at TIMESTAMPTZ
+source_name TEXT
+source_url  TEXT
+ai_tags     TEXT[]
+crisis_level INT               -- mapped from sentiment_stats.negative
+next_page   TEXT               -- cursor for pagination (stored per cache_key)
+fetched_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+```
+**Index:** `(cache_key, fetched_at)` for fast TTL checks.
+
+---
 
 ### `stories`
 ```sql
@@ -200,7 +233,7 @@ summary           TEXT
 category          TEXT
 status            TEXT       -- 'active' | 'resolved'
 resolved_outcome  TEXT       -- set manually via admin API
-controversy_score INT        -- AI-generated (1-100)
+crisis_level      INT        -- AI-generated (0-100) global tension metric
 claude_prediction TEXT       -- Claude's own pick, hidden until user locks
 created_at        TIMESTAMP
 ```
@@ -217,6 +250,7 @@ quote           TEXT    -- philosophy quote (italic serif)
 difficulty      INT     -- 1-5, strategic difficulty stat bar
 stability       INT     -- 1-5, stability focus stat bar
 portrait_url    TEXT    -- static file path or pre-generated image URL
+key_player_stance TEXT  -- e.g. "Defensive / High Alert"
 ```
 
 ### `narrative_scenes`
@@ -767,7 +801,7 @@ See `design_system.md` for full token set and component rules.
 ## End-to-End Data Flow
 
 ```
-1.  GNews API → Claude → new scenario stored in DB
+1.  newsdata.io → news_cache (DB) → Chronicle Hub (cache-first, 12h TTL)
 2.  User logs in via Privy (email/Google/MetaMask)
 3.  User reads Chronicle → clicks scenario
 4.  Selects role → fetches pre-generated role-aware choices from DB
@@ -805,7 +839,12 @@ OPERATOR_REGISTRY=0xb37c81eBC4b1B4bdD5476fe182D6C72133F41db9
 ANTHROPIC_API_KEY=sk-ant-...
 
 # News
-GNEWS_API_KEY=...
+NEWSDATA_API_KEY=...
+
+# Supabase
+NEXT_PUBLIC_SUPABASE_URL=https://xxxx.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+SUPABASE_SERVICE_ROLE_KEY=...                      # server-only, never expose to client
 
 # Auth
 NEXT_PUBLIC_PRIVY_APP_ID=...
