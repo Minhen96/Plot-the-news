@@ -1,55 +1,34 @@
-# FutureLens
+# ChronicleChain (formerly FutureLens)
 
 **NottsHack 2026 · DCAI Sponsor Prize ($1,800 USDT)**
+
+ChronicleChain is a decentralized news forecasting and prediction platform. It integrates real-time news via GNews and provides a type-safe prediction layer powered by Supabase and Drizzle ORM.
 
 Read editorial → pick a role → live a narrative → lock a prediction on-chain → see the AI-simulated future unfold.
 
 ---
 
-## What It Does
+## 🚀 Getting Started
 
-FutureLens turns real-world news into an interactive geopolitical simulation game:
-
-1. **Chronicle Hub** — live news feed powered by newsdata.io, cached in Supabase
-2. **Article View** — editorial deep-dive on the scenario
-3. **Role Selection** — choose your faction (e.g. The Coalition vs The Regional Guard)
-4. **Visual Novel** — typewriter narrative driven by pre-generated Claude scenes
-5. **Community Directives** — submit a prediction with confidence level
-6. **Lock on-chain** — prediction hash written to DCAI L3 Testnet via Privy wallet
-7. **Simulation** — AI-generated short/mid/long-term outcome timeline
-8. **Oracle's Archive** — pre-resolved stories with verified on-chain proofs
-
----
-
-## Stack
-
-| Layer          | Technology                       |
-| -------------- | -------------------------------- |
-| Frontend + API | Next.js 15 (App Router)          |
-| Styling        | Tailwind CSS v4                  |
-| AI             | Anthropic Claude (multi-agent)   |
-| Auth / Wallet  | Privy                            |
-| Blockchain     | DCAI L3 Testnet + ethers.js      |
-| Database       | Supabase (Postgres)              |
-| News           | newsdata.io (DB-cached, 12h TTL) |
-
----
-
-## Getting Started
-
-### 1. Install dependencies
-
+### 1. Clone & Install
 ```bash
-npm install
+# Clone the repository
+git clone <your-repo-url>
+cd NottsHack
+
+# Install dependencies using pnpm
+pnpm install
 ```
 
-### 2. Set up environment variables
-
-Create `.env.local` in the project root:
+### 2. Environment Variables
+Create a `.env` file in the root directory and populate it with the following:
 
 ```env
-# News
-NEWSDATA_API_KEY=...
+# GNews API Key (https://gnews.io/)
+GNEWS_API_KEY=your_gnews_api_key
+
+# Drizzle Database connection string (Supabase Transaction Pooler)
+DATABASE_URL="postgresql://postgres.[PROJ_ID]:[PASS]@aws-1-ap-northeast-1.pooler.supabase.com:6543/postgres"
 
 # Supabase
 NEXT_PUBLIC_SUPABASE_URL=https://xxxx.supabase.co
@@ -59,7 +38,7 @@ SUPABASE_SERVICE_ROLE_KEY=...
 # AI
 ANTHROPIC_API_KEY=sk-ant-...
 
-# Auth
+# Auth / Wallet
 NEXT_PUBLIC_PRIVY_APP_ID=...
 
 # Blockchain (DCAI L3)
@@ -74,19 +53,59 @@ ADMIN_PRIVATE_KEY=0x...
 ADMIN_SECRET=...
 ```
 
-### 3. Run the dev server
+### 3. Database Setup
+We use Drizzle ORM for database management. Sync your schema with your Supabase instance:
 
 ```bash
-npm run dev
+# Generate the SQL migrations
+pnpm drizzle-kit generate
+
+# Push the schema to your database
+pnpm drizzle-kit push
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+### 4. Storage Setup
+Ensure you have a public storage bucket named **`assets`** in your Supabase project to handle file uploads.
 
-> **Note:** Without `NEWSDATA_API_KEY` the Chronicle Hub renders fallback editorial content. All other pages work independently.
+### 5. Start Development
+```bash
+pnpm dev
+```
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
 ---
 
-## Project Structure
+## 🔮 What It Does
+
+ChronicleChain turns real-world news into an interactive geopolitical simulation game:
+
+1. **Chronicle Hub** — live news feed powered by GNews and newsdata.io, cached in Supabase
+2. **Article View** — editorial deep-dive on the scenario
+3. **Role Selection** — choose your faction (e.g. The Coalition vs The Regional Guard)
+4. **Visual Novel** — typewriter narrative driven by pre-generated Claude scenes
+5. **Community Directives** — submit a prediction with confidence level
+6. **Lock on-chain** — prediction hash written to DCAI L3 Testnet via Privy wallet
+7. **Simulation** — AI-generated short/mid/long-term outcome timeline
+8. **Oracle's Archive** — pre-resolved stories with verified on-chain proofs
+
+---
+
+## 🛠️ Tech Stack
+
+| Layer          | Technology                                   |
+| -------------- | -------------------------------------------- |
+| Frontend + API | Next.js 15 (App Router)                      |
+| Styling        | Tailwind CSS                                 |
+| ORM            | Drizzle ORM                                  |
+| AI             | Anthropic Claude (multi-agent orchestration) |
+| Auth / Wallet  | Privy                                        |
+| Blockchain     | DCAI L3 Testnet + Ethers.js                  |
+| Database       | Supabase (Postgres)                          |
+| News           | GNews API v4 / newsdata.io (DB-cached)       |
+
+---
+
+## 📂 Project Structure
 
 ```
 src/
@@ -104,11 +123,16 @@ src/
     SectionFeed.tsx           # Nested scroll feed (Markets / Crypto)
     MobileNav.tsx             # Hamburger sidebar
     NewsFeed.tsx              # Infinite scroll card grid
+  db/
+    index.ts                  # Drizzle client
+    schema.ts                 # Database schema definitions
   lib/
+    gnews/                    # Comprehensive GNews API integration
     newsdata.ts               # newsdata.io fetch functions (cache-first via Supabase)
+    supabase/                 # File storage and client utilities
+    predictions.ts            # Prediction logic and Drizzle queries
+    stories.ts                # Story processing logic
     types.ts                  # Shared TypeScript types
-  data/
-    news.ts                   # Fallback articles (shown when API key absent)
 docs/
   tech.md                     # Full technical specification
   design_system.md            # Design tokens, components, layout rules
@@ -120,7 +144,7 @@ reference/
 
 ---
 
-## Docs
+## 📖 Docs
 
 Before building any feature, read the relevant doc:
 
@@ -133,17 +157,17 @@ Before building any feature, read the relevant doc:
 
 ---
 
-## Demo Scenario
+## 🎭 Demo Scenario
 
 Primary demo: **"The Shadow of the Crescent: America vs. Iran"** (Strait of Hormuz)
 
-- Story ID: `strait-of-hormuz`
-- Two roles: The Coalition / The Regional Guard
+- **Story ID**: `strait-of-hormuz`
+- **Two roles**: The Coalition / The Regional Guard
 - Full flow completable in under 3 minutes
 
 ---
 
-## Blockchain — DCAI L3 Testnet
+## ⛓️ Blockchain — DCAI L3 Testnet
 
 | Field     | Value                            |
 | --------- | -------------------------------- |
