@@ -103,6 +103,8 @@ export interface SessionPrediction {
 export interface NewsArticle {
   title: string
   description: string
+  content?: string
+  keywords?: string[]
   url: string
   image: string | null
   publishedAt: string

@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import Header from '@/components/Header'
+import LiveArticleView from '@/components/LiveArticleView'
 import { getStory } from '@/data/stories'
-import { notFound } from 'next/navigation'
 
 export default async function ArticlePage({
   params,
@@ -11,7 +11,15 @@ export default async function ArticlePage({
   const { id } = await params
   const story = getStory(id)
 
-  if (!story) notFound()
+  // Live news article — data loaded from sessionStorage on client
+  if (!story) {
+    return (
+      <>
+        <Header variant="article" brand="editorial" />
+        <LiveArticleView slug={id} />
+      </>
+    )
+  }
 
   const formattedDate = new Date(story.date).toLocaleDateString('en-US', {
     month: 'long',

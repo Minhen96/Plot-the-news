@@ -38,9 +38,17 @@ export async function GET(request: NextRequest) {
     const clean = (v: string | null | undefined) =>
       !v || v.includes('ONLY AVAILABLE IN PAID PLANS') ? '' : v
 
+    const cleanContent = (v: string | null | undefined) => {
+      if (!v || v.includes('ONLY AVAILABLE IN PAID PLANS')) return undefined
+      const stripped = v.replace(/<[^>]*>/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim()
+      return stripped || undefined
+    }
+
     const articles = (data.results ?? []).map((raw: {
       title: string | null
       description: string | null
+      content: string | null
+      keywords: string[] | null
       link: string
       image_url: string | null
       pubDate: string
@@ -49,6 +57,8 @@ export async function GET(request: NextRequest) {
     }) => ({
       title:       raw.title ?? '',
       description: clean(raw.description),
+      content:     cleanContent(raw.content),
+      keywords:    raw.keywords?.length ? raw.keywords.slice(0, 8) : undefined,
       url:         raw.link,
       image:       raw.image_url,
       publishedAt: raw.pubDate,

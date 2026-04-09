@@ -1,9 +1,8 @@
-import Link from 'next/link'
 import Header from '@/components/Header'
 import SectionFeed from '@/components/SectionFeed'
 import TopFeed from '@/components/TopFeed'
+import ArticleLink from '@/components/ArticleLink'
 import { fetchLatestNews, fetchLastWeekNews, fetchMarketNews, fetchCryptoNews } from '@/lib/newsdata'
-import { toStorySlug } from '@/lib/utils'
 import { WORLD_FALLBACK, LAST_WEEK_FALLBACK } from '@/data/news'
 import type { NewsArticle } from '@/lib/types'
 
@@ -40,7 +39,7 @@ function SectionDivider({ label }: { label: string }) {
 // Lead story card — used in top section (left col) and market/crypto sections
 function LeadStory({ article, size = 'large' }: { article: NewsArticle; size?: 'large' | 'medium' }) {
   return (
-    <Link href={`/story/${toStorySlug(article.title)}`} className="group block">
+    <ArticleLink article={article} className="group block">
       <article className="flex flex-col gap-4">
         <div className="overflow-hidden">
           <ArticleImage
@@ -70,7 +69,7 @@ function LeadStory({ article, size = 'large' }: { article: NewsArticle; size?: '
           </div>
         </div>
       </article>
-    </Link>
+    </ArticleLink>
   )
 }
 
@@ -119,6 +118,7 @@ export default async function ChronicleHub({
 
           {/* Left 2/3 — Lead story (left col) + category articles (both cols), page scroll */}
           <TopFeed
+            key={activeCategory}
             featured={featured}
             initialArticles={primary.slice(1)}
             nextPage={nextPage}
@@ -138,7 +138,7 @@ export default async function ChronicleHub({
             </div>
             <div className="divide-y divide-outline/20">
               {lastWeek.map((article) => (
-                <Link key={article.url} href={`/story/${toStorySlug(article.title)}`} className="group block pt-5 first:pt-0">
+                <ArticleLink key={article.url} article={article} className="group block pt-5 first:pt-0">
                   <article>
                     <h5 className="text-sm font-headline font-bold leading-tight mb-1 group-hover:text-primary transition-colors line-clamp-2">
                       {article.title}
@@ -153,7 +153,7 @@ export default async function ChronicleHub({
                       {' · '}{article.source.name}
                     </span>
                   </article>
-                </Link>
+                </ArticleLink>
               ))}
             </div>
             {/* <Link

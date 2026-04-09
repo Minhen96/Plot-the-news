@@ -5,9 +5,13 @@ import type { NewsArticle } from '@/lib/types'
 import { toStorySlug } from '@/lib/utils'
 import Link from 'next/link'
 
+function saveArticle(article: NewsArticle) {
+  try { sessionStorage.setItem(`article:${toStorySlug(article.title)}`, JSON.stringify(article)) } catch { /* ignore */ }
+}
+
 function ArticleRow({ article }: { article: NewsArticle }) {
   return (
-    <Link href={`/story/${toStorySlug(article.title)}`} className="group block py-4 first:pt-0">
+    <Link href={`/story/${toStorySlug(article.title)}`} onClick={() => saveArticle(article)} className="group block py-4 first:pt-0">
       <div className="flex gap-3">
         <div className="flex-1 min-w-0">
           <h4 className="font-headline font-bold text-base leading-snug mt-1 mb-1 group-hover:text-primary transition-colors line-clamp-2">

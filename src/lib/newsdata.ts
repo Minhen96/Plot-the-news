@@ -20,6 +20,8 @@ interface NewsdataRaw {
   article_id:  string
   title:       string | null
   description: string | null
+  content:     string | null
+  keywords:    string[] | null
   link:        string
   image_url:   string | null
   pubDate:     string
@@ -38,10 +40,22 @@ function clean(value: string | null | undefined): string {
   return value
 }
 
+function cleanContent(value: string | null | undefined): string {
+  if (!value || value.includes('ONLY AVAILABLE IN PAID PLANS')) return ''
+  // Strip HTML tags and decode basic entities
+  return value
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&nbsp;/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
 function map(raw: NewsdataRaw): NewsArticle {
   return {
     title:       raw.title ?? '',
     description: clean(raw.description),
+    content:     cleanContent(raw.content) || undefined,
+    keywords:    raw.keywords?.length ? raw.keywords.slice(0, 8) : undefined,
     url:         raw.link,
     image:       raw.image_url,
     publishedAt: raw.pubDate,

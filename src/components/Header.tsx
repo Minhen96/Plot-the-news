@@ -50,8 +50,8 @@ function ArticleNav({ brand }: { brand: 'editorial' | 'futurelens' }) {
     <nav className="w-full sticky top-0 z-50 bg-surface-container-low border-b border-outline-variant/10 py-5 px-6 md:px-12">
       <div className="flex flex-col items-center gap-4 max-w-screen-2xl mx-auto">
         <div className="flex items-center justify-between w-full">
-          <Link href="/" className="text-on-surface/50 hover:text-on-surface transition-colors text-sm font-label">
-            ←
+          <Link href="/" className="text-on-surface hover:text-primary transition-all flex items-center gap-2 font-label font-black uppercase tracking-[0.2em] text-[10px]">
+            <span className="text-lg">←</span> 
           </Link>
           <Link href="/">
             <h1 className="text-3xl md:text-5xl font-black text-on-surface font-body italic">
@@ -64,9 +64,6 @@ function ArticleNav({ brand }: { brand: 'editorial' | 'futurelens' }) {
             </Link>
             <AuthButton />
           </div>
-        </div>
-        <div className="hidden md:flex gap-8 font-label uppercase tracking-widest font-bold text-on-surface/60 text-xs">
-          <NavTabs />
         </div>
       </div>
     </nav>
