@@ -48,9 +48,10 @@ function toSearchQuery(article: NewsArticle): string {
 }
 
 export default function LiveArticleView({ slug }: Props) {
-  const [article, setArticle]   = useState<NewsArticle | null>(null)
-  const [related, setRelated]   = useState<RelatedArticle[]>([])
-  const [ready, setReady]       = useState(false)
+  const [article, setArticle]         = useState<NewsArticle | null>(null)
+  const [related, setRelated]         = useState<RelatedArticle[]>([])
+  const [enrichedBody, setEnrichedBody] = useState<string>('')
+  const [ready, setReady]             = useState(false)
 
   useEffect(() => {
     try {
@@ -65,7 +66,17 @@ export default function LiveArticleView({ slug }: Props) {
     const q = toSearchQuery(article)
     fetch(`/api/news/related?q=${encodeURIComponent(q)}`)
       .then(r => r.json())
-      .then(d => setRelated(d.articles ?? []))
+      .then(d => {
+        const articles: RelatedArticle[] = d.articles ?? []
+        setRelated(articles)
+        // Use the first GNews result's content to enrich the body if our own is short
+        if (articles.length > 0 && articles[0].description) {
+          const own = article.content || article.description || ''
+          if (own.length < 200 && articles[0].description.length > own.length) {
+            setEnrichedBody(articles[0].description)
+          }
+        }
+      })
       .catch(() => {})
   }, [article])
 
@@ -86,7 +97,9 @@ export default function LiveArticleView({ slug }: Props) {
     month: 'long', day: 'numeric', year: 'numeric',
   })
 
-  const paragraphs = toParagraphs(article.content || article.description || '')
+  // enrichedBody from GNews overrides if our own text is too short
+  const body = enrichedBody || article.content || article.description || ''
+  const paragraphs = toParagraphs(body)
 
   return (
     <main className="max-w-4xl mx-auto px-6 pt-12 pb-24">
