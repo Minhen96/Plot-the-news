@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import AuthButton from './AuthButton'
+import MobileNav from './MobileNav'
 
 interface HeaderProps {
   brand?: 'editorial' | 'futurelens'
@@ -8,13 +9,15 @@ interface HeaderProps {
 }
 
 const NAV_TABS = [
-  { label: 'World News', href: '/?category=world',     category: 'world' },
-  { label: 'Politics',   href: '/?category=politics',  category: 'politics' },
-  { label: 'Economy',    href: '/?category=economy',   category: 'economy' },
-  { label: 'Culture',    href: '/?category=culture',   category: 'culture' },
-  { label: 'Science',    href: '/?category=science',   category: 'science' },
-  { label: 'Opinion',    href: '/?category=opinion',   category: 'opinion' },
-  { label: 'Interactive',href: '/story/strait-of-hormuz', category: null },
+  { label: 'World',       href: '/?category=world',        category: 'world' },
+  { label: 'Politics',    href: '/?category=politics',     category: 'politics' },
+  { label: 'Economy',     href: '/?category=economy',      category: 'economy' },
+  { label: 'Culture',     href: '/?category=culture',      category: 'culture' },
+  { label: 'Science',     href: '/?category=science',      category: 'science' },
+  { label: 'Health',      href: '/?category=health',       category: 'health' },
+  { label: 'Sports',      href: '/?category=sports',       category: 'sports' },
+  { label: 'Opinion',     href: '/?category=opinion',      category: 'opinion' },
+  { label: 'Interactive', href: '/story/strait-of-hormuz', category: null },
 ]
 
 function NavTabs({ activeCategory }: { activeCategory?: string }) {
@@ -82,11 +85,12 @@ function HubMasthead({ brand, activeCategory }: { brand: 'editorial' | 'futurele
     <header>
       <div className="flex justify-between items-center text-[10px] font-label font-bold tracking-widest uppercase mb-4 text-on-background/60">
         <span>{date}</span>
-        {/* <span className="hidden md:block">The Living Chronicle</span> */}
+        <span className="hidden md:block">The Living Chronicle</span>
         <div className="flex items-center gap-5">
-          <Link href="/archive" className="hover:text-primary transition-colors">Archive</Link>
-          <Link href="/profile" className="hover:text-primary transition-colors">Profile</Link>
+          <Link href="/archive" className="hover:text-primary transition-colors hidden md:block">Archive</Link>
+          <Link href="/profile" className="hover:text-primary transition-colors hidden md:block">Profile</Link>
           <AuthButton />
+          <MobileNav activeCategory={activeCategory} />
         </div>
       </div>
       <div className="border-t-4 border-on-background mb-2" />
@@ -101,7 +105,7 @@ function HubMasthead({ brand, activeCategory }: { brand: 'editorial' | 'futurele
       </h1>
       <div className="border-t border-on-background mb-4" />
       {brand === 'editorial' && (
-        <nav className="flex flex-wrap justify-center gap-x-8 gap-y-2 font-label uppercase text-[10px] md:text-xs tracking-[0.2em] font-black border-b border-on-background/10 pb-4">
+        <nav className="hidden md:flex flex-wrap justify-center gap-x-8 gap-y-2 font-label uppercase text-[10px] md:text-xs tracking-[0.2em] font-black border-b border-on-background/10 pb-4">
           <NavTabs activeCategory={activeCategory ?? 'world'} />
         </nav>
       )}

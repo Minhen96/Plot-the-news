@@ -98,9 +98,9 @@ export interface SessionPrediction {
   txHash?: string
 }
 
-// --- GNews ---
+// --- News Article (newsdata.io) ---
 
-export interface GNewsArticle {
+export interface NewsArticle {
   title: string
   description: string
   url: string
@@ -109,6 +109,7 @@ export interface GNewsArticle {
   source: { name: string; url: string }
   crisisLevel?: number
   factions?: { name: string; stance: string }[]
+  aiTags?: string[]
 }
 
 // --- User ---
