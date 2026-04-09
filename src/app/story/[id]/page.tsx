@@ -1,354 +1,216 @@
-"use client";
+import Link from 'next/link'
+import Header from '@/components/Header'
+import { getStory } from '@/data/stories'
+import { notFound } from 'next/navigation'
 
-import { useState, useEffect, use } from "react";
-import Link from "next/link";
-import ComicPanel from "@/components/ComicPanel";
-import PredictionUI from "@/components/PredictionUI";
-import EvidenceSection from "@/components/EvidenceSection";
-import { Story } from "@/lib/types";
-
-interface StoryWithStats extends Story {
-  stats: {
-    totalPredictions: number;
-    optionCounts: Record<string, number>;
-    averageConfidence: number;
-  };
-}
-
-export default function StoryPage({
+export default async function ArticlePage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: Promise<{ id: string }>
 }) {
-  const { id } = use(params);
-  const [story, setStory] = useState<StoryWithStats | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [address, setAddress] = useState<string | null>(null);
-  const [showSpeculative, setShowSpeculative] = useState(false);
-  const [selectedOption, setSelectedOption] = useState<string | null>(null);
-  const [currentPanel, setCurrentPanel] = useState(0);
-  const [showAllPanels, setShowAllPanels] = useState(false);
+  const { id } = await params
+  const story = getStory(id)
 
-  useEffect(() => {
-    const saved = localStorage.getItem("walletAddress");
-    if (saved) setAddress(saved);
+  if (!story) notFound()
 
-    fetch(`/api/stories/${id}`)
-      .then((r) => r.json())
-      .then((data) => {
-        setStory(data);
-        setLoading(false);
-      });
-  }, [id]);
-
-  async function handlePredict(optionId: string, confidence: number) {
-    if (!address || !story) return;
-
-    const res = await fetch("/api/predict", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        storyId: story.id,
-        optionId,
-        userAddress: address,
-        confidence,
-      }),
-    });
-
-    if (res.ok) {
-      setSelectedOption(optionId);
-      setShowSpeculative(true);
-    }
-  }
-
-  if (loading) {
-    return (
-      <div className="mx-auto max-w-4xl px-4 py-12">
-        <div className="space-y-6">
-          <div className="h-8 w-48 animate-pulse rounded-lg bg-zinc-200" />
-          <div className="h-64 animate-pulse rounded-2xl bg-zinc-200" />
-          <div className="h-64 animate-pulse rounded-2xl bg-zinc-200" />
-        </div>
-      </div>
-    );
-  }
-
-  if (!story) {
-    return (
-      <div className="mx-auto max-w-4xl px-4 py-12 text-center">
-        <h1 className="text-2xl font-bold text-zinc-900">Story not found</h1>
-        <Link href="/" className="mt-4 text-amber-600 hover:underline">
-          Back to stories
-        </Link>
-      </div>
-    );
-  }
-
-  const speculativeOption = story.predictionOptions.find(
-    (o) => o.id === selectedOption
-  );
-
-  // Build speculative panels if prediction was made
-  const speculativePanels = speculativeOption
-    ? [
-        {
-          id: 100,
-          narrative: `Based on your prediction: "${speculativeOption.label}" — here's how the story could play out. ${speculativeOption.description}`,
-          caption: "Your Predicted Future",
-          visualDescription: "Speculative future visualization",
-          emoji: "&#x1f52e;",
-        },
-        {
-          id: 101,
-          narrative: `If this comes true, it would follow the pattern of ${
-            story.historicalEvidence[0]?.title || "similar historical events"
-          }. The implications would reshape the landscape significantly.`,
-          caption: "The Ripple Effects",
-          visualDescription: "Chain of consequences",
-          emoji: "&#x1f30a;",
-        },
-      ]
-    : [];
+  const formattedDate = new Date(story.date).toLocaleDateString('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  })
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-8">
-      {/* Breadcrumb */}
-      <div className="mb-6">
-        <Link
-          href="/"
-          className="text-sm text-zinc-400 transition hover:text-zinc-600"
-        >
-          &larr; Back to stories
-        </Link>
-      </div>
+    <>
+      <Header variant="article" brand="editorial" />
 
-      {/* Story header */}
-      <header className="mb-8">
-        <div className="flex items-start gap-4">
-          <span className="text-5xl">{story.coverEmoji}</span>
-          <div>
-            <span className="inline-block rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-600">
-              {story.category}
-            </span>
-            <h1 className="mt-1 text-3xl font-bold leading-tight text-zinc-900">
-              {story.title}
-            </h1>
-            <p className="mt-2 text-zinc-500">{story.summary}</p>
-            <div className="mt-3 flex flex-wrap gap-3 text-sm text-zinc-400">
-              <span>{story.panels.length} panels</span>
-              <span>&middot;</span>
-              <span>
-                {(
-                  story.stats.totalPredictions + story.predictionCount
-                ).toLocaleString()}{" "}
-                predictions
-              </span>
-              <span>&middot;</span>
-              <span>Avg confidence: {story.stats.averageConfidence}/5</span>
-              {story.status === "resolved" && (
-                <>
-                  <span>&middot;</span>
-                  <span className="text-emerald-600 font-medium">
-                    Resolved
-                  </span>
-                </>
-              )}
-            </div>
+      <main className="max-w-4xl mx-auto px-6 pt-12 pb-24">
+
+        {/* Breadcrumb & metadata */}
+        <div className="mb-10 flex flex-col gap-4">
+          <div className="flex items-center gap-2 text-on-surface/50 font-label text-xs uppercase tracking-widest font-bold">
+            <Link href="/" className="hover:text-primary transition-colors">The Chronicle</Link>
+            <span>›</span>
+            <span className="text-primary">{story.category}</span>
           </div>
-        </div>
-      </header>
 
-      {/* Comic panels */}
-      <section className="mb-10">
-        <h2 className="mb-4 text-lg font-bold text-zinc-900">The Story So Far</h2>
-
-        {showAllPanels ? (
-          <div className="grid gap-4 sm:grid-cols-2">
-            {story.panels.map((panel, idx) => (
-              <div
-                key={panel.id}
-                className="animate-slide-in"
-                style={{ animationDelay: `${idx * 150}ms` }}
-              >
-                <ComicPanel
-                  panel={panel}
-                  index={idx}
-                  total={story.panels.length}
-                />
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div>
-            {/* Single panel view with navigation */}
-            <div className="animate-slide-in">
-              <ComicPanel
-                panel={story.panels[currentPanel]}
-                index={currentPanel}
-                total={story.panels.length}
-              />
-            </div>
-            <div className="mt-4 flex items-center justify-between">
-              <button
-                onClick={() => setCurrentPanel(Math.max(0, currentPanel - 1))}
-                disabled={currentPanel === 0}
-                className="rounded-lg border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-600 transition hover:bg-zinc-50 disabled:opacity-30"
-              >
-                &larr; Previous
-              </button>
-              <span className="text-sm text-zinc-400">
-                Panel {currentPanel + 1} of {story.panels.length}
-              </span>
-              {currentPanel < story.panels.length - 1 ? (
-                <button
-                  onClick={() =>
-                    setCurrentPanel(
-                      Math.min(story.panels.length - 1, currentPanel + 1)
-                    )
-                  }
-                  className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-zinc-700"
-                >
-                  Next &rarr;
-                </button>
-              ) : (
-                <button
-                  onClick={() => setShowAllPanels(true)}
-                  className="rounded-lg bg-amber-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-amber-700"
-                >
-                  View All Panels
-                </button>
-              )}
-            </div>
-          </div>
-        )}
-      </section>
-
-      {/* Cliffhanger */}
-      <section className="mb-10 rounded-2xl border-2 border-dashed border-amber-300 bg-amber-50/50 p-6 text-center">
-        <span className="text-3xl">&#x26a1;</span>
-        <h3 className="mt-2 text-lg font-bold text-amber-800">
-          The Cliffhanger
-        </h3>
-        <p className="mt-2 text-amber-700">{story.cliffhanger}</p>
-      </section>
-
-      {/* Prediction section */}
-      <section className="mb-10">
-        <PredictionUI
-          storyId={story.id}
-          options={story.predictionOptions}
-          userAddress={address}
-          onPredict={handlePredict}
-          existingPrediction={selectedOption || undefined}
-          isResolved={story.status === "resolved"}
-          resolvedOutcome={story.resolvedOutcome}
-          communityVotes={story.stats.optionCounts}
-        />
-      </section>
-
-      {/* Speculative future (after prediction) */}
-      {showSpeculative && speculativePanels.length > 0 && (
-        <section className="mb-10">
-          <h2 className="mb-4 text-lg font-bold text-amber-700">
-            &#x1f52e; Your Predicted Future
+          <h2 className="font-headline text-5xl md:text-6xl font-extrabold text-on-surface leading-[1.1] tracking-tight">
+            {story.title}
           </h2>
-          <div className="grid gap-4 sm:grid-cols-2">
-            {speculativePanels.map((panel, idx) => (
-              <div
-                key={panel.id}
-                className="animate-fade-in-up"
-                style={{ animationDelay: `${idx * 200}ms` }}
-              >
-                <ComicPanel
-                  panel={panel}
-                  index={idx}
-                  total={speculativePanels.length}
-                  isSpeculative
-                />
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
 
-      {/* On-chain proof card */}
-      {(showSpeculative || story.status === "resolved") && (
-        <section className="mb-10 rounded-2xl border border-zinc-200 bg-gradient-to-br from-zinc-900 to-zinc-800 p-6 text-white shadow-lg">
-          <div className="flex items-center gap-3">
-            <span className="text-2xl">&#x26d3;</span>
+          <div className="flex items-center gap-4 mt-2">
+            <div className="w-10 h-10 rounded-full bg-surface-container overflow-hidden shrink-0">
+              <div className="w-full h-full bg-linear-to-br from-primary/20 to-primary-container/40" />
+            </div>
             <div>
-              <h3 className="font-bold">
-                {story.status === "resolved"
-                  ? "On-Chain Verification"
-                  : "Prediction Anchored On-Chain"}
-              </h3>
-              <p className="text-sm text-zinc-400">
-                DCAI L3 on Base &middot; Immutable &middot; Tamper-proof
+              <p className="font-headline font-bold text-sm text-on-surface">By Elias Thorne</p>
+              <p className="font-body text-sm text-on-surface/60 italic">
+                Foreign Affairs Analyst · {formattedDate}
               </p>
             </div>
           </div>
-          <div className="mt-4 space-y-2 rounded-xl bg-zinc-800/50 p-4 font-mono text-xs text-zinc-300">
-            <div className="flex justify-between">
-              <span className="text-zinc-500">Network</span>
-              <span>DCAI L3 (Base)</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-zinc-500">Story Hash</span>
-              <span className="truncate ml-4">
-                {`0x${Array.from({ length: 16 }, () =>
-                  Math.floor(Math.random() * 16).toString(16)
-                ).join("")}...`}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-zinc-500">Prediction Hash</span>
-              <span className="truncate ml-4">
-                {`0x${Array.from({ length: 16 }, () =>
-                  Math.floor(Math.random() * 16).toString(16)
-                ).join("")}...`}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-zinc-500">Timestamp</span>
-              <span>{new Date().toISOString()}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-zinc-500">Status</span>
-              <span className="text-emerald-400">Confirmed</span>
-            </div>
+        </div>
+
+        {/* Hero image */}
+        <div className="relative group mb-16">
+          <div className="absolute -top-6 -left-6 w-24 h-24 bg-primary-container/20 rounded-full blur-3xl -z-10" />
+          <div className="rounded-xl overflow-hidden bg-surface-container-high aspect-video">
+            {story.imageUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={story.imageUrl}
+                alt={story.title}
+                className="w-full h-full object-cover grayscale-10 hover:grayscale-0 transition-all duration-700 scale-105 hover:scale-100"
+              />
+            ) : (
+              <div className="w-full h-full bg-linear-to-br from-on-surface/70 via-on-surface/40 to-primary/20 flex items-end p-6">
+                <span className="text-surface/60 font-label text-xs uppercase tracking-widest">
+                  Naval operations · Strait of Hormuz
+                </span>
+              </div>
+            )}
           </div>
-          <button className="mt-4 w-full rounded-lg bg-amber-600 py-2 text-sm font-semibold transition hover:bg-amber-700">
-            &#x1f517; View on Block Explorer
-          </button>
-        </section>
-      )}
+          <p className="mt-4 font-body text-sm text-on-surface/50 italic text-center max-w-2xl mx-auto">
+            &ldquo;The narrow artery of global commerce in the Strait of Hormuz remains the
+            primary theater for a decades-long chess match between Washington and Tehran.&rdquo;
+          </p>
+        </div>
 
-      {/* Historical evidence */}
-      <section className="mb-10">
-        <EvidenceSection evidence={story.historicalEvidence} />
-      </section>
-
-      {/* Share card */}
-      {showSpeculative && (
-        <section className="mb-10 text-center">
-          <div className="inline-block rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
-            <h3 className="text-lg font-bold text-zinc-900">
-              Share Your Prediction
-            </h3>
-            <p className="mt-1 text-sm text-zinc-500">
-              Show the world you called it — with blockchain proof
+        {/* Article body */}
+        <article className="mb-16 space-y-6">
+          {story.articleBody.map((paragraph, i) => (
+            <p
+              key={i}
+              className={`font-body leading-relaxed text-on-surface ${
+                i === 0
+                  ? 'text-xl md:text-2xl first-letter:text-7xl first-letter:font-bold first-letter:text-primary first-letter:mr-3 first-letter:float-left first-letter:font-headline first-letter:leading-none'
+                  : 'text-lg'
+              }`}
+            >
+              {paragraph}
             </p>
-            <div className="mt-4 flex justify-center gap-3">
-              <button className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-zinc-700">
-                Copy Prediction Card
-              </button>
-              <button className="rounded-lg border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-600 transition hover:bg-zinc-50">
-                Share Link
-              </button>
+          ))}
+        </article>
+
+        {/* Summary of impact */}
+        <div className="bg-surface-container-low rounded-lg p-8 mb-12 border-l-4 border-primary">
+          <h3 className="font-headline font-bold text-sm mb-4 uppercase tracking-wider text-primary">
+            Summary of Impact
+          </h3>
+          <ul className="space-y-4">
+            {[
+              'Global oil prices remain highly sensitive to maritime incidents, with a projected 10% premium on insurance for tankers in the Gulf.',
+              'Regional stability in the Levant and Yemen is increasingly tied to the outcome of direct and indirect U.S.–Iran communications.',
+              'Active diplomatic backchannels through Oman and Qatar remain the only firewall against unintended kinetic escalation.',
+            ].map((point) => (
+              <li key={point} className="flex items-start gap-3">
+                <span className="text-primary mt-1 shrink-0">◆</span>
+                <span className="font-body text-on-surface text-base leading-relaxed">{point}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        {/* Enter the game CTA */}
+        <div className="flex flex-col items-center justify-center py-16 px-8 rounded-xl bg-linear-to-br from-primary to-on-surface text-white mb-20">
+          <h4 className="font-headline text-3xl font-bold mb-4 text-center">
+            Inside the Shadow War
+          </h4>
+          <p className="font-body text-lg opacity-90 text-center mb-10 max-w-lg leading-relaxed">
+            Experience the high-stakes world of maritime brinkmanship through an immersive
+            visual narrative. Pick your faction. Lock your prediction on-chain.
+          </p>
+          <Link
+            href={`/story/${id}/role`}
+            className="bg-primary-container text-on-surface px-12 py-5 rounded-full font-headline font-bold text-lg hover:scale-105 active:scale-95 transition-all flex items-center gap-3"
+          >
+            ✦ Launch Interactive Comic
+          </Link>
+        </div>
+
+        {/* Deep Dive */}
+        {(story.historicalEvidence || story.references) && (
+          <section className="mt-20 pt-16 border-t border-outline-variant/30">
+            <div className="flex items-center gap-4 mb-12">
+              <div className="h-px flex-1 bg-outline-variant/30" />
+              <h3 className="font-headline text-sm font-black uppercase tracking-[0.3em] text-on-surface/50">
+                Deep Dive
+              </h3>
+              <div className="h-px flex-1 bg-outline-variant/30" />
             </div>
+
+            <div className="grid md:grid-cols-2 gap-12">
+              {story.historicalEvidence && (
+                <div className="space-y-4">
+                  <h4 className="font-headline font-bold text-2xl text-on-surface">
+                    📜 Historical Evidence
+                  </h4>
+                  <div className="p-8 rounded-lg bg-surface-container-high">
+                    <h5 className="font-headline font-bold text-tertiary mb-3">
+                      {story.historicalEvidence.title}
+                    </h5>
+                    <p className="font-body text-on-surface leading-relaxed italic mb-4">
+                      &ldquo;{story.historicalEvidence.quote}&rdquo;
+                    </p>
+                    <p className="font-body text-sm text-on-surface/60">
+                      {story.historicalEvidence.summary}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {story.references && (
+                <div className="space-y-4">
+                  <h4 className="font-headline font-bold text-2xl text-on-surface">
+                    📖 References
+                  </h4>
+                  <ul className="space-y-3">
+                    {story.references.map((ref) => (
+                      <li key={ref.title}>
+                        <a
+                          href={ref.url}
+                          className="group flex items-center justify-between p-4 rounded-lg bg-surface hover:bg-surface-container-lowest border border-outline-variant/10 transition-colors"
+                        >
+                          <div className="flex flex-col">
+                            <span className="font-headline font-bold text-sm text-on-surface group-hover:text-primary transition-colors">
+                              {ref.title}
+                            </span>
+                            <span className="font-body text-xs text-on-surface/50">{ref.source}</span>
+                          </div>
+                          <span className="text-outline group-hover:translate-x-1 transition-transform shrink-0 ml-3">
+                            →
+                          </span>
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          </section>
+        )}
+      </main>
+
+      <footer className="w-full border-t border-outline-variant/20 bg-surface-container">
+        <div className="flex flex-col items-center justify-center py-12 px-8 gap-6">
+          <Link href="/">
+            <h2 className="text-2xl font-bold text-on-surface font-body italic hover:text-primary transition-colors">
+              The Illuminated Editorial
+            </h2>
+          </Link>
+          <div className="flex flex-wrap justify-center gap-x-8 gap-y-3">
+            {['About Us', 'Archives', 'Privacy Policy', 'Terms of Service', 'Contact', 'Newsletters'].map(
+              (l) => (
+                <a key={l} href="#" className="font-label text-sm text-on-surface/60 hover:text-primary underline underline-offset-4 transition-colors">
+                  {l}
+                </a>
+              )
+            )}
           </div>
-        </section>
-      )}
-    </div>
-  );
+          <p className="font-label text-sm text-center max-w-md text-on-surface/50 italic">
+            © 2026 The Illuminated Editorial · FutureLens. All Rights Reserved.
+          </p>
+        </div>
+      </footer>
+    </>
+  )
 }

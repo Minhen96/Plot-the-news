@@ -54,6 +54,18 @@ export interface SimulationResult {
 
 // --- Story ---
 
+export interface HistoricalEvidence {
+  title: string
+  quote: string
+  summary: string
+}
+
+export interface Reference {
+  title: string
+  source: string
+  url: string
+}
+
 export interface Story {
   id: string
   title: string
@@ -64,6 +76,8 @@ export interface Story {
   status: 'active' | 'resolved'
   articleBody: string[]
   historicalContext: string
+  historicalEvidence?: HistoricalEvidence
+  references?: Reference[]
   roles: Role[]
   scenes: Scene[]
   directives: Directive[]

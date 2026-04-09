@@ -12,7 +12,7 @@ export async function fetchGNewsArticles(
   try {
     const res = await fetch(
       `${BASE}/top-headlines?category=${category}&max=${max}&lang=en&token=${key}`,
-      { next: { revalidate: 3600 } }
+      { next: { revalidate: 43200 } }
     )
     if (!res.ok) return []
     const data = await res.json()
