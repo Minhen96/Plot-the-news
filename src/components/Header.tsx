@@ -4,17 +4,41 @@ import AuthButton from './AuthButton'
 interface HeaderProps {
   brand?: 'editorial' | 'futurelens'
   variant?: 'hub' | 'article'
+  activeCategory?: string
 }
 
 const NAV_TABS = [
-  { label: 'World News', href: '/?category=world' },
-  { label: 'Politics', href: '/?category=politics' },
-  { label: 'Economy', href: '/?category=economy' },
-  { label: 'Culture', href: '/?category=culture' },
-  { label: 'Science', href: '/?category=science' },
-  { label: 'Opinion', href: '/?category=opinion' },
-  { label: 'Interactive', href: '/story/strait-of-hormuz' },
+  { label: 'World News', href: '/?category=world',     category: 'world' },
+  { label: 'Politics',   href: '/?category=politics',  category: 'politics' },
+  { label: 'Economy',    href: '/?category=economy',   category: 'economy' },
+  { label: 'Culture',    href: '/?category=culture',   category: 'culture' },
+  { label: 'Science',    href: '/?category=science',   category: 'science' },
+  { label: 'Opinion',    href: '/?category=opinion',   category: 'opinion' },
+  { label: 'Interactive',href: '/story/strait-of-hormuz', category: null },
 ]
+
+function NavTabs({ activeCategory }: { activeCategory?: string }) {
+  return (
+    <>
+      {NAV_TABS.map((tab) => {
+        const isActive = tab.category !== null && tab.category === activeCategory
+        return (
+          <Link
+            key={tab.href}
+            href={tab.href}
+            className={`transition-colors ${
+              isActive
+                ? 'text-primary border-b-2 border-primary pb-1'
+                : 'hover:text-primary'
+            }`}
+          >
+            {tab.label}
+          </Link>
+        )
+      })}
+    </>
+  )
+}
 
 // Compact sticky nav — used on Article, Archive, Profile pages
 function ArticleNav({ brand }: { brand: 'editorial' | 'futurelens' }) {
@@ -38,16 +62,8 @@ function ArticleNav({ brand }: { brand: 'editorial' | 'futurelens' }) {
             <AuthButton />
           </div>
         </div>
-        <div className="hidden md:flex gap-8">
-          {NAV_TABS.map((tab) => (
-            <Link
-              key={tab.href}
-              href={tab.href}
-              className="font-label uppercase tracking-widest font-bold text-on-surface/60 hover:text-primary text-xs transition-colors"
-            >
-              {tab.label}
-            </Link>
-          ))}
+        <div className="hidden md:flex gap-8 font-label uppercase tracking-widest font-bold text-on-surface/60 text-xs">
+          <NavTabs />
         </div>
       </div>
     </nav>
@@ -55,7 +71,7 @@ function ArticleNav({ brand }: { brand: 'editorial' | 'futurelens' }) {
 }
 
 // Full broadsheet masthead — used on Chronicle Hub only
-function HubMasthead({ brand }: { brand: 'editorial' | 'futurelens' }) {
+function HubMasthead({ brand, activeCategory }: { brand: 'editorial' | 'futurelens'; activeCategory?: string }) {
   const date = new Date().toLocaleDateString('en-US', {
     weekday: 'long',
     year: 'numeric',
@@ -66,7 +82,7 @@ function HubMasthead({ brand }: { brand: 'editorial' | 'futurelens' }) {
     <header>
       <div className="flex justify-between items-center text-[10px] font-label font-bold tracking-widest uppercase mb-4 text-on-background/60">
         <span>{date}</span>
-        <span className="hidden md:block">The Living Chronicle</span>
+        {/* <span className="hidden md:block">The Living Chronicle</span> */}
         <div className="flex items-center gap-5">
           <Link href="/archive" className="hover:text-primary transition-colors">Archive</Link>
           <Link href="/profile" className="hover:text-primary transition-colors">Profile</Link>
@@ -86,18 +102,14 @@ function HubMasthead({ brand }: { brand: 'editorial' | 'futurelens' }) {
       <div className="border-t border-on-background mb-4" />
       {brand === 'editorial' && (
         <nav className="flex flex-wrap justify-center gap-x-8 gap-y-2 font-label uppercase text-[10px] md:text-xs tracking-[0.2em] font-black border-b border-on-background/10 pb-4">
-          {NAV_TABS.map((tab) => (
-            <Link key={tab.href} href={tab.href} className="hover:text-primary transition-colors">
-              {tab.label}
-            </Link>
-          ))}
+          <NavTabs activeCategory={activeCategory ?? 'world'} />
         </nav>
       )}
     </header>
   )
 }
 
-export default function Header({ brand = 'editorial', variant = 'hub' }: HeaderProps) {
+export default function Header({ brand = 'editorial', variant = 'hub', activeCategory }: HeaderProps) {
   if (variant === 'article') return <ArticleNav brand={brand} />
-  return <HubMasthead brand={brand} />
+  return <HubMasthead brand={brand} activeCategory={activeCategory} />
 }

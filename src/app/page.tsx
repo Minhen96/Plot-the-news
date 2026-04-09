@@ -1,64 +1,9 @@
 import Link from 'next/link'
 import Header from '@/components/Header'
 import NewsFeed from '@/components/NewsFeed'
-import { fetchGNewsArticles } from '@/lib/gnews'
+import { fetchGNewsArticles, fetchGNewsLastWeek } from '@/lib/gnews'
 import { toStorySlug } from '@/lib/utils'
-import type { GNewsArticle } from '@/lib/types'
-
-// Shown only when GNEWS_API_KEY is not set
-const WORLD_FALLBACK: GNewsArticle[] = [
-  {
-    title: 'Iran Moves to Close Strait of Hormuz — Oil Markets in Freefall',
-    description:
-      'As geopolitical tensions escalate in the Strait of Hormuz, the world watches a high-stakes chess match on the high seas. A narrow corridor where global energy security meets modern naval brinkmanship.',
-    url: '#',
-    image: null,
-    publishedAt: new Date().toISOString(),
-    source: { name: 'The Illuminated Editorial', url: '#' },
-    crisisLevel: 92,
-    factions: [
-      { name: 'The Coalition (West)', stance: 'Defensive' },
-      { name: 'The Regional Guard (Iran)', stance: 'Aggressive' }
-    ]
-  },
-  {
-    title: 'The Amazon\'s Last Breath: Satellite Data Reveals Accelerating Shifts',
-    description:
-      'Unprecedented shifts in the rainforest\'s ecosystem demand immediate global conservation efforts as tipping points loom.',
-    url: '#',
-    image: null,
-    publishedAt: new Date().toISOString(),
-    source: { name: 'The Illuminated Editorial', url: '#' },
-  },
-  {
-    title: 'Urban Gridlock: The True Cost of Modern Mobility',
-    description:
-      'Infrastructure failures in major cities are costing the global economy trillions in lost productivity annually.',
-    url: '#',
-    image: null,
-    publishedAt: new Date().toISOString(),
-    source: { name: 'The Illuminated Editorial', url: '#' },
-  },
-]
-
-const ECONOMY_FALLBACK: GNewsArticle[] = [
-  {
-    title: 'The Rebirth of Local Currency',
-    description: 'Small communities are turning to hyper-local bartering systems as trust in central banks erodes.',
-    url: '#',
-    image: null,
-    publishedAt: new Date().toISOString(),
-    source: { name: 'The Illuminated Editorial', url: '#' },
-  },
-  {
-    title: 'Market Analysis: The Circuit Pulse',
-    description: 'Tech stocks fluctuate as global supply chains tighten further amid geopolitical uncertainty.',
-    url: '#',
-    image: null,
-    publishedAt: new Date().toISOString(),
-    source: { name: 'The Illuminated Editorial', url: '#' },
-  },
-]
+import { WORLD_FALLBACK, LAST_WEEK_FALLBACK } from '@/data/news'
 
 function ArticleImage({
   src,
@@ -78,52 +23,76 @@ function ArticleImage({
   )
 }
 
-export default async function ChronicleHub() {
-  const [worldArticles, economyArticles, techArticles, politicsArticles] = await Promise.all([
-    fetchGNewsArticles('world', 10),
+// Maps URL ?category= values → GNews API category names
+const CATEGORY_MAP: Record<string, string> = {
+  world:    'world',
+  politics: 'nation',
+  economy:  'business',
+  culture:  'entertainment',
+  science:  'science',
+  opinion:  'general',
+}
+
+export default async function ChronicleHub({
+  searchParams,
+}: {
+  searchParams: Promise<{ category?: string }>
+}) {
+  const { category } = await searchParams
+  const activeCategory = category && CATEGORY_MAP[category] ? category : 'world'
+  const gnewsCategory  = CATEGORY_MAP[activeCategory]
+
+  const [primaryArticles, economyArticles, techArticles, politicsArticles, lastWeekArticles] = await Promise.all([
+    fetchGNewsArticles(gnewsCategory, 10),
     fetchGNewsArticles('business', 10),
     fetchGNewsArticles('technology', 10),
-    fetchGNewsArticles('politics', 10),
+    fetchGNewsArticles('nation', 10),
+    fetchGNewsLastWeek(gnewsCategory, 6),
   ])
 
-  const world = worldArticles.length > 0 ? worldArticles : WORLD_FALLBACK
-  const economy = economyArticles.length > 0 ? economyArticles : ECONOMY_FALLBACK
+  const primary  = primaryArticles.length > 0   ? primaryArticles   : WORLD_FALLBACK
+  const lastWeek = lastWeekArticles.length > 0   ? lastWeekArticles  : LAST_WEEK_FALLBACK
 
-  const featured = world[0]
-  const sidebarArticles = world.slice(1, 3)
+  const featured        = primary[0]
+  const sidebarArticles = primary.slice(1, 5)
 
-  // Feed = everything not used in the 3-col layout, mixed across categories
+  // Feed — remaining articles, deduplicated by URL
+  const seen = new Set([featured.url, ...sidebarArticles.map((a) => a.url)])
   const feedArticles = [
-    ...world.slice(3),
+    ...primary.slice(3),
     ...techArticles,
     ...politicsArticles,
     ...economyArticles.slice(2),
-  ]
+  ].filter((a) => {
+    if (seen.has(a.url)) return false
+    seen.add(a.url)
+    return true
+  })
 
   return (
     <div className="max-w-[1400px] mx-auto px-6 lg:px-12 py-6">
-      <Header brand="editorial" />
+      <Header brand="editorial" activeCategory={activeCategory} />
 
       <main className="mt-8">
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_2fr_1fr] gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_2fr_1fr] gap-8 items-start">
 
-          {/* ── Left column: World News + Opinion ── */}
+          {/* ── Left column: Category News + Opinion ── */}
           <aside className="space-y-8">
             <section>
               <h4 className="font-headline font-black uppercase text-xs tracking-widest mb-4 border-b-2 border-on-background pb-1 w-fit">
-                World News
+                {activeCategory.charAt(0).toUpperCase() + activeCategory.slice(1)}
               </h4>
-              <div className="space-y-6">
-                {sidebarArticles[0] && (
-                  <article className="group">
+              <div className="divide-y divide-outline/20">
+                {sidebarArticles.map((article) => (
+                  <article key={article.url} className="group pt-6 first:pt-0">
                     <h5 className="text-xl font-headline font-bold leading-tight mb-2 group-hover:underline">
-                      {sidebarArticles[0].title}
+                      {article.title}
                     </h5>
-                    <p className="text-sm opacity-80 leading-relaxed mb-3 font-body">
-                      {sidebarArticles[0].description}
+                    <p className="text-sm opacity-80 leading-relaxed mb-3 font-body line-clamp-3">
+                      {article.description}
                     </p>
                     <a
-                      href={sidebarArticles[0].url}
+                      href={article.url}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-1 text-[10px] font-label font-black uppercase tracking-widest text-primary"
@@ -131,25 +100,7 @@ export default async function ChronicleHub() {
                       Enter Story →
                     </a>
                   </article>
-                )}
-
-                <div className="border-t border-outline/20" />
-
-                {sidebarArticles[1] && (
-                  <article className="group">
-                    <h5 className="text-xl font-headline font-bold leading-tight mb-2 group-hover:underline">
-                      {sidebarArticles[1].title}
-                    </h5>
-                    <ArticleImage
-                      src={sidebarArticles[1].image}
-                      alt={sidebarArticles[1].title}
-                      className="w-full h-32 object-cover mb-3 grayscale hover:grayscale-0 transition-all duration-500"
-                    />
-                    <p className="text-sm opacity-80 leading-relaxed font-body">
-                      {sidebarArticles[1].description}
-                    </p>
-                  </article>
-                )}
+                ))}
               </div>
             </section>
 
@@ -181,10 +132,10 @@ export default async function ChronicleHub() {
                 <span className="bg-primary text-on-primary px-3 py-1 rounded-sm text-[10px] font-label font-bold tracking-widest uppercase">
                   Lead Story
                 </span>
-                <h2 className="text-5xl md:text-7xl font-headline font-extrabold leading-[0.9] tracking-tighter text-on-background">
+                <h2 className="text-3xl md:text-5xl font-headline font-extrabold leading-[0.9] tracking-tighter text-on-background">
                   {featured.title}
                 </h2>
-                <p className="text-2xl font-body italic opacity-90 leading-snug">
+                <p className="text-xl font-body italic opacity-90 leading-snug">
                   {featured.description}
                 </p>
 
@@ -255,26 +206,28 @@ export default async function ChronicleHub() {
             </article>
           </section>
 
-          {/* ── Right column: Economy + Newsletter + Archive ── */}
+          {/* ── Right column: The Week Before + Newsletter + Archive ── */}
           <aside className="space-y-8">
             <section>
-              <h4 className="font-headline font-black uppercase text-xs tracking-widest mb-4 border-b-2 border-on-background pb-1 w-fit">
-                Economy
-              </h4>
-              <div className="space-y-6">
-                {economy.map((article) => (
-                  <article key={article.title} className="flex gap-4 group cursor-pointer">
-                    <div className="flex-1">
-                      <h5 className="text-lg font-headline font-bold leading-tight mb-1 group-hover:text-primary transition-colors">
-                        {article.title}
-                      </h5>
-                      <p className="text-xs opacity-70 font-body">{article.description}</p>
-                    </div>
-                    <ArticleImage
-                      src={article.image}
-                      alt={article.title}
-                      className="w-16 h-16 object-cover grayscale shrink-0"
-                    />
+              <div className="mb-4">
+                <h4 className="font-headline font-black uppercase text-xs tracking-widest border-b-2 border-on-background pb-1 w-fit">
+                  The Week Before
+                </h4>
+                <p className="text-[10px] font-label opacity-50 uppercase tracking-widest mt-1">
+                  {activeCategory} · 7 days ago
+                </p>
+              </div>
+              <div className="divide-y divide-outline/20">
+                {lastWeek.slice(0, 4).map((article) => (
+                  <article key={article.url} className="group pt-5 first:pt-0">
+                    <h5 className="text-sm font-headline font-bold leading-tight mb-1 group-hover:text-primary transition-colors">
+                      {article.title}
+                    </h5>
+                    <p className="text-xs opacity-60 font-body line-clamp-2 mb-2">{article.description}</p>
+                    <span className="text-[10px] font-label opacity-40 uppercase tracking-widest">
+                      {new Date(article.publishedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                      {' · '}{article.source.name}
+                    </span>
                   </article>
                 ))}
               </div>
