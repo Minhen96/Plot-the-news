@@ -1,66 +1,119 @@
-export interface StoryPanel {
-  id: number;
-  narrative: string;
-  caption: string;
-  visualDescription: string;
-  emoji: string; // Visual icon for the panel
+// --- Roles ---
+
+export interface RoleStats {
+  strategic: number  // 0–100
+  stability: number  // 0–100
 }
 
-export interface PredictionOption {
-  id: string;
-  label: string;
-  description: string;
-  probability: string; // AI-estimated likelihood
+export interface Role {
+  id: string
+  name: string
+  faction: string
+  quote: string
+  portraitUrl: string
+  stats: RoleStats
 }
 
-export interface HistoricalEvidence {
-  title: string;
-  year: string;
-  summary: string;
-  outcome: string;
-  relevance: string;
-  panels: StoryPanel[];
+// --- Narrative ---
+
+export interface Scene {
+  id: string
+  characterName: string
+  characterPortrait: string
+  backgroundUrl: string
+  sectorBadge: string
+  dialogue: string
 }
+
+// --- Prediction ---
+
+export interface Directive {
+  id: string
+  label: string
+  description: string
+  votes: number
+  proposedBy: string
+  popular?: boolean
+}
+
+// --- Simulation ---
+
+export interface SimulationPhase {
+  phase: 'short' | 'mid' | 'long'
+  label: string
+  timeframe: string
+  event: string
+  emoji: string
+}
+
+export interface SimulationResult {
+  timeline: SimulationPhase[]
+  verdict?: 'correct' | 'partially_correct' | 'incorrect'
+  reasoning?: string
+}
+
+// --- Story ---
 
 export interface Story {
-  id: string;
-  title: string;
-  category: string;
-  summary: string;
-  coverEmoji: string;
-  date: string;
-  predictionCount: number;
-  consensusOption?: string;
-  controversyScore: number; // 0-100, higher = more split
-  status: "active" | "resolved";
-  resolvedOutcome?: string;
-  panels: StoryPanel[];
-  cliffhanger: string;
-  predictionOptions: PredictionOption[];
-  historicalEvidence: HistoricalEvidence[];
+  id: string
+  title: string
+  lede: string
+  category: string
+  imageUrl: string
+  date: string
+  status: 'active' | 'resolved'
+  articleBody: string[]
+  historicalContext: string
+  roles: Role[]
+  scenes: Scene[]
+  directives: Directive[]
+  resolvedTimeline?: SimulationPhase[]
+  txHash?: string
 }
 
-export interface Prediction {
-  id: string;
-  storyId: string;
-  userAddress: string;
-  optionId: string;
-  optionLabel: string;
-  confidence: number; // 1-5
-  justification?: string;
-  timestamp: number;
-  txHash?: string;
-  resolved: boolean;
-  correct?: boolean;
+// --- Session state (stored in sessionStorage) ---
+
+export interface SessionPrediction {
+  storyId: string
+  roleId: string
+  directiveId?: string
+  customText?: string
+  confidence: number  // 0–100
+  txHash?: string
+}
+
+// --- GNews ---
+
+export interface GNewsArticle {
+  title: string
+  description: string
+  url: string
+  image: string | null
+  publishedAt: string
+  source: { name: string; url: string }
+}
+
+// --- User ---
+
+export interface UserStats {
+  address: string
+  displayName: string
+  totalPredictions: number
+  correctPredictions: number
+  accuracy: number
+  reputationScore: number
+  streak: number
+  onChainProofs: number
+  badge: 'First Foresight' | 'Pattern Seeker' | 'Analyst' | 'Strategist' | 'Oracle' | null
 }
 
 export interface LeaderboardEntry {
-  address: string;
-  displayName: string;
-  totalPredictions: number;
-  correctPredictions: number;
-  accuracy: number;
-  reputationScore: number;
-  streak: number;
-  rank: number;
+  address: string
+  displayName: string
+  totalPredictions: number
+  correctPredictions: number
+  accuracy: number
+  reputationScore: number
+  streak: number
+  rank: number
 }

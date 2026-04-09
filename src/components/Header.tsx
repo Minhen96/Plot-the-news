@@ -1,70 +1,76 @@
-"use client";
+import Link from 'next/link'
+import AuthButton from './AuthButton'
 
-import { useState, useEffect } from "react";
-import Link from "next/link";
-import { connectWallet, shortenAddress } from "@/lib/wallet";
+interface HeaderProps {
+  brand?: 'editorial' | 'futurelens'
+}
 
-export default function Header() {
-  const [address, setAddress] = useState<string | null>(null);
-  const [mounted, setMounted] = useState(false);
+const NAV_TABS = [
+  { label: 'World News', href: '/?category=world' },
+  { label: 'Politics', href: '/?category=politics' },
+  { label: 'Economy', href: '/?category=economy' },
+  { label: 'Culture', href: '/?category=culture' },
+  { label: 'Science', href: '/?category=science' },
+  { label: 'Opinion', href: '/?category=opinion' },
+  { label: 'Interactive', href: '/story/strait-of-hormuz' },
+]
 
-  useEffect(() => {
-    setMounted(true);
-    const saved = localStorage.getItem("walletAddress");
-    if (saved) setAddress(saved);
-  }, []);
-
-  async function handleConnect() {
-    const addr = await connectWallet();
-    if (addr) {
-      setAddress(addr);
-      localStorage.setItem("walletAddress", addr);
-    }
-  }
-
-  if (!mounted) return null;
+export default function Header({ brand = 'editorial' }: HeaderProps) {
+  const date = new Date().toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  })
 
   return (
-    <header className="sticky top-0 z-50 border-b border-zinc-200 bg-white/80 backdrop-blur-md">
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
-        <Link href="/" className="flex items-center gap-2">
-          <span className="text-2xl">&#x1f4dc;</span>
-          <span className="text-xl font-bold tracking-tight text-zinc-900">
-            Chronicle<span className="text-amber-600">Chain</span>
-          </span>
-        </Link>
-
-        <nav className="hidden items-center gap-6 md:flex">
-          <Link
-            href="/"
-            className="text-sm font-medium text-zinc-600 transition hover:text-zinc-900"
-          >
-            Stories
+    <header>
+      {/* Top info bar */}
+      <div className="flex justify-between items-center text-[10px] font-label font-bold tracking-widest uppercase mb-4 text-on-background/60">
+        <span>{date}</span>
+        <span className="hidden md:block">The Living Chronicle</span>
+        <div className="flex items-center gap-5">
+          <Link href="/archive" className="hover:text-primary transition-colors">
+            Archive
           </Link>
-          <Link
-            href="/leaderboard"
-            className="text-sm font-medium text-zinc-600 transition hover:text-zinc-900"
-          >
-            Leaderboard
+          <Link href="/profile" className="hover:text-primary transition-colors">
+            Profile
           </Link>
-        </nav>
-
-        <div className="flex items-center gap-3">
-          {address ? (
-            <div className="flex items-center gap-2 rounded-full bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-700 ring-1 ring-emerald-200">
-              <span className="h-2 w-2 rounded-full bg-emerald-500" />
-              {shortenAddress(address)}
-            </div>
-          ) : (
-            <button
-              onClick={handleConnect}
-              className="rounded-full bg-zinc-900 px-5 py-2 text-sm font-medium text-white transition hover:bg-zinc-700"
-            >
-              Connect Wallet
-            </button>
-          )}
+          <AuthButton />
         </div>
       </div>
+
+      {/* Thick rule */}
+      <div className="border-t-4 border-on-background mb-2" />
+
+      {/* Masthead */}
+      <h1
+        className={`text-center font-headline font-extrabold tracking-tighter italic leading-none my-4 ${
+          brand === 'editorial'
+            ? 'text-7xl md:text-[7rem] text-on-background'
+            : 'text-5xl md:text-7xl text-primary'
+        }`}
+      >
+        {brand === 'editorial' ? 'The Illuminated Editorial' : 'FutureLens'}
+      </h1>
+
+      {/* Medium rule */}
+      <div className="border-t border-on-background mb-4" />
+
+      {/* Nav tabs — editorial only */}
+      {brand === 'editorial' && (
+        <nav className="flex flex-wrap justify-center gap-x-8 gap-y-2 font-label uppercase text-[10px] md:text-xs tracking-[0.2em] font-black border-b border-on-background/10 pb-4">
+          {NAV_TABS.map((tab) => (
+            <Link
+              key={tab.href}
+              href={tab.href}
+              className="hover:text-primary transition-colors"
+            >
+              {tab.label}
+            </Link>
+          ))}
+        </nav>
+      )}
     </header>
-  );
+  )
 }

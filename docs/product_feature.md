@@ -19,8 +19,9 @@
 | Article View | `/story/[id]` | Editorial article + "Enter" CTA |
 | Role Selection | `/story/[id]/role` | Pick faction before entering |
 | In-Game Narrative | `/story/[id]/play` | Visual novel, role param in query/state |
-| Make Prediction | `/story/[id]/predict` | Shown at end of narrative OR same page overlay |
-| Mission Outcome | `/story/[id]/outcome` | Post-prediction simulation + analysis |
+| Make Prediction | `/story/[id]/predict` | Community Directives — directive cards + confidence slider |
+| Simulation Loading | `/story/[id]/outcome?phase=loading` | "FutureLens" branded loading screen while Claude runs |
+| Mission Outcome | `/story/[id]/outcome` | 3 sequential phase screens + resolution summary |
 | Oracle's Archive | `/archive` | Pre-resolved stories with on-chain proofs |
 | User Profile | `/profile` | Journal, stats, badges |
 | Leaderboard | `/leaderboard` | Reputation rankings |
@@ -30,9 +31,11 @@
 ## Core User Flow
 
 ```
-/ → /story/[id] → /story/[id]/role → /story/[id]/play → /story/[id]/predict → /story/[id]/outcome
-                                                                                        ↓
-                                                                                   /archive  /profile
+/ → /story/[id] → /story/[id]/role → /story/[id]/play → /story/[id]/predict
+                                                                  ↓
+                                           /story/[id]/outcome (loading → phase 1 → 2 → 3 → summary)
+                                                                  ↓
+                                                         /archive    /profile
 ```
 
 ---
@@ -96,76 +99,120 @@ This is the immersive storytelling layer before the decision point.
 
 ---
 
-### Page 5 — Make Your Prediction (Decision Engine)
-**Vibe:** Overlay on blurred cinematic background. High-stakes decision moment.
+### Page 5 — Community Directives (Decision Engine)
+**Vibe:** Full cinematic background. Players contribute to a "Strategic Consensus" network.
 
-- **Critical Event badge** (e.g. "STRAIT OF HORMUZ")
-- Headline: `MAKE YOUR PREDICTION` (display font, all caps)
-- **3 preset choice cards** in a row, each with:
-  - Icon
-  - Choice title (e.g. "Strategic De-escalation")
-  - 1-2 sentence description
-  - Community vote count shown below (e.g. "42% of predictors chose this")
-- **4th option — "Write Your Own Prediction"** card:
-  - Text input field for free-form prediction
-  - Placeholder: "Describe what you think will happen..."
-  - Gets its own AI-generated simulation when submitted
-  - Counted separately — does not compete in Crowd Champion contest
-- **Confidence slider:** `Confidence Level (0-100%)` — Cautious ←→ Absolute
-- CTA button: `🔒 Lock Prediction on L3` (primary green)
-- Below: Character briefing card with portrait + quote providing context
-- Bottom toolbar: Continue / Log / Skip / Auto
+- Section label: `COMMUNITY DIRECTIVES`
+- Headline: `Strategic Consensus` (uppercase, extrabold)
+- Subtext: *"Real-time projections from the global intelligence network"*
+- **3 preset directive cards** in a 3-column grid, each with:
+  - Icon + proposed-by user label (e.g. "Proposed by Stratos_Alpha")
+  - Directive title (e.g. "Strategic De-escalation")
+  - 1-2 sentence description (italic serif)
+  - Live vote count (e.g. "8.4k Votes")
+  - SELECT button (green for most popular, neutral otherwise)
+  - Most-popular card gets a `MOST POPULAR` + `TRENDSETTER` badge at top
+- **4th panel — "Author Directive"** (sidebar card, same row):
+  - Label: `AUTHOR DIRECTIVE` (primary green, with edit icon)
+  - Note: *"High-performing directives earn influence and Trendsetter status"*
+  - Textarea: placeholder "Describe the outcome..."
+  - `SUBMIT TO NETWORK` green button
+- **Bottom pill bar** — full-width, rounded-full, contains:
+  - `Confidence Level` label + range slider (Cautious ←→ Absolute)
+  - `🔒 LOCK PREDICTION` button (dark/black, fills on hover to primary green)
+- **Below (narrative anchor):** Character avatar (circular, small) + dialogue quote from The Admiral: *"Which path shall we take through the Strait?"*
+- Bottom toolbar (mobile): Continue / Log / Skip / Auto
+
+> **Design note:** The background is a full cinematic scene (naval bridge at dusk). Cards float over it with glassmorphism `backdrop-blur` and `surface-container-lowest/90`.
 
 ---
 
-### Page 6 — L3 Transaction Moment (Judge WOW Moment)
-Inline animation after clicking Lock:
+### Page 6 — L3 Lock Animation (WOW Moment)
+Inline animation shown directly after clicking "LOCK PREDICTION":
 ```
 Hashing prediction...    ▓▓▓░░░  (0.5s)
 Submitting to L3...      ▓▓▓▓▓░  (0.5s)
 ✅ Locked on-chain
 Proof ID: 0xA81F92...
 ```
-Brief, dramatic, then transitions to outcome or continues narrative.
+Brief, dramatic. Then transitions to Loading Simulation screen.
 
 ---
 
-### Page 7 — Mission Outcome
-**Vibe:** Editorial resolution. Journalistic "verdict" page.
+### Page 6.5 — Loading Simulation
+**Vibe:** FutureLens "processing" moment. Header switches to "FutureLens" branding (not "The Illuminated Editorial").
 
-- **"STORY RESOLVED" badge** (green pill, top)
-- Headline: `Strategic Verdict: [Outcome Title]`
-- Pull quote in italic serif
-- **Hero image** — cinematic resolution scene
-- Verdict overlay card on image: outcome label + date
-- Right sidebar: floating speech bubble with key quote
-- **3-Phase Simulation Timeline** (replaces Day 1/3/7):
-  - 🟡 **Short-term** — Immediate reaction (hours to days)
-  - 🟠 **Mid-term** — Developing consequences (weeks to months)
-  - 🔴 **Long-term** — Lasting structural impact (months to years)
-  - Each phase shown as a panel with emoji + event description
-- **AI Analytical Mirror section:**
-  - `The Reality:` — bullet points comparing prediction vs actual trajectory
-  - If user wrote a custom prediction: AI shows "Your prediction was [correct/partially correct/incorrect] because..."
-- Right panel: **On-Chain Verified** badge + reputation delta
-- **Crowd Results** — shows which option was most chosen + who wins Crowd Champion badge
-- Bottom: "Deepen Your Context" — links to real documents/sources
-- CTAs: `Explore Next Story` + `Share Prediction`
+- Header: `FutureLens` (italic, forest green) — this is one of two screens that use FutureLens branding
+- Headline: `Generating Future` + `Simulation...` (italic serif for the second word)
+- **Prominent progress bar** (green gradient, animated stripe, shows percentage e.g. "64%")
+  - Label above bar: "Synthesizing Variables"
+- **Intelligence Briefing Carousel** — rotating educational fact cards
+  - Each card: icon + category label + headline + 1-2 sentence fact
+  - e.g. "The Strait of Hormuz — Approximately **20% of the world's oil** passes through daily"
+  - Left/right chevron navigation arrows
+  - Dot indicators below
+- **Pulsing status line** at bottom: `● Neural Engine: Active Middle East Node` (pulsing green dot)
+- This screen appears while Claude is generating the 3-phase simulation
+- Minimum display time: 2 seconds (so user can read the briefing card)
+
+---
+
+### Page 7 — Mission Outcome (3 Sequential Phase Screens)
+**Vibe:** The outcome is experienced as a mini-narrative — three separate cinematic screens, one per phase. Users click through them like the in-game narrative.
+
+Each phase screen shares the same layout:
+
+**Chrome (persistent across all 3 phases):**
+- Fixed top nav: `The Illuminated Editorial` branding + Narrative / Map / Timeline nav
+- **Floating phase badge** (center top): `CURRENT PHASE: SHORT-TERM OUTCOME (DAYS 1-7)` (tertiary/amber pill)
+- **Left sidebar (desktop):** Fleet Command panel with nav items (Intel / Diplomacy / War Room / Archive) + `Next Phase` green button at bottom
+- **Mobile bottom nav:** Narrative / Map / Timeline / Settings
+
+**Per-phase content (center canvas):**
+- Full cinematic background (atmospheric scene appropriate to the phase)
+- Gradient overlay (`bg-gradient-to-t from-surface via-transparent to-transparent`) for readability
+- **AI Intel sidebar (right, desktop):** floating panel with:
+  - Analysis label + progress bar (e.g. "De-escalation Probability: 74%")
+  - Causal Factors bullet list (tertiary dot bullets)
+  - Operational Status chip (e.g. "Cooling Period")
+- **Character dialogue box (bottom center):**
+  - Character portrait positioned above-left, partially overlapping the dialogue card
+  - Speech bubble tail (diamond `rotate-45` notch) pointing up-left toward portrait
+  - Character name label (e.g. "THE ADMIRAL") in primary green
+  - Narrative text in Newsreader serif (2 lines, large size)
+  - `CLICK TO CONTINUE →` button (primary green, rounded-full, right-aligned)
+
+**Phase progression:**
+- Phase 1 — Short-term: "Days 1-7" → what happens immediately
+- Phase 2 — Mid-term: "Weeks 1-12" → developing consequences
+- Phase 3 — Long-term: "Year 1-5" → lasting structural impact
+- After Phase 3: transitions to the proof card / reputation delta view
+
+**After phases — Resolution Summary:**
+- **On-Chain Verified** badge + txHash (monospace)
+- Reputation points earned
+- **Crowd Results** — most-chosen option + Crowd Champion winner
+- If custom prediction: AI verdict (correct / partially correct / incorrect)
+- CTAs: `Explore Next Story` + `Share Prediction Card`
 
 ---
 
 ### Page 8 — User Profile (FutureLens Journal)
-**Vibe:** Personal journalist's dossier / achievement journal.
+**Vibe:** Personal journalist's dossier / achievement journal. Header uses `FutureLens` branding (one of two screens that do).
 
-- Avatar + display name + flair quote (e.g. *"The future belongs to those who see it unfolding."*)
-- **Foresight Score:** large number (e.g. 12,840)
-- Stats row: Total Predictions / Accuracy / Streak / On-Chain Proofs
-- **Journal of Achievements:** scrollable list of completed stories
-  - Each entry: story thumbnail + title + user's prediction quote + `Details →`
-  - Status badge per entry: Correct / Incorrect / Pending
-- **Achievement Badges** (right sidebar): First Foresight / Pattern Seeker / Diplomat / etc.
-- Account Management: Profile Settings / Security & Privacy
-- Upgrade CTA: `Elevate Your Insight` (subscription/premium prompt)
+- **Top nav:** `FutureLens` (italic, green) + Stories / Archive / Profile links
+- **User Header:** circular avatar (gradient ring: primary → primary-container) + role badge ("Oracle") + display name + flair quote
+- **Foresight Score:** large number displayed in a rounded-full pill (e.g. 12,840)
+- **Stats Bento Grid** (2×2 on mobile, 4 columns on desktop):
+  - Total Predictions / Accuracy Rate / Streak / On-Chain Proofs
+  - On-Chain Proofs card has a verified checkmark icon
+  - Cards lift on hover (`hover:bg-primary-container`)
+- **Left (main column): Journal of Achievements** — scrollable list
+  - Each entry: story thumbnail/emoji (grayscale → color on hover) + title + user's prediction quote (italic serif, chat bubble icon) + L3 proof hash in monospace + `Details →`
+  - Status badge: `Resolved - Correct` (primary-container) / `Pending Resolution` (surface-container)
+- **Right column (sidebar):**
+  - Achievement Badges grid (2 columns): icon + badge name + criteria
+  - Account management links
 
 ---
 

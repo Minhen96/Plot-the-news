@@ -35,11 +35,13 @@ Build less. Make this one flow flawless.
 
 | Priority | Feature | Reason |
 |----------|---------|--------|
-| P0 | Cinematic in-game screens (stitch design UI) | Judges *feel* the product |
-| P0 | Streaming narrative text (typewriter via SSE) | Alive, not static |
+| P0 | Cinematic in-game screens (all 10 stitch design screens) | Judges *feel* the product |
+| P0 | Typewriter narrative text (pre-stored, `setInterval` on frontend) | Alive, not static |
+| P0 | Loading simulation screen (progress bar + intel carousel) | Bridges predict → outcome |
+| P0 | 3-phase sequential outcome screens (Short → Mid → Long) | Core game loop payoff |
 | P0 | Optimistic L3 tx + proof card | Judge WOW moment |
 | P0 | Privy wallet auth | Anyone can use it, no MetaMask needed |
-| P0 | 1-2 pre-built scenarios (AI pre-generated) | Demo needs content ready |
+| P0 | 1 pre-built Hormuz scenario (roles + scenes + choices pre-generated) | Demo needs content ready |
 | P1 | Shareable proof card image (html2canvas) | Viral / social hook |
 | P1 | Oracle's Archive (pre-resolved story + real txHashes) | Proves full loop |
 | P1 | Role-influenced simulation | Makes role choice matter mechanically |
@@ -58,13 +60,14 @@ Build less. Make this one flow flawless.
 
 ## The "Minimum Impressive" Build (if time runs short)
 
-These 5 things alone make FutureLens win-worthy:
+These 6 things alone make FutureLens win-worthy:
 
-1. **Cinematic in-game UI** — full-bleed bg, character portrait, speech bubble
-2. **Streaming narrative text** — typewriter effect via Claude streaming
-3. **Optimistic L3 tx animation → proof card** — the WOW moment
-4. **Shareable proof card image** — "I called it. Here's the proof."
-5. **Oracle's Archive** — one pre-resolved story, real txHash, clickable explorer link
+1. **Newspaper Chronicle Hub** — "The Illuminated Editorial" masthead, editorial grid
+2. **Cinematic in-game UI** — full-screen bg, character portrait, speech bubble typewriter
+3. **Community Directives** — 3 choice cards + confidence slider + LOCK PREDICTION
+4. **Loading simulation** — progress bar + intelligence briefing carousel
+5. **3-phase sequential outcome** — Short → Mid → Long with character dialogue per phase
+6. **Optimistic L3 tx → proof card → Oracle's Archive** — real txHash, clickable explorer link
 
 ---
 
@@ -274,13 +277,16 @@ ADMIN_SECRET=some-random-secret-string
 
 ## Demo Script (3 minutes)
 
-1. **Chronicle** → "This scenario was generated from today's news via GNews API."
-2. **Role selection** → pick The Analyst → "Your role shapes the choices you see."
-3. **In-game narrative** → watch text stream in → "Claude is narrating the crisis in real time."
-4. **Decision screen** → pick a choice, set confidence → click **Lock Prediction on L3**
-5. **L3 animation** → "Your prediction is being hashed and anchored permanently on DCAI L3."
-6. **Proof card** → show txHash → click View on Explorer → live block explorer
-7. **Simulation + Analysis** → Day 1/3/7 panels → "Three AI analysts debated this outcome."
-8. **Oracle's Archive** → show pre-resolved story → "This prediction was made 48 hours ago. The outcome resolved. The proof is immutable."
+1. **Chronicle** → "The Illuminated Editorial — today's lead story: The Shadow of the Crescent."
+2. **Article** → click "Launch Interactive Comic" → "This is the editorial brief. Now you step inside the story."
+3. **Role selection** → pick The Coalition → "You're now Admiral. Every choice you see is shaped by your role."
+4. **In-game narrative** → watch text appear scene by scene → "The Admiral briefs you on the crisis unfolding in the Strait."
+5. **Community Directives** → choose a directive, set confidence to 80% → click **LOCK PREDICTION**
+6. **L3 animation** → "Your prediction is being hashed and anchored permanently on DCAI L3."
+7. **Loading simulation** → progress bar + intel briefing → "Our neural engine is generating three futures based on your choice."
+8. **Short-term outcome** → character dialogue → click "Next Phase"
+9. **Mid-term → Long-term** → "Three phases of consequence. Click through to see the full arc."
+10. **Proof card + txHash** → click View on Explorer → live block explorer → "Immutable. Timestamped. Yours."
+11. **Oracle's Archive** → show pre-resolved story → "This prediction was made 48 hours ago. The outcome is now locked on-chain forever."
 
 **Closing line:** _"No one can claim they predicted something after it happens — except FutureLens users."_

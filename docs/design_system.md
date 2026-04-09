@@ -9,6 +9,17 @@ Authority of digital journalism + expressive warmth of graphic novels.
 
 ---
 
+## Two Branding Contexts
+
+| Brand | Usage | Screens |
+|-------|-------|---------|
+| **The Illuminated Editorial** | The fictional publication — editorial + in-game | Hub, Article, Role, Narrative, Predict, Outcome phases |
+| **FutureLens** | The app layer — processing + personal | Loading Simulation, User Profile |
+
+The nav component switches wordmark depending on context. Both use the same color palette and typography.
+
+---
+
 ## Color Palette
 
 ### Surface Hierarchy (stacked vellum layers)
@@ -134,11 +145,36 @@ No traditional drop shadows. Use:
 - Minimal UI — maximum immersion
 - Glassmorphic sector badge (top-left)
 
-### Make Your Prediction
-- Semi-transparent overlay on blurred background
-- White card panel (surface_container_lowest)
-- 3 choice cards in a row
-- Character briefing card below (with portrait + italic serif quote)
+### Community Directives (Predict)
+- Full cinematic background (not blurred overlay)
+- Three directive cards in a 3-column grid + 1 "Author Directive" sidebar panel
+- Most-popular card has a `MOST POPULAR` badge at top edge (positioned with `-top-3`)
+- Bottom pill: confidence slider + LOCK PREDICTION button in a single `rounded-full` container
+- Character avatar (circular, small) + briefing quote anchored below all cards
+- Card state: selected = `border-2 border-primary shadow-xl shadow-primary/5`
+
+### Loading Simulation
+- Uses "FutureLens" branding in header (not "The Illuminated Editorial")
+- Center layout: title → progress bar → intel briefing carousel
+- Progress bar: `bg-gradient-to-r from-primary to-primary-container` + animated stripe overlay
+- Intel briefing: `surface-container-low` card, left/right chevron buttons, pagination dots
+- Status line: pulsing dot animation + "Neural Engine" label
+
+### Mission Outcome Phase Screens
+- Full cinematic background (different scene per phase)
+- `bg-gradient-to-t from-surface via-transparent to-transparent opacity-90` overlay
+- **Left sidebar (desktop):** `w-72 bg-surface-container-low rounded-r-[2rem]` fixed panel
+  - Nav items with icon + label
+  - "Next Phase" green rounded-full button at bottom
+- **Floating phase badge (top center):** `bg-tertiary-container/20 border border-tertiary/20 rounded-full` pill
+- **AI Intel sidebar (right, desktop):** `bg-surface-container-lowest/80 backdrop-blur-md rounded-lg`
+  - Probability bar + causal factors list
+  - Operational status with secondary-colored border-l-4
+- **Dialogue box (bottom center):**
+  - `bg-surface-container-lowest rounded-xl border border-outline-variant/15`
+  - Diamond speech bubble tail: `w-8 h-8 bg-surface-container-lowest rotate-45 border-l border-t` at `-top-4 left-24`
+  - Character portrait positioned `absolute -top-32 left-12 w-48 h-48`
+  - Character name label in `text-primary font-headline font-bold`
 
 ### Mission Outcome
 - Full editorial layout again (back to "newspaper of record" feel)
@@ -175,12 +211,15 @@ No traditional drop shadows. Use:
 
 ## Screens Reference
 
-| Screen | File |
-|--------|------|
-| The Daily Chronicle (Hub) | `stitch design/the_daily_chronicle_america_vs._iran_edition/` |
-| Article View | `stitch design/article_the_shadow_of_the_crescent/` |
-| Role Selection | `stitch design/role_selection_america_vs._iran/` |
-| In-Game Narrative | `stitch design/in_game_the_strait_crisis/` |
-| Make Your Prediction | `stitch design/in_game_final_directive/` |
-| Mission Outcome | `stitch design/mission_outcome_america_vs._iran/` |
-| User Profile | `stitch design/user_profile_futurelens_journal/` |
+| Screen | File | Branding |
+|--------|------|----------|
+| The Daily Chronicle (Hub) | `stitch design/the_daily_chronicle_america_vs._iran_edition/` | The Illuminated Editorial |
+| Article View | `stitch design/article_the_shadow_of_the_crescent/` | The Illuminated Editorial |
+| Role Selection | `stitch design/role_selection_america_vs._iran/` | The Illuminated Editorial |
+| In-Game Narrative | `stitch design/in_game_the_strait_crisis/` | The Illuminated Editorial |
+| Community Directives (Predict) | `stitch design/in_game_community_directives/` | The Illuminated Editorial |
+| Loading Simulation | `stitch design/loading_strategic_simulation/` | **FutureLens** |
+| Short-term Outcome | `stitch design/in_game_short_term_outcome/` | The Illuminated Editorial |
+| Mid-term Outcome | `stitch design/in_game_mid_term_outcome/` | The Illuminated Editorial |
+| Long-term Outcome | `stitch design/in_game_long_term_outcome/` | The Illuminated Editorial |
+| User Profile | `stitch design/user_profile_futurelens_journal/` | **FutureLens** |

@@ -1,80 +1,85 @@
 @import "tailwindcss";
 
-:root {
-  --background: #fafaf9;
-  --foreground: #1c1917;
-}
+@theme {
+  /* Surface hierarchy */
+  --color-surface: #fefdf1;
+  --color-surface-container-low: #fafaeb;
+  --color-surface-container: #f4f5e2;
+  --color-surface-container-high: #edf0d8;
+  --color-surface-container-lowest: #ffffff;
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  /* Brand colors */
+  --color-primary: #336f54;
+  --color-primary-container: #b1f0ce;
+  --color-on-primary: #ffffff;
+
+  --color-secondary: #3655e3;
+  --color-secondary-container: #dee1ff;
+  --color-on-secondary-container: #001256;
+
+  --color-tertiary: #915700;
+  --color-tertiary-container: #ffddb3;
+  --color-on-tertiary: #ffffff;
+
+  /* Text & outline */
+  --color-on-surface: #353a26;
+  --color-on-background: #1c1d1a;
+  --color-outline: #7e836b;
+  --color-outline-variant: #b7bca2;
+
+  /* Typography */
+  --font-headline: var(--font-plus-jakarta), "Plus Jakarta Sans", sans-serif;
+  --font-body: var(--font-newsreader), "Newsreader", serif;
+  --font-label: var(--font-plus-jakarta), "Plus Jakarta Sans", sans-serif;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-sans), system-ui, sans-serif;
+  background-color: #fefdf1;
+  color: #353a26;
 }
 
-/* Custom scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
+/* Typewriter cursor */
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
 }
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  background: #d4d4d8;
-  border-radius: 3px;
-}
-
-/* Fade-in animation */
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.typewriter-cursor::after {
+  content: '|';
+  animation: blink 1s step-end infinite;
+  color: #336f54;
 }
 
-.animate-fade-in-up {
-  animation: fadeInUp 0.6s ease-out forwards;
-  opacity: 0;
+/* Animated progress bar stripe */
+@keyframes stripe-slide {
+  from { background-position: 0 0; }
+  to { background-position: 40px 0; }
+}
+.progress-stripe {
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 10px,
+    rgba(255, 255, 255, 0.15) 10px,
+    rgba(255, 255, 255, 0.15) 20px
+  );
+  background-size: 40px 40px;
+  animation: stripe-slide 0.8s linear infinite;
 }
 
-/* Panel hover effect */
-@keyframes pulse-glow {
-  0%,
-  100% {
-    box-shadow: 0 0 0 0 rgba(217, 119, 6, 0);
-  }
-  50% {
-    box-shadow: 0 0 20px 4px rgba(217, 119, 6, 0.15);
-  }
+/* Pulsing status dot */
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.75); }
+}
+.pulse-dot {
+  animation: pulse-dot 1.5s ease-in-out infinite;
 }
 
-.pulse-glow {
-  animation: pulse-glow 2s ease-in-out infinite;
+/* Fade up entry */
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
 }
-
-/* Comic panel entry */
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateX(-30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-.animate-slide-in {
-  animation: slideIn 0.5s ease-out forwards;
-  opacity: 0;
+.animate-fade-up {
+  animation: fade-up 0.5s ease-out forwards;
 }
