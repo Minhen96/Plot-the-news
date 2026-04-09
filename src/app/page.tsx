@@ -25,14 +25,6 @@ function ArticleImage({ src, alt, className }: { src: string | null; alt: string
   return <img src={src} alt={alt} className={className} />
 }
 
-function AiTagBadge({ tag }: { tag: string }) {
-  return (
-    <span className="inline-block px-2 py-0.5 bg-tertiary-container/30 text-tertiary text-[9px] font-label font-black uppercase tracking-widest rounded-sm">
-      {tag}
-    </span>
-  )
-}
-
 function SectionDivider({ label }: { label: string }) {
   return (
     <div className="flex items-center gap-4 my-16">
@@ -58,32 +50,15 @@ function LeadStory({ article, size = 'large' }: { article: NewsArticle; size?: '
           />
         </div>
         <div className="space-y-3">
-          {article.crisisLevel !== undefined && article.crisisLevel > 50 && (
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] font-label font-black uppercase tracking-widest text-on-background/50">
-                Crisis
-              </span>
-              <div className="flex-1 h-1 bg-surface-container-high rounded-full overflow-hidden max-w-[80px]">
-                <div
-                  className="h-full bg-linear-to-r from-primary to-tertiary"
-                  style={{ width: `${article.crisisLevel}%` }}
-                />
-              </div>
-              <span className="text-[10px] font-label font-black text-primary">{article.crisisLevel}</span>
-            </div>
-          )}
           <h3 className={`font-headline font-extrabold leading-tight text-on-background group-hover:text-primary transition-colors ${
             size === 'large' ? 'text-2xl md:text-3xl' : 'text-xl md:text-2xl'
           }`}>
             {article.title}
           </h3>
-          <p className="text-sm font-body opacity-70 leading-relaxed line-clamp-3">
-            {article.description}
-          </p>
-          {article.aiTags && article.aiTags.length > 0 && (
-            <div className="flex flex-wrap gap-1">
-              {article.aiTags.slice(0, 2).map(tag => <AiTagBadge key={tag} tag={tag} />)}
-            </div>
+          {article.description && (
+            <p className="text-sm font-body opacity-70 leading-relaxed line-clamp-3">
+              {article.description}
+            </p>
           )}
           <div className="flex items-center justify-between pt-1">
             <span className="text-[10px] font-label opacity-50 uppercase tracking-widest">
@@ -168,9 +143,11 @@ export default async function ChronicleHub({
                     <h5 className="text-sm font-headline font-bold leading-tight mb-1 group-hover:text-primary transition-colors line-clamp-2">
                       {article.title}
                     </h5>
-                    <p className="text-xs opacity-60 font-body line-clamp-2 mb-2">
-                      {article.description}
-                    </p>
+                    {article.description && (
+                      <p className="text-xs opacity-60 font-body line-clamp-2 mb-2">
+                        {article.description}
+                      </p>
+                    )}
                     <span className="text-[10px] font-label opacity-40 uppercase tracking-widest">
                       {new Date(article.publishedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                       {' · '}{article.source.name}
@@ -179,12 +156,12 @@ export default async function ChronicleHub({
                 </Link>
               ))}
             </div>
-            <Link
+            {/* <Link
               href="/archive?week=last"
               className="mt-6 inline-flex items-center gap-1 text-[10px] font-label font-black uppercase tracking-widest text-primary border-b border-primary/30 hover:border-primary transition-colors"
             >
               See all last week →
-            </Link>
+            </Link> */}
           </aside>
         </div>
 

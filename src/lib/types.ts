@@ -107,9 +107,6 @@ export interface NewsArticle {
   image: string | null
   publishedAt: string
   source: { name: string; url: string }
-  crisisLevel?: number
-  factions?: { name: string; stance: string }[]
-  aiTags?: string[]
 }
 
 // --- User ---

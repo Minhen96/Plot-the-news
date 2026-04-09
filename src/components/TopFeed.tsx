@@ -5,28 +5,19 @@ import Link from 'next/link'
 import type { NewsArticle } from '@/lib/types'
 import { toStorySlug } from '@/lib/utils'
 
-function AiTagBadge({ tag }: { tag: string }) {
-  return (
-    <span className="inline-block px-2 py-0.5 bg-tertiary-container/30 text-tertiary text-[9px] font-label font-black uppercase tracking-widest rounded-sm">
-      {tag}
-    </span>
-  )
-}
-
 function ArticleItem({ article }: { article: NewsArticle }) {
   return (
     <Link href={`/story/${toStorySlug(article.title)}`} className="group block py-4 border-b border-outline/15 last:border-0">
       <div className="flex gap-3">
         <div className="flex-1 min-w-0">
-          {article.aiTags && article.aiTags.length > 0 && (
-            <AiTagBadge tag={article.aiTags[0]} />
-          )}
           <h4 className="font-headline font-bold text-sm leading-snug mt-1 mb-1 group-hover:text-primary transition-colors line-clamp-2">
             {article.title}
           </h4>
-          <p className="text-xs font-body opacity-60 line-clamp-2 leading-relaxed">
-            {article.description}
-          </p>
+          {article.description && (
+            <p className="text-xs font-body opacity-60 line-clamp-2 leading-relaxed">
+              {article.description}
+            </p>
+          )}
           <span className="text-[10px] font-label opacity-40 uppercase tracking-widest mt-1 block">
             {article.source.name} · {new Date(article.publishedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
           </span>
@@ -136,23 +127,11 @@ export default function TopFeed({ featured, initialArticles, nextPage: initialNe
                 }
               </div>
               <div className="space-y-2">
-                {featured.crisisLevel !== undefined && featured.crisisLevel > 50 && (
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-label font-black uppercase tracking-widest text-on-background/50">Crisis</span>
-                    <div className="flex-1 h-1 bg-surface-container-high rounded-full overflow-hidden max-w-[80px]">
-                      <div className="h-full bg-linear-to-r from-primary to-tertiary" style={{ width: `${featured.crisisLevel}%` }} />
-                    </div>
-                    <span className="text-[10px] font-label font-black text-primary">{featured.crisisLevel}</span>
-                  </div>
-                )}
                 <h3 className="text-xl md:text-2xl font-headline font-extrabold leading-tight text-on-background group-hover:text-primary transition-colors">
                   {featured.title}
                 </h3>
-                <p className="text-sm font-body opacity-70 leading-relaxed line-clamp-2">{featured.description}</p>
-                {featured.aiTags && featured.aiTags.length > 0 && (
-                  <div className="flex flex-wrap gap-1">
-                    {featured.aiTags.slice(0, 2).map(tag => <AiTagBadge key={tag} tag={tag} />)}
-                  </div>
+                {featured.description && (
+                  <p className="text-sm font-body opacity-70 leading-relaxed line-clamp-2">{featured.description}</p>
                 )}
                 <div className="flex items-center justify-between pt-1">
                   <span className="text-[10px] font-label opacity-50 uppercase tracking-widest">

@@ -35,6 +35,9 @@ export async function GET(request: NextRequest) {
 
     const data = await res.json()
 
+    const clean = (v: string | null | undefined) =>
+      !v || v.includes('ONLY AVAILABLE IN PAID PLANS') ? '' : v
+
     const articles = (data.results ?? []).map((raw: {
       title: string | null
       description: string | null
@@ -43,20 +46,13 @@ export async function GET(request: NextRequest) {
       pubDate: string
       source_name: string | null
       source_url: string | null
-      ai_tag?: string[] | null
-      ai_summary?: string | null
-      sentiment_stats?: { negative: number; neutral: number; positive: number } | null
     }) => ({
       title:       raw.title ?? '',
-      description: raw.ai_summary ?? raw.description ?? '',
+      description: clean(raw.description),
       url:         raw.link,
       image:       raw.image_url,
       publishedAt: raw.pubDate,
       source:      { name: raw.source_name ?? '', url: raw.source_url ?? '' },
-      crisisLevel: raw.sentiment_stats
-        ? Math.round(raw.sentiment_stats.negative)
-        : undefined,
-      aiTags: Array.isArray(raw.ai_tag) ? raw.ai_tag.filter(Boolean) : undefined,
     }))
 
     return Response.json({ articles, nextPage: data.nextPage ?? null })

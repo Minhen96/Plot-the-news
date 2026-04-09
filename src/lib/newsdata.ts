@@ -17,17 +17,14 @@ const CAT: Record<string, string> = {
 const COMMON = 'language=en&removeduplicate=1&image=1'
 
 interface NewsdataRaw {
-  article_id:      string
-  title:           string | null
-  description:     string | null
-  link:            string
-  image_url:       string | null
-  pubDate:         string
-  source_name:     string | null
-  source_url:      string | null
-  ai_tag?:         string[] | string | null
-  ai_summary?:     string | null
-  sentiment_stats?: { negative: number; neutral: number; positive: number } | null
+  article_id:  string
+  title:       string | null
+  description: string | null
+  link:        string
+  image_url:   string | null
+  pubDate:     string
+  source_name: string | null
+  source_url:  string | null
 }
 
 interface NewsdataResponse {
@@ -36,18 +33,19 @@ interface NewsdataResponse {
   nextPage:     string | null
 }
 
+function clean(value: string | null | undefined): string {
+  if (!value || value.includes('ONLY AVAILABLE IN PAID PLANS')) return ''
+  return value
+}
+
 function map(raw: NewsdataRaw): NewsArticle {
   return {
     title:       raw.title ?? '',
-    description: raw.ai_summary ?? raw.description ?? '',
+    description: clean(raw.description),
     url:         raw.link,
     image:       raw.image_url,
     publishedAt: raw.pubDate,
     source:      { name: raw.source_name ?? '', url: raw.source_url ?? '' },
-    crisisLevel: raw.sentiment_stats
-      ? Math.round(raw.sentiment_stats.negative)
-      : undefined,
-    aiTags: Array.isArray(raw.ai_tag) ? (raw.ai_tag as string[]).filter(Boolean) : undefined,
   }
 }
 

@@ -5,28 +5,19 @@ import type { NewsArticle } from '@/lib/types'
 import { toStorySlug } from '@/lib/utils'
 import Link from 'next/link'
 
-function AiTagBadge({ tag }: { tag: string }) {
-  return (
-    <span className="inline-block px-2 py-0.5 bg-tertiary-container/30 text-tertiary text-[9px] font-label font-black uppercase tracking-widest rounded-sm">
-      {tag}
-    </span>
-  )
-}
-
 function ArticleRow({ article }: { article: NewsArticle }) {
   return (
     <Link href={`/story/${toStorySlug(article.title)}`} className="group block py-4 first:pt-0">
       <div className="flex gap-3">
         <div className="flex-1 min-w-0">
-          {article.aiTags && article.aiTags.length > 0 && (
-            <AiTagBadge tag={article.aiTags[0]} />
-          )}
           <h4 className="font-headline font-bold text-base leading-snug mt-1 mb-1 group-hover:text-primary transition-colors line-clamp-2">
             {article.title}
           </h4>
-          <p className="text-xs font-body opacity-60 line-clamp-2 leading-relaxed">
-            {article.description}
-          </p>
+          {article.description && (
+            <p className="text-xs font-body opacity-60 line-clamp-2 leading-relaxed">
+              {article.description}
+            </p>
+          )}
           <span className="text-[10px] font-label opacity-40 uppercase tracking-widest mt-1 block">
             {article.source.name} · {new Date(article.publishedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
           </span>

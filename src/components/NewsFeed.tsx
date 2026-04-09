@@ -23,11 +23,6 @@ function ArticleCard({ article }: { article: NewsArticle }) {
         </div>
         <div className="p-4 flex flex-col gap-2 flex-1">
           <div className="flex items-center gap-2 flex-wrap text-on-surface/50">
-            {article.aiTags && article.aiTags.length > 0 && (
-              <span className="text-[9px] font-label font-black uppercase tracking-widest text-tertiary bg-tertiary-container/30 px-1.5 py-0.5 rounded-sm">
-                {article.aiTags[0]}
-              </span>
-            )}
             <span className="text-[9px] font-label font-black uppercase tracking-widest text-primary">
               {article.source.name}
             </span>

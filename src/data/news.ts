@@ -10,11 +10,6 @@ export const WORLD_FALLBACK: NewsArticle[] = [
         image: null,
         publishedAt: new Date().toISOString(),
         source: { name: 'The Illuminated Editorial', url: '#' },
-        crisisLevel: 92,
-        factions: [
-            { name: 'The Coalition (West)', stance: 'Defensive' },
-            { name: 'The Regional Guard (Iran)', stance: 'Aggressive' }
-        ]
     },
     {
         title: 'The Amazon\'s Last Breath: Satellite Data Reveals Accelerating Shifts',
