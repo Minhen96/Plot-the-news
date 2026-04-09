@@ -1,10 +1,21 @@
 import Link from 'next/link'
 import Header from '@/components/Header'
+import NewsFeed from '@/components/NewsFeed'
 import { fetchGNewsArticles } from '@/lib/gnews'
+import { toStorySlug } from '@/lib/utils'
 import type { GNewsArticle } from '@/lib/types'
 
-// Fallback articles shown when no GNews API key is present
+// Shown only when GNEWS_API_KEY is not set
 const WORLD_FALLBACK: GNewsArticle[] = [
+  {
+    title: 'Iran Moves to Close Strait of Hormuz — Oil Markets in Freefall',
+    description:
+      'As geopolitical tensions escalate in the Strait of Hormuz, the world watches a high-stakes chess match on the high seas. A narrow corridor where global energy security meets modern naval brinkmanship.',
+    url: '#',
+    image: null,
+    publishedAt: new Date().toISOString(),
+    source: { name: 'The Illuminated Editorial', url: '#' },
+  },
   {
     title: 'The Amazon\'s Last Breath: Satellite Data Reveals Accelerating Shifts',
     description:
@@ -12,7 +23,7 @@ const WORLD_FALLBACK: GNewsArticle[] = [
     url: '#',
     image: null,
     publishedAt: new Date().toISOString(),
-    source: { name: 'Editorial', url: '#' },
+    source: { name: 'The Illuminated Editorial', url: '#' },
   },
   {
     title: 'Urban Gridlock: The True Cost of Modern Mobility',
@@ -21,26 +32,26 @@ const WORLD_FALLBACK: GNewsArticle[] = [
     url: '#',
     image: null,
     publishedAt: new Date().toISOString(),
-    source: { name: 'Editorial', url: '#' },
+    source: { name: 'The Illuminated Editorial', url: '#' },
   },
 ]
 
 const ECONOMY_FALLBACK: GNewsArticle[] = [
   {
     title: 'The Rebirth of Local Currency',
-    description: 'Small communities are turning to hyper-local bartering systems.',
+    description: 'Small communities are turning to hyper-local bartering systems as trust in central banks erodes.',
     url: '#',
     image: null,
     publishedAt: new Date().toISOString(),
-    source: { name: 'Editorial', url: '#' },
+    source: { name: 'The Illuminated Editorial', url: '#' },
   },
   {
     title: 'Market Analysis: The Circuit Pulse',
-    description: 'Tech stocks fluctuate as supply chains tighten further.',
+    description: 'Tech stocks fluctuate as global supply chains tighten further amid geopolitical uncertainty.',
     url: '#',
     image: null,
     publishedAt: new Date().toISOString(),
-    source: { name: 'Editorial', url: '#' },
+    source: { name: 'The Illuminated Editorial', url: '#' },
   },
 ]
 
@@ -63,13 +74,26 @@ function ArticleImage({
 }
 
 export default async function ChronicleHub() {
-  const [worldArticles, economyArticles] = await Promise.all([
-    fetchGNewsArticles('world', 3),
-    fetchGNewsArticles('business', 2),
+  const [worldArticles, economyArticles, techArticles, politicsArticles] = await Promise.all([
+    fetchGNewsArticles('world', 10),
+    fetchGNewsArticles('business', 10),
+    fetchGNewsArticles('technology', 10),
+    fetchGNewsArticles('politics', 10),
   ])
 
   const world = worldArticles.length > 0 ? worldArticles : WORLD_FALLBACK
   const economy = economyArticles.length > 0 ? economyArticles : ECONOMY_FALLBACK
+
+  const featured = world[0]
+  const sidebarArticles = world.slice(1, 3)
+
+  // Feed = everything not used in the 3-col layout, mixed across categories
+  const feedArticles = [
+    ...world.slice(3),
+    ...techArticles,
+    ...politicsArticles,
+    ...economyArticles.slice(2),
+  ]
 
   return (
     <div className="max-w-[1400px] mx-auto px-6 lg:px-12 py-6">
@@ -85,39 +109,39 @@ export default async function ChronicleHub() {
                 World News
               </h4>
               <div className="space-y-6">
-                {/* First article: no image */}
-                <article className="group">
-                  <h5 className="text-xl font-headline font-bold leading-tight mb-2 group-hover:underline">
-                    {world[0]?.title}
-                  </h5>
-                  <p className="text-sm opacity-80 leading-relaxed mb-3 font-body">
-                    {world[0]?.description}
-                  </p>
-                  <a
-                    href={world[0]?.url ?? '#'}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 text-[10px] font-label font-black uppercase tracking-widest text-primary"
-                  >
-                    Enter Story →
-                  </a>
-                </article>
+                {sidebarArticles[0] && (
+                  <article className="group">
+                    <h5 className="text-xl font-headline font-bold leading-tight mb-2 group-hover:underline">
+                      {sidebarArticles[0].title}
+                    </h5>
+                    <p className="text-sm opacity-80 leading-relaxed mb-3 font-body">
+                      {sidebarArticles[0].description}
+                    </p>
+                    <a
+                      href={sidebarArticles[0].url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-[10px] font-label font-black uppercase tracking-widest text-primary"
+                    >
+                      Enter Story →
+                    </a>
+                  </article>
+                )}
 
                 <div className="border-t border-outline/20" />
 
-                {/* Second article: with image */}
-                {world[1] && (
+                {sidebarArticles[1] && (
                   <article className="group">
                     <h5 className="text-xl font-headline font-bold leading-tight mb-2 group-hover:underline">
-                      {world[1].title}
+                      {sidebarArticles[1].title}
                     </h5>
                     <ArticleImage
-                      src={world[1].image}
-                      alt={world[1].title}
+                      src={sidebarArticles[1].image}
+                      alt={sidebarArticles[1].title}
                       className="w-full h-32 object-cover mb-3 grayscale hover:grayscale-0 transition-all duration-500"
                     />
                     <p className="text-sm opacity-80 leading-relaxed font-body">
-                      {world[1].description}
+                      {sidebarArticles[1].description}
                     </p>
                   </article>
                 )}
@@ -145,7 +169,7 @@ export default async function ChronicleHub() {
             </section>
           </aside>
 
-          {/* ── Center column: Featured story ── */}
+          {/* ── Center column: Featured story (top GNews article) ── */}
           <section className="lg:px-8 lg:border-x border-outline/15">
             <article className="flex flex-col gap-6">
               <div className="space-y-4">
@@ -153,53 +177,42 @@ export default async function ChronicleHub() {
                   Lead Story
                 </span>
                 <h2 className="text-5xl md:text-7xl font-headline font-extrabold leading-[0.9] tracking-tighter text-on-background">
-                  The Shadow of the Crescent: A Maritime Standoff
+                  {featured.title}
                 </h2>
                 <p className="text-2xl font-body italic opacity-90 leading-snug">
-                  As geopolitical tensions escalate in the Strait of Hormuz, the world
-                  watches a high-stakes chess match on the high seas.
+                  {featured.description}
                 </p>
               </div>
 
-              {/* Hero image placeholder — swap src when real image is ready */}
               <div className="relative">
-                <div className="w-full aspect-video bg-linear-to-br from-on-surface/80 via-on-surface/50 to-primary/30 flex items-end p-4">
-                  <span className="text-surface/80 font-label text-xs uppercase tracking-widest">
-                    Naval maneuvers in the Strait of Hormuz
-                  </span>
-                </div>
+                <ArticleImage
+                  src={featured.image}
+                  alt={featured.title}
+                  className="w-full aspect-video object-cover"
+                />
                 <p className="text-[10px] font-label mt-2 opacity-60 uppercase tracking-widest">
-                  Photograph by Editorial Staff — DCAI Intelligence Imagery
+                  {featured.source.name} · {new Date(featured.publishedAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
                 </p>
               </div>
 
               <div className="flex flex-col md:flex-row gap-8 py-6 border-y border-outline/15">
                 <div className="flex-1">
-                  <p className="text-base leading-relaxed opacity-90 mb-6 font-body">
-                    In the emerald waters of the Persian Gulf, the silence of the dawn is
-                    broken by the low hum of gas turbines. From the command decks of
-                    American destroyers to the nimble fast-attack craft of the Iranian Guard,
-                    the map of global commerce is being contested knot by knot.
-                  </p>
                   <Link
-                    href="/story/strait-of-hormuz"
+                    href={`/story/${toStorySlug(featured.title)}`}
                     className="inline-flex items-center gap-2 bg-on-background text-surface px-6 py-3 font-label font-black text-[10px] uppercase tracking-widest hover:bg-primary transition-colors"
                   >
                     Launch Interactive Comic →
                   </Link>
                 </div>
-                <div className="flex-1 space-y-4">
-                  <p className="text-base leading-relaxed opacity-90 font-body">
-                    Strategic experts warn that this &lsquo;Maritime Chessboard&rsquo; could
-                    remain volatile for years, creating a potential choke point for global
-                    trade not seen in decades of naval history.
-                  </p>
-                  <Link
-                    href="/story/strait-of-hormuz"
+                <div className="flex-1">
+                  <a
+                    href={featured.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="text-primary font-bold underline decoration-primary/30 underline-offset-4 text-sm"
                   >
-                    Continue reading the digital feature →
-                  </Link>
+                    Read original article → {featured.source.name}
+                  </a>
                 </div>
               </div>
             </article>
@@ -273,6 +286,8 @@ export default async function ChronicleHub() {
           </aside>
 
         </div>
+
+        <NewsFeed articles={feedArticles} />
       </main>
 
       {/* Footer */}
