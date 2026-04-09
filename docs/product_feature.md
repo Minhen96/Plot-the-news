@@ -281,6 +281,11 @@ Each phase screen shares the same layout:
 - On-chain verification status per entry
 - Shareable prediction cards
 
+### 9. Enriched News Ecosystem
+- **Crisis Level**: A global metric (0-100) on the Chronicle Hub defining how volatile the scenario is.
+- **Key Player Stances**: Dual-faction live stances derived from the news (e.g. `The Coalition (West): Defensive`).
+- **Intelligence Briefs**: A module leveraging actual URLs (from GNews) instead of hallucinations, grounding the simulation in reality.
+
 ---
 
 ## MVP Scope

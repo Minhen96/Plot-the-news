@@ -10,6 +10,7 @@ export const STORIES: Story[] = [
     imageUrl: '',
     date: '2026-04-09',
     status: 'active',
+    crisisLevel: 92,
     articleBody: [
       'The geopolitical friction between the United States and Iran has reached a critical inflection point. Following years of "maximum pressure" and the subsequent collapse of the 2015 JCPOA, the diplomatic landscape has shifted from negotiation tables to the high seas. Recent naval escalations in the Persian Gulf have underscored the fragility of regional peace, as both powers navigate a complex web of deterrents and provocations.',
       'At the heart of the current stalemate is the legacy of the nuclear deal and the struggle for regional hegemony. While the JCPOA once promised a path toward Iranian reintegration into the global economy in exchange for nuclear oversight, the withdrawal of the U.S. triggered a spiral of mistrust. Today, the focus has pivoted to maritime security and the protection of global energy supply lines, which remain vulnerable to any sudden shift in the status quo.',
@@ -38,6 +39,7 @@ export const STORIES: Story[] = [
           '"Freedom of navigation is not a privilege — it is the foundation upon which global prosperity is built. We will not yield the Strait."',
         portraitUrl: '/images/roles/coalition.jpg',
         stats: { strategic: 72, stability: 65 },
+        keyPlayerStance: 'Defensive / High Alert',
       },
       {
         id: 'regional-guard',
@@ -47,6 +49,7 @@ export const STORIES: Story[] = [
           '"Every ship that passes through our waters does so at our discretion. The Strait is not international — it is sovereign."',
         portraitUrl: '/images/roles/regional-guard.jpg',
         stats: { strategic: 68, stability: 40 },
+        keyPlayerStance: 'Aggressive / Opportunistic',
       },
     ],
     scenes: [

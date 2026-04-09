@@ -160,24 +160,33 @@ export default async function ArticlePage({
 
               {story.references && (
                 <div className="space-y-4">
-                  <h4 className="font-headline font-bold text-2xl text-on-surface">
-                    📖 References
-                  </h4>
+                  <div className="flex flex-col gap-1 mb-2">
+                    <h4 className="font-headline font-bold text-2xl text-on-surface">
+                      🌍 Real references
+                    </h4>
+                    <p className="font-body text-sm text-on-surface/60 italic">
+                      Real-world, verified sources grounding this scenario.
+                    </p>
+                  </div>
                   <ul className="space-y-3">
                     {story.references.map((ref) => (
                       <li key={ref.title}>
                         <a
                           href={ref.url}
-                          className="group flex items-center justify-between p-4 rounded-lg bg-surface hover:bg-surface-container-lowest border border-outline-variant/10 transition-colors"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="group flex items-center justify-between p-4 rounded-xl bg-surface-container-low hover:bg-surface-container-lowest hover:shadow-sm border border-outline-variant/15 hover:border-primary/30 transition-all"
                         >
                           <div className="flex flex-col">
                             <span className="font-headline font-bold text-sm text-on-surface group-hover:text-primary transition-colors">
                               {ref.title}
                             </span>
-                            <span className="font-body text-xs text-on-surface/50">{ref.source}</span>
+                            <span className="font-label text-[10px] uppercase tracking-widest text-tertiary mt-1">
+                              {ref.source}
+                            </span>
                           </div>
-                          <span className="text-outline group-hover:translate-x-1 transition-transform shrink-0 ml-3">
-                            →
+                          <span className="text-primary opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all shrink-0 ml-3">
+                            ↗
                           </span>
                         </a>
                       </li>

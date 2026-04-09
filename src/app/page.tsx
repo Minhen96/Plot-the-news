@@ -15,6 +15,11 @@ const WORLD_FALLBACK: GNewsArticle[] = [
     image: null,
     publishedAt: new Date().toISOString(),
     source: { name: 'The Illuminated Editorial', url: '#' },
+    crisisLevel: 92,
+    factions: [
+      { name: 'The Coalition (West)', stance: 'Defensive' },
+      { name: 'The Regional Guard (Iran)', stance: 'Aggressive' }
+    ]
   },
   {
     title: 'The Amazon\'s Last Breath: Satellite Data Reveals Accelerating Shifts',
@@ -182,6 +187,38 @@ export default async function ChronicleHub() {
                 <p className="text-2xl font-body italic opacity-90 leading-snug">
                   {featured.description}
                 </p>
+
+                {featured.crisisLevel && featured.factions && (
+                  <div className="flex flex-col md:flex-row gap-4 pt-4">
+                    <div className="flex-1 bg-surface-container-low border border-outline/10 p-4 rounded-xl">
+                      <div className="text-[10px] font-label font-black uppercase tracking-widest text-on-background/70 mb-2">
+                        Crisis Level
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="text-3xl font-headline font-black text-primary">
+                          {featured.crisisLevel}
+                        </div>
+                        <div className="flex-1 h-1.5 bg-surface-container-lowest rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-linear-to-r from-primary to-tertiary"
+                            style={{ width: `${featured.crisisLevel}%` }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex-2 bg-surface-container-low border border-outline/10 p-4 rounded-xl">
+                      <div className="text-[10px] font-label font-black uppercase tracking-widest text-on-background/70 mb-2">
+                        Key Player Stances
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2 font-headline text-sm font-bold">
+                        <span className="text-primary">{featured.factions[0].name}: <span className="opacity-70 font-normal">{featured.factions[0].stance}</span></span>
+                        <span className="text-on-background/40 italic px-2">vs</span>
+                        <span className="text-tertiary">{featured.factions[1].name}: <span className="opacity-70 font-normal">{featured.factions[1].stance}</span></span>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="relative">

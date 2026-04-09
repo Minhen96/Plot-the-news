@@ -12,6 +12,7 @@ export interface Role {
   quote: string
   portraitUrl: string
   stats: RoleStats
+  keyPlayerStance?: string
 }
 
 // --- Narrative ---
@@ -83,6 +84,7 @@ export interface Story {
   directives: Directive[]
   resolvedTimeline?: SimulationPhase[]
   txHash?: string
+  crisisLevel?: number
 }
 
 // --- Session state (stored in sessionStorage) ---
@@ -105,6 +107,8 @@ export interface GNewsArticle {
   image: string | null
   publishedAt: string
   source: { name: string; url: string }
+  crisisLevel?: number
+  factions?: { name: string; stance: string }[]
 }
 
 // --- User ---

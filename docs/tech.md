@@ -200,7 +200,7 @@ summary           TEXT
 category          TEXT
 status            TEXT       -- 'active' | 'resolved'
 resolved_outcome  TEXT       -- set manually via admin API
-controversy_score INT        -- AI-generated (1-100)
+crisis_level      INT        -- AI-generated (0-100) global tension metric
 claude_prediction TEXT       -- Claude's own pick, hidden until user locks
 created_at        TIMESTAMP
 ```
@@ -217,6 +217,7 @@ quote           TEXT    -- philosophy quote (italic serif)
 difficulty      INT     -- 1-5, strategic difficulty stat bar
 stability       INT     -- 1-5, stability focus stat bar
 portrait_url    TEXT    -- static file path or pre-generated image URL
+key_player_stance TEXT  -- e.g. "Defensive / High Alert"
 ```
 
 ### `narrative_scenes`
