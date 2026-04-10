@@ -4,7 +4,7 @@ export const STORIES: Story[] = [
   {
     id: 'strait-of-hormuz',
     title: 'The Shadow of the Crescent: America vs. Iran',
-    lede:
+    summary:
       'As geopolitical tensions reach a critical inflection point in the Strait of Hormuz, the world watches a high-stakes chess match on the high seas — a narrow corridor where global energy security meets modern naval brinkmanship.',
     category: 'Geopolitics',
     imageUrl: '',
@@ -52,7 +52,7 @@ export const STORIES: Story[] = [
         keyPlayerStance: 'Aggressive / Opportunistic',
       },
     ],
-    scenes: [
+    panels: [
       {
         id: 'scene-1',
         characterName: 'The Admiral',
@@ -81,7 +81,7 @@ export const STORIES: Story[] = [
           "The question before us isn't military — it's historical. Every admiral who has stood where I stand has had to choose: respond with strength, negotiate with patience, or hold position and wait. Which path shall we take through the Strait?",
       },
     ],
-    directives: [
+    predictionOptions: [
       {
         id: 'de-escalation',
         label: 'Strategic De-escalation',

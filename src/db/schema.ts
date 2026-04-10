@@ -25,23 +25,32 @@ export const profiles = pgTable('profiles', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 });
 
-// 2. Stories Table
+// 2. Stories Table — field names match the Story type in src/lib/types.ts
 export const stories = pgTable('stories', {
   id: text('id').primaryKey(),
   title: text('title').notNull(),
-  category: text('category').notNull(),
   summary: text('summary'),
-  coverEmoji: text('cover_emoji'),
+  category: text('category').notNull(),
+  imageUrl: text('image_url'),
   date: text('date'),
+  status: text('status', { enum: ['active', 'resolved'] }).default('active'),
+  crisisLevel: integer('crisis_level'),
+  coverEmoji: text('cover_emoji'),
+  articleBody: jsonb('article_body').default([]),            // string[]
+  historicalContext: text('historical_context'),
+  historicalEvidence: jsonb('historical_evidence'),          // HistoricalEvidence
+  references: jsonb('references').default([]),               // Reference[]
+  roles: jsonb('roles').default([]),                         // Role[]
+  panels: jsonb('panels').default([]),                       // Scene[]
+  predictionOptions: jsonb('prediction_options').default([]), // Directive[]
+  cliffhanger: text('cliffhanger'),
+  resolvedTimeline: jsonb('resolved_timeline'),              // SimulationPhase[]
+  resolvedOutcome: text('resolved_outcome'),
+  txHash: text('tx_hash'),
+  // Aggregate metadata
   predictionCount: integer('prediction_count').default(0),
   consensusOption: text('consensus_option'),
   controversyScore: integer('controversy_score').default(0),
-  status: text('status', { enum: ['active', 'resolved'] }).default('active'),
-  resolvedOutcome: text('resolved_outcome'),
-  panels: jsonb('panels').default([]),
-  cliffhanger: text('cliffhanger'),
-  predictionOptions: jsonb('prediction_options').default([]),
-  historicalEvidence: jsonb('historical_evidence').default([]),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 });
 

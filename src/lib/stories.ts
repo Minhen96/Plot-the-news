@@ -1,11 +1,16 @@
-import { Story } from "@/lib/types";
+import {
+  Story,
+  Role,
+  Scene,
+  Directive,
+  SimulationPhase,
+  HistoricalEvidence,
+  Reference,
+} from "@/lib/types";
 import { db } from "@/db";
 import { stories } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 
-/**
- * Fetches all stories from Supabase using Drizzle
- */
 export async function getAllStories(): Promise<Story[]> {
   const result = await db
     .select()
@@ -15,9 +20,6 @@ export async function getAllStories(): Promise<Story[]> {
   return result.map(mapDbStoryToType);
 }
 
-/**
- * Fetches a single story by ID
- */
 export async function getStoryById(id: string): Promise<Story | undefined> {
   const [result] = await db
     .select()
@@ -28,66 +30,63 @@ export async function getStoryById(id: string): Promise<Story | undefined> {
   return result ? mapDbStoryToType(result) : undefined;
 }
 
-/**
- * Upserts a story (for admin/crawlers) using Drizzle
- */
 export async function upsertStory(story: Story): Promise<void> {
-  await db.insert(stories).values({
+  const values = {
     id: story.id,
     title: story.title,
-    category: story.category,
     summary: story.summary,
-    coverEmoji: story.coverEmoji,
+    category: story.category,
+    imageUrl: story.imageUrl,
     date: story.date,
-    predictionCount: story.predictionCount,
-    consensusOption: story.consensusOption,
-    controversyScore: story.controversyScore,
     status: story.status,
-    resolvedOutcome: story.resolvedOutcome,
+    crisisLevel: story.crisisLevel ?? null,
+    coverEmoji: story.coverEmoji ?? null,
+    articleBody: story.articleBody,
+    historicalContext: story.historicalContext,
+    historicalEvidence: story.historicalEvidence ?? null,
+    references: story.references ?? [],
+    roles: story.roles,
     panels: story.panels,
-    cliffhanger: story.cliffhanger,
     predictionOptions: story.predictionOptions,
-    historicalEvidence: story.historicalEvidence,
-  }).onConflictDoUpdate({
-    target: stories.id,
-    set: {
-      title: story.title,
-      category: story.category,
-      summary: story.summary,
-      coverEmoji: story.coverEmoji,
-      date: story.date,
-      predictionCount: story.predictionCount,
-      consensusOption: story.consensusOption,
-      controversyScore: story.controversyScore,
-      status: story.status,
-      resolvedOutcome: story.resolvedOutcome,
-      panels: story.panels,
-      cliffhanger: story.cliffhanger,
-      predictionOptions: story.predictionOptions,
-      historicalEvidence: story.historicalEvidence,
-    }
-  });
+    cliffhanger: story.cliffhanger ?? null,
+    resolvedTimeline: story.resolvedTimeline ?? null,
+    resolvedOutcome: story.resolvedOutcome ?? null,
+    txHash: story.txHash ?? null,
+    predictionCount: story.predictionCount ?? 0,
+    consensusOption: story.consensusOption ?? null,
+    controversyScore: story.controversyScore ?? 0,
+  };
+
+  await db
+    .insert(stories)
+    .values(values)
+    .onConflictDoUpdate({ target: stories.id, set: values });
 }
 
-/**
- * Helper to map DB row to TypeScript interface
- */
 function mapDbStoryToType(s: any): Story {
   return {
     id: s.id,
     title: s.title,
+    summary: s.summary || "",
     category: s.category,
-    summary: s.summary,
-    coverEmoji: s.coverEmoji,
-    date: s.date,
-    predictionCount: s.predictionCount || 0,
-    consensusOption: s.consensusOption,
-    controversyScore: s.controversyScore || 0,
+    imageUrl: s.imageUrl || "",
+    date: s.date || "",
     status: (s.status as "active" | "resolved") || "active",
-    resolvedOutcome: s.resolvedOutcome,
-    panels: (s.panels as any) || [],
-    cliffhanger: s.cliffhanger || "",
-    predictionOptions: (s.predictionOptions as any) || [],
-    historicalEvidence: (s.historicalEvidence as any) || [],
+    crisisLevel: s.crisisLevel ?? undefined,
+    coverEmoji: s.coverEmoji ?? undefined,
+    articleBody: (s.articleBody as string[]) || [],
+    historicalContext: s.historicalContext || "",
+    historicalEvidence: s.historicalEvidence as HistoricalEvidence | undefined,
+    references: (s.references as Reference[]) || [],
+    roles: (s.roles as Role[]) || [],
+    panels: (s.panels as Scene[]) || [],
+    predictionOptions: (s.predictionOptions as Directive[]) || [],
+    cliffhanger: s.cliffhanger ?? undefined,
+    resolvedTimeline: s.resolvedTimeline as SimulationPhase[] | undefined,
+    resolvedOutcome: s.resolvedOutcome ?? undefined,
+    txHash: s.txHash ?? undefined,
+    predictionCount: s.predictionCount ?? 0,
+    consensusOption: s.consensusOption ?? undefined,
+    controversyScore: s.controversyScore ?? 0,
   };
 }

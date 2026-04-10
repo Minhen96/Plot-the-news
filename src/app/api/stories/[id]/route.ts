@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getStoryById } from "@/data/stories";
+import { getStoryById } from "@/lib/stories";
 import { getStoryPredictionStats } from "@/lib/predictions";
 
 export async function GET(
@@ -7,16 +7,13 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const story = getStoryById(id);
+  const story = await getStoryById(id);
 
   if (!story) {
     return NextResponse.json({ error: "Story not found" }, { status: 404 });
   }
 
-  const stats = getStoryPredictionStats(story.id);
+  const stats = await getStoryPredictionStats(story.id);
 
-  return NextResponse.json({
-    ...story,
-    stats,
-  });
+  return NextResponse.json({ ...story, stats });
 }

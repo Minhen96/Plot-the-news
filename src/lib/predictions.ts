@@ -1,24 +1,26 @@
 import { Prediction, LeaderboardEntry } from "@/lib/types";
 import { db } from "@/db";
 import { predictions, profiles } from "@/db/schema";
-import { eq, desc, avg, and } from "drizzle-orm";
+import { eq, desc, and } from "drizzle-orm";
 
-/**
- * Adds a prediction to the database using Drizzle
- */
-export async function addPrediction(prediction: Omit<Prediction, 'id'>): Promise<void> {
-  await db.insert(predictions).values({
-    storyId: prediction.storyId,
-    userAddress: prediction.userAddress,
-    optionId: prediction.optionId,
-    optionLabel: prediction.optionLabel,
-    confidence: prediction.confidence,
-    justification: prediction.justification,
-    timestamp: prediction.timestamp || Date.now(),
-    txHash: prediction.txHash,
-    resolved: prediction.resolved,
-    correct: prediction.correct,
-  });
+export async function addPrediction(prediction: Omit<Prediction, 'id'>): Promise<Prediction> {
+  const [result] = await db
+    .insert(predictions)
+    .values({
+      storyId: prediction.storyId,
+      userAddress: prediction.userAddress,
+      optionId: prediction.optionId,
+      optionLabel: prediction.optionLabel,
+      confidence: prediction.confidence,
+      justification: prediction.justification,
+      timestamp: prediction.timestamp || Date.now(),
+      txHash: prediction.txHash,
+      resolved: prediction.resolved,
+      correct: prediction.correct,
+    })
+    .returning();
+
+  return mapDbPredictionToType(result);
 }
 
 /**

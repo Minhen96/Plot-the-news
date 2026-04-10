@@ -70,21 +70,28 @@ export interface Reference {
 export interface Story {
   id: string
   title: string
-  lede: string
+  summary: string
   category: string
   imageUrl: string
   date: string
   status: 'active' | 'resolved'
+  crisisLevel?: number
+  coverEmoji?: string
   articleBody: string[]
   historicalContext: string
   historicalEvidence?: HistoricalEvidence
   references?: Reference[]
   roles: Role[]
-  scenes: Scene[]
-  directives: Directive[]
+  panels: Scene[]
+  predictionOptions: Directive[]
+  cliffhanger?: string
   resolvedTimeline?: SimulationPhase[]
+  resolvedOutcome?: string
   txHash?: string
-  crisisLevel?: number
+  // Aggregate metadata (populated from DB counts)
+  predictionCount?: number
+  consensusOption?: string
+  controversyScore?: number
 }
 
 // --- Session state (stored in sessionStorage) ---

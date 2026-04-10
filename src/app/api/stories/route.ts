@@ -1,24 +1,28 @@
 import { NextResponse } from "next/server";
-import { demoStories } from "@/data/stories";
+import { getAllStories } from "@/lib/stories";
 import { getStoryPredictionStats } from "@/lib/predictions";
 
 export async function GET() {
-  const stories = demoStories.map((story) => {
-    const stats = getStoryPredictionStats(story.id);
-    return {
-      id: story.id,
-      title: story.title,
-      category: story.category,
-      summary: story.summary,
-      coverEmoji: story.coverEmoji,
-      date: story.date,
-      predictionCount: stats.totalPredictions + story.predictionCount,
-      controversyScore: story.controversyScore,
-      status: story.status,
-      panelCount: story.panels.length,
-      optionCount: story.predictionOptions.length,
-    };
-  });
+  const storyList = await getAllStories();
 
-  return NextResponse.json(stories);
+  const result = await Promise.all(
+    storyList.map(async (story) => {
+      const stats = await getStoryPredictionStats(story.id);
+      return {
+        id: story.id,
+        title: story.title,
+        summary: story.summary,
+        category: story.category,
+        imageUrl: story.imageUrl,
+        coverEmoji: story.coverEmoji,
+        date: story.date,
+        status: story.status,
+        crisisLevel: story.crisisLevel,
+        predictionCount: stats.totalPredictions,
+        controversyScore: story.controversyScore,
+      };
+    })
+  );
+
+  return NextResponse.json(result);
 }
