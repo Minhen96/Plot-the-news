@@ -1,3 +1,19 @@
+/**
+ * POST /api/stories/generate
+ *
+ * Generates a full FutureLens story from a news article and saves it to DB.
+ *
+ * Flow:
+ *   1. Deduplicate — if sourceUrl already exists in DB, return existing id
+ *   2. Call DeepSeek to generate article content, roles, panels, prediction options
+ *   3. Generate images (FAL.ai or Picsum depending on GENERATE_IMAGES env var)
+ *   4. Assemble Story object and upsert into news + stories tables
+ *
+ * Called by: /api/stories/generate-batch (cron), or manually for seeding
+ *
+ * Body: { headline, description, url, imageUrl?, source? }
+ * Returns: { id: string }
+ */
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { news } from "@/db/schema";

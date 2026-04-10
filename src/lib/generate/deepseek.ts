@@ -1,3 +1,14 @@
+/**
+ * deepseek.ts
+ *
+ * Calls DeepSeek (OpenAI-compatible API) to generate a full FutureLens story
+ * from a news headline and description.
+ *
+ * Returns a typed DeepSeekStoryOutput containing article content, roles,
+ * visual novel panels, and prediction options — ready to assemble into a Story.
+ *
+ * Used by: src/app/api/stories/generate/route.ts
+ */
 import OpenAI from "openai";
 
 const deepseek = new OpenAI({
@@ -107,6 +118,9 @@ export interface DeepSeekStoryOutput {
   refs: { title: string; source: string; url: string }[];
 }
 
+/**
+ * Generate story content using DeepSeek
+ */
 export async function generateStoryContent(
   headline: string,
   description: string,
