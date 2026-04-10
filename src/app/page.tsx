@@ -181,8 +181,8 @@ export default async function ChronicleHub({
     fetchLastWeekNews(activeCategory, 6).catch(() => []),
     fetchMarketNews(6).catch(() => ({ articles: [], nextPage: null })),
     fetchCryptoNews(6).catch(() => ({ articles: [], nextPage: null })),
-    // Only fetch live news when DB is empty
-    hasDbStories
+    // Fetch live news when DB is empty OR has too few stories to fill the feed
+    hasDbStories && dbStories.length >= 4
       ? Promise.resolve(null)
       : fetchLatestNews(activeCategory, 10).catch(() => null),
   ])
@@ -217,11 +217,36 @@ export default async function ChronicleHub({
               </div>
               <div>
                 <h4 className="font-headline font-black uppercase text-xs tracking-widest mb-4 border-b-2 border-on-background pb-1 w-fit">
-                  Active Scenarios
+                  {dbStories.slice(1).length > 0 ? 'Active Scenarios' : 'Latest Dispatches'}
                 </h4>
-                {dbStories.slice(1).map(story => (
-                  <StoryItem key={story.id} story={story} />
-                ))}
+                {dbStories.slice(1).length > 0
+                  ? dbStories.slice(1).map(story => (
+                      <StoryItem key={story.id} story={story} />
+                    ))
+                  : primary.slice(0, 6).map(article => (
+                      <ArticleLink key={article.url} article={article} className="group block py-4 border-b border-outline/15 last:border-0">
+                        <article className="flex gap-3">
+                          <div className="flex-1 min-w-0">
+                            <span className="text-[9px] font-label font-black uppercase tracking-widest text-primary/60 block mb-1">
+                              {article.source.name}
+                            </span>
+                            <h4 className="font-headline font-bold text-sm leading-snug mb-1 group-hover:text-primary transition-colors line-clamp-2">
+                              {article.title}
+                            </h4>
+                            <span className="text-[10px] font-label opacity-40 uppercase tracking-widest">
+                              {new Date(article.publishedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                            </span>
+                          </div>
+                          {article.image && (
+                            <div className="w-14 h-14 shrink-0 overflow-hidden ring-1 ring-outline/10">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img src={article.image} alt={article.title} className="w-full h-full object-cover" />
+                            </div>
+                          )}
+                        </article>
+                      </ArticleLink>
+                    ))
+                }
               </div>
             </div>
           ) : (
