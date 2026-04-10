@@ -1,7 +1,11 @@
 {
   "permissions": {
     "allow": [
-      "Bash(ls src/app/story/[id]/)"
+      "Bash(ls src/app/story/[id]/)",
+      "Bash(cat src/app/story/[id]/play/page.tsx)",
+      "Bash(cat src/app/story/[id]/role/page.tsx)",
+      "Bash(cat src/app/story/[id]/outcome/page.tsx)",
+      "Bash(cat src/app/story/[id]/page.tsx)"
     ]
   }
 }
