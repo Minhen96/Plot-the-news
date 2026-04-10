@@ -128,6 +128,22 @@ export interface SessionPrediction {
   txHash?: string
 }
 
+// --- Prediction (DB record) ---
+
+export interface Prediction {
+  id: string
+  storyId: string
+  userAddress: string
+  optionId: string
+  optionLabel: string
+  confidence: number
+  justification?: string
+  timestamp: number
+  txHash?: string
+  resolved: boolean
+  correct?: boolean
+}
+
 // --- News Article (newsdata.io) ---
 
 export interface NewsArticle {

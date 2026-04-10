@@ -44,9 +44,9 @@ export async function POST(request: Request) {
     confidence: confidence ?? 3,
     justification: justification ?? null,
     timestamp,
-    txHash: null,
+    txHash: undefined,
     resolved: false,
-    correct: null,
+    correct: undefined,
   });
 
   return NextResponse.json({
