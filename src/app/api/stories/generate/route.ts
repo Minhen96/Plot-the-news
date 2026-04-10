@@ -109,6 +109,7 @@ export async function POST(req: NextRequest) {
         portraitUrl: portraitUrls[i] ?? "",
         stats: role.stats,
         keyPlayerStance: role.keyPlayerStance,
+        portraitPrompt: role.portraitPrompt,
       })),
       panels: storyData.panels.map((panel, i) => ({
         id: panel.id,
@@ -117,6 +118,7 @@ export async function POST(req: NextRequest) {
         backgroundUrl: panelUrls[i] ?? "",
         sectorBadge: panel.sectorBadge,
         dialogue: panel.dialogue,
+        bgPrompt: panel.bgPrompt,
       })),
       predictionOptions: storyData.predictionOptions,
       simulations: {},

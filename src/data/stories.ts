@@ -7,7 +7,7 @@ export const STORIES: Story[] = [
     summary:
       'As geopolitical tensions reach a critical inflection point in the Strait of Hormuz, the world watches a high-stakes chess match on the high seas — a narrow corridor where global energy security meets modern naval brinkmanship.',
     category: 'Geopolitics',
-    imageUrl: '',
+    imageUrl: 'https://picsum.photos/seed/hormuz-cover/1200/630',
     date: '2026-04-09',
     status: 'active',
     crisisLevel: 92,
@@ -37,9 +37,10 @@ export const STORIES: Story[] = [
         faction: 'Western Interest',
         quote:
           '"Freedom of navigation is not a privilege — it is the foundation upon which global prosperity is built. We will not yield the Strait."',
-        portraitUrl: '/images/roles/coalition.jpg',
+        portraitUrl: 'https://picsum.photos/seed/coalition/512/768',
         stats: { strategic: 72, stability: 65 },
         keyPlayerStance: 'Defensive / High Alert',
+        portraitPrompt: 'Distinguished Western military admiral in dress uniform, silver hair, confident authoritative expression, cinematic portrait, dark navy backdrop, photorealistic',
       },
       {
         id: 'regional-guard',
@@ -47,38 +48,42 @@ export const STORIES: Story[] = [
         faction: 'Regional Sovereignty',
         quote:
           '"Every ship that passes through our waters does so at our discretion. The Strait is not international — it is sovereign."',
-        portraitUrl: '/images/roles/regional-guard.jpg',
+        portraitUrl: 'https://picsum.photos/seed/regional-guard/512/768',
         stats: { strategic: 68, stability: 40 },
         keyPlayerStance: 'Aggressive / Opportunistic',
+        portraitPrompt: 'Iranian Revolutionary Guard naval commander in uniform, intense determined expression, dramatic side lighting, cinematic portrait, photorealistic',
       },
     ],
     panels: [
       {
         id: 'scene-1',
         characterName: 'The Admiral',
-        characterPortrait: '/images/characters/admiral.jpg',
-        backgroundUrl: '/images/scenes/naval-command.jpg',
+        characterPortrait: 'https://picsum.photos/seed/admiral/512/768',
+        backgroundUrl: 'https://picsum.photos/seed/naval-command/1920/1080',
         sectorBadge: 'Eastern Basin Alpha',
         dialogue:
           "Admiral's Log — 0430 hours. Three of their fast-attack vessels crossed the median line twenty minutes ago. Washington wants options on the table before sunrise. What we say in the next six hours will echo for a decade.",
+        bgPrompt: 'Naval command center at night, multiple tactical screens glowing blue, officers in uniform at workstations, tense atmosphere, cinematic wide angle, photorealistic',
       },
       {
         id: 'scene-2',
         characterName: 'The Admiral',
-        characterPortrait: '/images/characters/admiral.jpg',
-        backgroundUrl: '/images/scenes/naval-command.jpg',
+        characterPortrait: 'https://picsum.photos/seed/admiral/512/768',
+        backgroundUrl: 'https://picsum.photos/seed/naval-ops/1920/1080',
         sectorBadge: 'Eastern Basin Alpha',
         dialogue:
           "Intelligence confirms their coastal missile batteries are on active targeting. One wrong move and we trigger a closure that shuts down 20% of the world's oil in under an hour. The markets are already watching.",
+        bgPrompt: 'Aerial view of US carrier strike group in the Persian Gulf at dawn, dramatic storm clouds, military vessels in formation, cinematic photography',
       },
       {
         id: 'scene-3',
         characterName: 'The Admiral',
-        characterPortrait: '/images/characters/admiral.jpg',
-        backgroundUrl: '/images/scenes/bridge-dusk.jpg',
+        characterPortrait: 'https://picsum.photos/seed/admiral/512/768',
+        backgroundUrl: 'https://picsum.photos/seed/bridge-dusk/1920/1080',
         sectorBadge: 'Hormuz Corridor',
         dialogue:
           "The question before us isn't military — it's historical. Every admiral who has stood where I stand has had to choose: respond with strength, negotiate with patience, or hold position and wait. Which path shall we take through the Strait?",
+        bgPrompt: 'Naval bridge at dusk overlooking the Strait of Hormuz, warm golden hour light through porthole windows, silhouette of officer, cinematic atmosphere, photorealistic',
       },
     ],
     predictionOptions: [

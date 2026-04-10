@@ -59,10 +59,10 @@ Generate a complete scenario as JSON with this exact shape:
       "characterIndex": 0,
       "sectorBadge": "Location name e.g. Eastern Basin Alpha",
       "dialogue": "2-3 sentence in-character monologue, dramatic, present tense",
-      "bgPrompt": "FAL.ai image prompt, cinematic, dramatic lighting, photorealistic, wide angle"
+      "bgPrompt": "Descriptive FAL.ai image prompt for this specific physical location. (e.g. 'Dark neon-lit hackerspace, glowing monitors, cinematic lighting, wide angle'). MUST BE UNIQUE for each scene."
     },
-    { "id": "scene-2", "characterIndex": 0, "sectorBadge": "...", "dialogue": "...", "bgPrompt": "..." },
-    { "id": "scene-3", "characterIndex": 0, "sectorBadge": "...", "dialogue": "...", "bgPrompt": "..." }
+    { "id": "scene-2", "characterIndex": 0, "sectorBadge": "Different location...", "dialogue": "...", "bgPrompt": "Unique image prompt for this completely new location..." },
+    { "id": "scene-3", "characterIndex": 0, "sectorBadge": "Another location...", "dialogue": "...", "bgPrompt": "Unique image prompt for this third distinct location..." }
   ],
   "predictionOptions": [
     {

@@ -51,9 +51,10 @@ export async function generateStoryImages(
   panels: { bgPrompt: string }[],
   roles: { portraitPrompt: string }[],
   coverImageQuery: string,
-  existingCoverUrl?: string
+  existingCoverUrl?: string,
+  force = false
 ): Promise<GeneratedImages> {
-  if (usePlaceholders()) {
+  if (!force && usePlaceholders()) {
     return picsumImages(panels, roles, existingCoverUrl);
   }
 

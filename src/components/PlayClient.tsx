@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import type { Scene, Role } from '@/lib/types'
+import SimulationLoading from '@/components/SimulationLoading'
 
 interface Props {
   storyId: string
@@ -11,14 +12,33 @@ interface Props {
   roles: Role[]
 }
 
-export default function PlayClient({ storyId, panels, roles }: Props) {
+export default function PlayClient({ storyId, panels: initialPanels, roles: initialRoles }: Props) {
   const router = useRouter()
 
+  const [activePanels, setActivePanels] = useState<Scene[]>(initialPanels)
+  const [activeRoles, setActiveRoles] = useState<Role[]>(initialRoles)
+  const [generatingImages, setGeneratingImages] = useState(false)
   const [currentPanel, setCurrentPanel] = useState(0)
   const [displayed, setDisplayed] = useState('')
   const [isTyping, setIsTyping] = useState(true)
 
-  const panel = panels[currentPanel]
+  // On-demand image generation: if panels have Picsum placeholders, generate real images
+  useEffect(() => {
+    const isPicsum = initialPanels[0]?.backgroundUrl?.includes('picsum.photos') ?? false
+    if (!isPicsum) return
+
+    setGeneratingImages(true)
+    fetch(`/api/stories/${storyId}/generate-images`, { method: 'POST' })
+      .then((r: Response) => r.ok ? r.json() : Promise.reject())
+      .then(data => {
+        if (data.panels?.length) setActivePanels(data.panels)
+        if (data.roles?.length) setActiveRoles(data.roles)
+      })
+      .catch(() => { /* keep Picsum if FAL.ai fails */ })
+      .finally(() => setGeneratingImages(false))
+  }, [storyId, initialPanels])
+
+  const panel = activePanels[currentPanel]
 
   // Read role from sessionStorage to show correct portrait
   const [roleId, setRoleId] = useState<string | null>(null)
@@ -29,7 +49,7 @@ export default function PlayClient({ storyId, panels, roles }: Props) {
     } catch { /* ignore */ }
   }, [])
 
-  const activeRole = roles.find(r => r.id === roleId) ?? roles[0]
+  const activeRole = activeRoles.find((r: Role) => r.id === roleId) ?? activeRoles[0]
 
   // Typewriter effect
   useEffect(() => {
@@ -55,12 +75,16 @@ export default function PlayClient({ storyId, panels, roles }: Props) {
       setIsTyping(false)
       return
     }
-    if (currentPanel < panels.length - 1) {
-      setCurrentPanel(p => p + 1)
+    if (currentPanel < activePanels.length - 1) {
+      setCurrentPanel((p: number) => p + 1)
     } else {
       router.push(`/story/${storyId}/predict`)
     }
-  }, [isTyping, currentPanel, panels.length, panel.dialogue, storyId, router])
+  }, [isTyping, currentPanel, activePanels.length, panel.dialogue, storyId, router])
+
+  if (generatingImages) {
+    return <SimulationLoading />
+  }
 
   return (
     <div
@@ -155,14 +179,14 @@ export default function PlayClient({ storyId, panels, roles }: Props) {
               {/* Click to continue */}
               <div className="absolute bottom-6 right-8 flex items-center gap-2">
                 <span className="font-headline text-[10px] font-bold uppercase tracking-[0.2em] text-outline">
-                  {isTyping ? 'Click to skip' : currentPanel < panels.length - 1 ? 'Click to continue' : 'Click to proceed'}
+                  {isTyping ? 'Click to skip' : currentPanel < activePanels.length - 1 ? 'Click to continue' : 'Click to proceed'}
                 </span>
                 <div className="w-2 h-2 bg-primary rounded-full animate-pulse shadow-[0_0_12px_rgba(51,111,84,0.4)]" />
               </div>
 
               {/* Panel progress dots */}
               <div className="absolute -top-4 -right-4 flex gap-1.5 bg-surface-container-lowest/80 backdrop-blur-sm rounded-full px-3 py-1.5 shadow-sm">
-                {panels.map((_, i) => (
+                {activePanels.map((_: Scene, i: number) => (
                   <div
                     key={i}
                     className={`w-1.5 h-1.5 rounded-full transition-all ${i === currentPanel ? 'bg-primary w-3' : i < currentPanel ? 'bg-primary/40' : 'bg-outline/30'}`}
@@ -185,7 +209,7 @@ export default function PlayClient({ storyId, panels, roles }: Props) {
           <Link
             key={label}
             href={href}
-            onClick={e => e.stopPropagation()}
+            onClick={(e: React.MouseEvent) => e.stopPropagation()}
             className="flex flex-col items-center justify-center text-on-surface/40 gap-0.5"
           >
             <span className="text-lg">{icon}</span>

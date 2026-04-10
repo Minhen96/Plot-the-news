@@ -13,6 +13,7 @@ export interface Role {
   portraitUrl: string
   stats: RoleStats
   keyPlayerStance?: string
+  portraitPrompt?: string  // stored for on-demand FAL.ai regeneration
 }
 
 // --- Narrative ---
@@ -24,6 +25,7 @@ export interface Scene {
   backgroundUrl: string
   sectorBadge: string
   dialogue: string
+  bgPrompt?: string       // stored for on-demand FAL.ai regeneration
 }
 
 // --- Prediction ---
@@ -45,6 +47,9 @@ export interface SimulationPhase {
   timeframe: string
   event: string
   emoji: string
+  probability?: number
+  operationalStatus?: string
+  causalFactors?: string[]
 }
 
 export interface SimulationResult {
