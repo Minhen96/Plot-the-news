@@ -13,7 +13,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getStory } from "@/data/stories";
 import { getStoryById, upsertStory } from "@/lib/stories";
-import { generateStoryImages } from "@/lib/generate/images";
+import { generateFalImages } from "@/lib/generate/images";
 
 export async function POST(
   _req: NextRequest,
@@ -41,12 +41,11 @@ export async function POST(
       `Cinematic portrait of ${r.name}, ${r.faction} leader, dramatic lighting, photorealistic`,
   }));
 
-  const { coverUrl, panelUrls, portraitUrls } = await generateStoryImages(
+  const { coverUrl, panelUrls, portraitUrls } = await generateFalImages(
     panelPrompts,
     rolePrompts,
     story.title,
-    story.imageUrl || undefined,
-    true  // force FAL.ai regardless of GENERATE_IMAGES env flag
+    story.imageUrl || undefined
   );
 
   // Update roles with new portrait URLs
