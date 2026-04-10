@@ -5,13 +5,14 @@
  *
  * Flow:
  *   1. Deduplicate — if sourceUrl already exists in DB, return existing id
- *   2. Call DeepSeek to generate article content, roles, panels, prediction options
- *   3. Generate images (FAL.ai or Picsum depending on GENERATE_IMAGES env var)
- *   4. Assemble Story object and upsert into news + stories tables
+ *   2. Call DeepSeek with headline + description + scraped full content
+ *   3. Fetch 2-3 related articles from GNews as story references
+ *   4. Generate images (FAL.ai or Picsum depending on GENERATE_IMAGES env var)
+ *   5. Assemble Story object and upsert into news + stories tables
  *
  * Called by: /api/stories/generate-batch (cron), or manually for seeding
  *
- * Body: { headline, description, url, imageUrl?, source? }
+ * Body: { headline, description, url, imageUrl?, source?, fullContent? }
  * Returns: { id: string }
  */
 import { NextRequest, NextResponse } from "next/server";
@@ -22,16 +23,18 @@ import { upsertStory } from "@/lib/stories";
 import { toStorySlug } from "@/lib/utils";
 import { generateStoryContent } from "@/lib/generate/deepseek";
 import { generateStoryImages } from "@/lib/generate/images";
+import { searchNews } from "@/lib/gnews";
 import type { Story } from "@/lib/types";
 
 export async function POST(req: NextRequest) {
   try {
-    const { headline, description, url, imageUrl, source } = await req.json() as {
+    const { headline, description, url, imageUrl, source, fullContent } = await req.json() as {
       headline: string;
       description: string;
       url: string;
       imageUrl?: string;
       source?: string;
+      fullContent?: string | null;
     };
 
     if (!headline || !description || !url) {
@@ -54,8 +57,26 @@ export async function POST(req: NextRequest) {
 
     const id = toStorySlug(headline);
 
-    // Generate content + images
-    const storyData = await generateStoryContent(headline, description, source);
+    // Generate story content (DeepSeek gets full article text if available)
+    const storyData = await generateStoryContent(headline, description, source, fullContent);
+
+    // Fetch related articles from GNews as story references (best-effort)
+    const gNewsRefs = await searchNews({
+      q: headline.slice(0, 100),
+      lang: "en",
+      max: 3,
+    }).then((res) =>
+      res.articles.map((a) => ({
+        title: a.title,
+        source: a.source.name,
+        url: a.url,
+      }))
+    ).catch(() => [] as { title: string; source: string; url: string }[]);
+
+    // Merge GNews refs with any AI-generated refs (GNews takes priority)
+    const refs = gNewsRefs.length > 0 ? gNewsRefs : (storyData.refs ?? []);
+
+    // Generate images
     const { coverUrl, panelUrls, portraitUrls } = await generateStoryImages(
       storyData.panels,
       storyData.roles,
@@ -78,7 +99,7 @@ export async function POST(req: NextRequest) {
       articleBody: storyData.articleBody,
       historicalContext: storyData.historicalContext,
       historicalEvidence: storyData.historicalEvidence,
-      references: storyData.refs ?? [],
+      references: refs,
       status: "active",
       roles: storyData.roles.map((role, i) => ({
         id: role.id,

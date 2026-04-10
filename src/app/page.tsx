@@ -1,12 +1,13 @@
+import Link from 'next/link'
 import Header from '@/components/Header'
 import SectionFeed from '@/components/SectionFeed'
 import TopFeed from '@/components/TopFeed'
 import ArticleLink from '@/components/ArticleLink'
 import { fetchLatestNews, fetchLastWeekNews, fetchMarketNews, fetchCryptoNews } from '@/lib/newsdata'
 import { WORLD_FALLBACK, LAST_WEEK_FALLBACK } from '@/data/news'
-import type { NewsArticle } from '@/lib/types'
+import { getAllStories } from '@/lib/stories'
+import type { NewsArticle, Story } from '@/lib/types'
 
-// Maps URL ?category= → newsdata category keys
 const CATEGORY_MAP: Record<string, string> = {
   world:    'world',
   politics: 'politics',
@@ -17,6 +18,8 @@ const CATEGORY_MAP: Record<string, string> = {
   sports:   'sports',
   opinion:  'opinion',
 }
+
+// ── Shared sub-components ─────────────────────────────────────────────────────
 
 function ArticleImage({ src, alt, className }: { src: string | null; alt: string; className: string }) {
   if (!src) return <div className={`${className} bg-surface-container-high`} />
@@ -36,7 +39,7 @@ function SectionDivider({ label }: { label: string }) {
   )
 }
 
-// Lead story card — used in top section (left col) and market/crypto sections
+// Lead story card for live news — used in Markets/Crypto sections
 function LeadStory({ article, size = 'large' }: { article: NewsArticle; size?: 'large' | 'medium' }) {
   return (
     <ArticleLink article={article} className="group block">
@@ -73,6 +76,89 @@ function LeadStory({ article, size = 'large' }: { article: NewsArticle; size?: '
   )
 }
 
+// ── DB story sub-components ───────────────────────────────────────────────────
+
+function CrisisBadge({ level }: { level?: number }) {
+  if (!level) return null
+  const color = level >= 80 ? 'bg-red-100 text-red-700' : level >= 50 ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700'
+  return (
+    <span className={`text-[9px] font-label font-black uppercase tracking-widest px-2 py-0.5 rounded-full ${color}`}>
+      Crisis {level}
+    </span>
+  )
+}
+
+function FeaturedStory({ story }: { story: Story }) {
+  return (
+    <Link href={`/story/${story.id}`} className="group block">
+      <article className="flex flex-col gap-4">
+        <div className="overflow-hidden">
+          <ArticleImage
+            src={story.imageUrl}
+            alt={story.title}
+            className="w-full aspect-video object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+          />
+        </div>
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-label font-black uppercase tracking-widest text-primary/70">
+              {story.coverEmoji} {story.category}
+            </span>
+            <CrisisBadge level={story.crisisLevel} />
+          </div>
+          <h3 className="text-xl md:text-2xl font-headline font-extrabold leading-tight text-on-background group-hover:text-primary transition-colors">
+            {story.title}
+          </h3>
+          {story.summary && (
+            <p className="text-sm font-body opacity-70 leading-relaxed line-clamp-2">{story.summary}</p>
+          )}
+          <div className="flex items-center justify-between pt-1">
+            <span className="text-[10px] font-label opacity-50 uppercase tracking-widest">
+              {new Date(story.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+            </span>
+            <div className="text-[10px] font-label font-black uppercase tracking-widest text-primary flex items-center gap-1 group/btn">
+              Read &amp; Play <span className="transition-transform duration-300 group-hover/btn:translate-x-1 group-hover:translate-x-1">→</span>
+            </div>
+          </div>
+        </div>
+      </article>
+    </Link>
+  )
+}
+
+function StoryItem({ story }: { story: Story }) {
+  return (
+    <Link href={`/story/${story.id}`} className="group block py-4 border-b border-outline/15 last:border-0">
+      <div className="flex gap-3">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5 mb-1">
+            <span className="text-[9px] font-label font-black uppercase tracking-widest text-primary/60">
+              {story.coverEmoji} {story.category}
+            </span>
+            <CrisisBadge level={story.crisisLevel} />
+          </div>
+          <h4 className="font-headline font-bold text-sm leading-snug mb-1 group-hover:text-primary transition-colors line-clamp-2">
+            {story.title}
+          </h4>
+          {story.summary && (
+            <p className="text-xs font-body opacity-60 line-clamp-2 leading-relaxed">{story.summary}</p>
+          )}
+          <span className="text-[10px] font-label opacity-40 uppercase tracking-widest mt-1 block">
+            {new Date(story.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+          </span>
+        </div>
+        {story.imageUrl && (
+          <div className="w-14 h-14 shrink-0 overflow-hidden ring-1 ring-outline/10 group-hover:ring-primary/30 transition-all">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={story.imageUrl} alt={story.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+          </div>
+        )}
+      </div>
+    </Link>
+  )
+}
+
+// ── Page ──────────────────────────────────────────────────────────────────────
 
 export default async function ChronicleHub({
   searchParams,
@@ -82,30 +168,34 @@ export default async function ChronicleHub({
   const { category } = await searchParams
   const activeCategory = category && CATEGORY_MAP[category] ? category : 'world'
 
+  // Try DB first — if empty, fall back to live news, then static
+  const dbStories = await getAllStories().catch(() => [])
+  const hasDbStories = dbStories.length > 0
+
   const [
-    { articles: primaryArticles, nextPage },
     lastWeekArticles,
     { articles: marketArticles, nextPage: marketNextPage },
     { articles: cryptoArticles, nextPage: cryptoNextPage },
+    primaryResult,
   ] = await Promise.all([
-    fetchLatestNews(activeCategory, 10),
-    fetchLastWeekNews(activeCategory, 6),
-    fetchMarketNews(6),
-    fetchCryptoNews(6),
+    fetchLastWeekNews(activeCategory, 6).catch(() => []),
+    fetchMarketNews(6).catch(() => ({ articles: [], nextPage: null })),
+    fetchCryptoNews(6).catch(() => ({ articles: [], nextPage: null })),
+    // Only fetch live news when DB is empty
+    hasDbStories
+      ? Promise.resolve(null)
+      : fetchLatestNews(activeCategory, 10).catch(() => null),
   ])
 
-  const primary  = primaryArticles.length  > 0 ? primaryArticles  : WORLD_FALLBACK
-  const lastWeek = lastWeekArticles.length  > 0 ? lastWeekArticles : LAST_WEEK_FALLBACK
-  const markets  = marketArticles
-  const crypto   = cryptoArticles
+  // Resolve main feed source
+  const liveArticles = primaryResult?.articles ?? []
+  const primary = liveArticles.length > 0 ? liveArticles : WORLD_FALLBACK
+  const lastWeek = lastWeekArticles.length > 0 ? lastWeekArticles : LAST_WEEK_FALLBACK
 
-  const featured = primary[0]
-
-  const marketFeatured = markets[0]
-  const marketList     = markets.slice(1)
-  const cryptoFeatured = crypto[0]
-  const cryptoList     = crypto.slice(1)
-
+  const marketFeatured = marketArticles[0]
+  const marketList     = marketArticles.slice(1)
+  const cryptoFeatured = cryptoArticles[0]
+  const cryptoList     = cryptoArticles.slice(1)
 
   return (
     <div className="max-w-[1400px] mx-auto px-6 lg:px-12 py-6">
@@ -113,20 +203,39 @@ export default async function ChronicleHub({
 
       <main className="mt-8">
 
-        {/* ── Top section: Lead+Category (page scroll) / Last Week ── */}
+        {/* ── Top section: main feed + The Week Before ── */}
         <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-8 items-start">
 
-          {/* Left 2/3 — Lead story (left col) + category articles (both cols), page scroll */}
-          <TopFeed
-            key={activeCategory}
-            featured={featured}
-            initialArticles={primary.slice(1)}
-            nextPage={nextPage}
-            category={activeCategory}
-            sectionLabel={activeCategory.charAt(0).toUpperCase() + activeCategory.slice(1)}
-          />
+          {/* Left 2/3 — DB stories OR live news TopFeed */}
+          {hasDbStories ? (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-8 items-start border-r border-outline/15 pr-8">
+              <div>
+                <h4 className="font-headline font-black uppercase text-xs tracking-widest mb-4 border-b-2 border-on-background pb-1 w-fit">
+                  Lead Story
+                </h4>
+                <FeaturedStory story={dbStories[0]} />
+              </div>
+              <div>
+                <h4 className="font-headline font-black uppercase text-xs tracking-widest mb-4 border-b-2 border-on-background pb-1 w-fit">
+                  Active Scenarios
+                </h4>
+                {dbStories.slice(1).map(story => (
+                  <StoryItem key={story.id} story={story} />
+                ))}
+              </div>
+            </div>
+          ) : (
+            <TopFeed
+              key={activeCategory}
+              featured={primary[0]}
+              initialArticles={primary.slice(1)}
+              nextPage={primaryResult?.nextPage ?? null}
+              category={activeCategory}
+              sectionLabel={activeCategory.charAt(0).toUpperCase() + activeCategory.slice(1)}
+            />
+          )}
 
-          {/* Right 1/3 — Last Week (sticky) */}
+          {/* Right 1/3 — The Week Before (always live) */}
           <aside className="lg:sticky lg:top-6">
             <div className="mb-4">
               <h4 className="font-headline font-black uppercase text-xs tracking-widest border-b-2 border-on-background pb-1 w-fit">
@@ -156,16 +265,10 @@ export default async function ChronicleHub({
                 </ArticleLink>
               ))}
             </div>
-            {/* <Link
-              href="/archive?week=last"
-              className="mt-6 inline-flex items-center gap-1 text-[10px] font-label font-black uppercase tracking-widest text-primary border-b border-primary/30 hover:border-primary transition-colors"
-            >
-              See all last week →
-            </Link> */}
           </aside>
         </div>
 
-        {/* ── Markets section ── */}
+        {/* ── Markets section (always live) ── */}
         {marketFeatured && (
           <>
             <SectionDivider label="Markets" />
@@ -176,7 +279,7 @@ export default async function ChronicleHub({
           </>
         )}
 
-        {/* ── Crypto section ── */}
+        {/* ── Crypto section (always live) ── */}
         {cryptoFeatured && (
           <>
             <SectionDivider label="Crypto" />
@@ -186,7 +289,6 @@ export default async function ChronicleHub({
             </div>
           </>
         )}
-
 
       </main>
 

@@ -20,10 +20,11 @@ const SYSTEM_PROMPT = `You are an editorial AI for a geopolitical simulation gam
 Given a news article, generate a complete interactive scenario.
 Return ONLY valid JSON with no markdown, no code fences, no extra text.`;
 
-function buildPrompt(headline: string, description: string, source?: string): string {
+function buildPrompt(headline: string, description: string, source?: string, fullContent?: string | null): string {
   return `Headline: "${headline}"
 Description: "${description}"
 ${source ? `Source: ${source}` : ""}
+${fullContent ? `\nFull article content:\n${fullContent}\n` : ""}
 
 Generate a complete scenario as JSON with this exact shape:
 {
@@ -124,14 +125,15 @@ export interface DeepSeekStoryOutput {
 export async function generateStoryContent(
   headline: string,
   description: string,
-  source?: string
+  source?: string,
+  fullContent?: string | null
 ): Promise<DeepSeekStoryOutput> {
   const response = await deepseek.chat.completions.create({
     model: "deepseek-chat",
     max_tokens: 4096,
     messages: [
       { role: "system", content: SYSTEM_PROMPT },
-      { role: "user", content: buildPrompt(headline, description, source) },
+      { role: "user", content: buildPrompt(headline, description, source, fullContent) },
     ],
     response_format: { type: "json_object" },
   });
