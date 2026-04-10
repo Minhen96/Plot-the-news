@@ -2,6 +2,7 @@ import Link from 'next/link'
 import Header from '@/components/Header'
 import LiveArticleView from '@/components/LiveArticleView'
 import { getStory } from '@/data/stories'
+import { getStoryById } from '@/lib/stories'
 
 export default async function ArticlePage({
   params,
@@ -9,9 +10,10 @@ export default async function ArticlePage({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
-  const story = getStory(id)
 
-  // Live news article — data loaded from sessionStorage on client
+  // static demo story → DB story → live news (sessionStorage fallback)
+  const story = getStory(id) ?? await getStoryById(id).catch(() => undefined)
+
   if (!story) {
     return (
       <>
