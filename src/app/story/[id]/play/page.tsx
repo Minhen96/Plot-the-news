@@ -9,7 +9,7 @@ export default async function PlayPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
-  const story = getStory(id) ?? await getStoryById(id).catch(() => undefined)
+  const story = await getStoryById(id).catch(() => undefined) ?? getStory(id)
 
   if (!story) notFound()
 

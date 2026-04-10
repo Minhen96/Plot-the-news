@@ -67,12 +67,40 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ```
 Cron (every 2h) → Newsdata headlines → scrape full article → DeepSeek generates story
-               → GNews fetches related articles as references → save to DB
+               → GNews fetches related articles as references → save to DB with Picsum images
 
 Home page → reads DB stories (falls back to live newsdata if DB empty)
   → click story → Article View → Role Selection → Visual Novel (play)
+    → Play page detects Picsum images → triggers FAL.ai on-demand → stores real images in DB
     → Community Directives (predict) → lock on-chain → Outcome simulation
 ```
+
+### Image Generation: Two Functions, Two Purposes
+
+| Function | When used | Respects `GENERATE_IMAGES`? |
+|---|---|---|
+| `generateStoryImages` | Story creation (cron / generate route) | Yes — returns Picsum when `false` |
+| `generateFalImages` | On-demand (`/api/stories/[id]/generate-images`) | Never — always calls FAL.ai |
+
+**`GENERATE_IMAGES=false` (default in dev):**
+- Story creation → Picsum placeholders instantly, no API cost
+- User hits Play page → detects Picsum → shows loading screen → calls FAL.ai → swaps images in state → saves to DB
+- Next visit → images already real, no extra call needed
+
+**`GENERATE_IMAGES=true` (production):**
+- Story creation → FAL.ai immediately at creation time
+- Play page → images already real, no extra call needed
+
+### Cron Jobs: Vercel Only
+
+The cron in `vercel.json` is a **Vercel infrastructure feature** — it tells Vercel's servers to HTTP-call your route on a schedule. It does not run locally.
+
+Locally there is no scheduler, but the route itself works normally. To simulate it:
+```bash
+curl -H "Authorization: Bearer YOUR_CRON_SECRET" \
+  http://localhost:3000/api/stories/generate-batch
+```
+You are acting as the scheduler — calling the route manually the same way Vercel would.
 
 ---
 
@@ -86,30 +114,24 @@ http://localhost:3000/story/strait-of-hormuz
 ```
 The demo story is hardcoded in `src/data/stories.ts` and works immediately.
 
-**Option 2 — Generate a story from a real headline:**
+**Option 2 — Generate a story from a custom headline:**
 ```bash
 curl -X POST http://localhost:3000/api/stories/generate \
   -H "Content-Type: application/json" \
   -d '{
-    "headline": "US and Iran tensions escalate in Persian Gulf",
-    "description": "Naval confrontations increase as diplomatic talks stall.",
+    "headline": "North Korea fires ballistic missile toward Japan",
+    "description": "Pyongyang launches ICBM as US-South Korea drills intensify.",
     "url": "https://example.com/test-article"
   }'
 ```
-Returns `{ "id": "us-and-iran-tensions-..." }`. With `GENERATE_IMAGES=false`, uses Picsum placeholders instantly — no FAL.ai credits spent.
+Returns `{ "id": "north-korea-fires-ballistic-..." }`. Story is saved with Picsum placeholders. When you open the play page, real FAL.ai images are generated automatically (~30–60s first time, instant on revisit).
 
-**Option 3 — Trigger the cron batch manually:**
+**Option 3 — Pull real live headlines from newsdata:**
 ```bash
 curl -H "Authorization: Bearer YOUR_CRON_SECRET" \
   http://localhost:3000/api/stories/generate-batch
 ```
-Fetches real newsdata headlines, scrapes them, generates up to 3 stories.
-
-**Generate real images for a story (after seeding):**
-```bash
-curl -X POST http://localhost:3000/api/stories/{story-id}/generate-images
-```
-Set `GENERATE_IMAGES=true` first, otherwise still returns Picsum.
+Fetches up to 3 real headlines, scrapes full article text, generates stories with DeepSeek. Same on-demand image generation applies when you visit the play page.
 
 ---
 
