@@ -8,83 +8,101 @@ import {
   Reference,
 } from "@/lib/types";
 import { db } from "@/db";
-import { stories } from "@/db/schema";
+import { news, stories } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 
 export async function getAllStories(): Promise<Story[]> {
   const result = await db
     .select()
-    .from(stories)
-    .orderBy(desc(stories.createdAt));
+    .from(news)
+    .innerJoin(stories, eq(stories.id, news.id))
+    .orderBy(desc(news.createdAt));
 
-  return result.map(mapDbStoryToType);
+  return result.map((r) => mapJoinToStory(r.news, r.stories));
 }
 
 export async function getStoryById(id: string): Promise<Story | undefined> {
   const [result] = await db
     .select()
-    .from(stories)
-    .where(eq(stories.id, id))
+    .from(news)
+    .innerJoin(stories, eq(stories.id, news.id))
+    .where(eq(news.id, id))
     .limit(1);
 
-  return result ? mapDbStoryToType(result) : undefined;
+  return result ? mapJoinToStory(result.news, result.stories) : undefined;
 }
 
 export async function upsertStory(story: Story): Promise<void> {
-  const values = {
+  const newsValues = {
     id: story.id,
     title: story.title,
     summary: story.summary,
-    category: story.category,
     imageUrl: story.imageUrl,
     date: story.date,
-    status: story.status,
+    category: story.category,
+    sourceUrl: story.sourceUrl ?? null,
     crisisLevel: story.crisisLevel ?? null,
     coverEmoji: story.coverEmoji ?? null,
+    cliffhanger: story.cliffhanger ?? null,
     articleBody: story.articleBody,
     historicalContext: story.historicalContext,
     historicalEvidence: story.historicalEvidence ?? null,
-    references: story.references ?? [],
+    refs: story.references ?? [],
+  };
+
+  const storyValues = {
+    id: story.id,
+    status: story.status,
     roles: story.roles,
     panels: story.panels,
     predictionOptions: story.predictionOptions,
-    cliffhanger: story.cliffhanger ?? null,
     resolvedTimeline: story.resolvedTimeline ?? null,
     resolvedOutcome: story.resolvedOutcome ?? null,
     txHash: story.txHash ?? null,
+    simulations: story.simulations ?? {},
     predictionCount: story.predictionCount ?? 0,
     consensusOption: story.consensusOption ?? null,
     controversyScore: story.controversyScore ?? 0,
   };
 
   await db
+    .insert(news)
+    .values(newsValues)
+    .onConflictDoUpdate({ target: news.id, set: newsValues });
+
+  await db
     .insert(stories)
-    .values(values)
-    .onConflictDoUpdate({ target: stories.id, set: values });
+    .values(storyValues)
+    .onConflictDoUpdate({ target: stories.id, set: storyValues });
 }
 
-function mapDbStoryToType(s: any): Story {
+function mapJoinToStory(
+  n: typeof news.$inferSelect,
+  s: typeof stories.$inferSelect
+): Story {
   return {
-    id: s.id,
-    title: s.title,
-    summary: s.summary || "",
-    category: s.category,
-    imageUrl: s.imageUrl || "",
-    date: s.date || "",
+    id: n.id,
+    title: n.title,
+    summary: n.summary || "",
+    imageUrl: n.imageUrl || "",
+    date: n.date || "",
+    category: n.category,
+    sourceUrl: n.sourceUrl ?? undefined,
+    crisisLevel: n.crisisLevel ?? undefined,
+    coverEmoji: n.coverEmoji ?? undefined,
+    cliffhanger: n.cliffhanger ?? undefined,
+    articleBody: (n.articleBody as string[]) || [],
+    historicalContext: n.historicalContext || "",
+    historicalEvidence: n.historicalEvidence as HistoricalEvidence | undefined,
+    references: (n.refs as Reference[]) || [],
     status: (s.status as "active" | "resolved") || "active",
-    crisisLevel: s.crisisLevel ?? undefined,
-    coverEmoji: s.coverEmoji ?? undefined,
-    articleBody: (s.articleBody as string[]) || [],
-    historicalContext: s.historicalContext || "",
-    historicalEvidence: s.historicalEvidence as HistoricalEvidence | undefined,
-    references: (s.references as Reference[]) || [],
     roles: (s.roles as Role[]) || [],
     panels: (s.panels as Scene[]) || [],
     predictionOptions: (s.predictionOptions as Directive[]) || [],
-    cliffhanger: s.cliffhanger ?? undefined,
     resolvedTimeline: s.resolvedTimeline as SimulationPhase[] | undefined,
     resolvedOutcome: s.resolvedOutcome ?? undefined,
     txHash: s.txHash ?? undefined,
+    simulations: s.simulations as Record<string, SimulationPhase[]> | undefined,
     predictionCount: s.predictionCount ?? 0,
     consensusOption: s.consensusOption ?? undefined,
     controversyScore: s.controversyScore ?? 0,

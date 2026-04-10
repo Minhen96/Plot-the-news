@@ -53,6 +53,25 @@ export interface SimulationResult {
   reasoning?: string
 }
 
+// --- News ---
+
+export interface News {
+  id: string
+  title: string
+  summary: string
+  imageUrl: string
+  date: string
+  category: string
+  sourceUrl?: string
+  crisisLevel?: number
+  coverEmoji?: string
+  cliffhanger?: string
+  articleBody: string[]
+  historicalContext: string
+  historicalEvidence?: HistoricalEvidence
+  references?: Reference[]
+}
+
 // --- Story ---
 
 export interface HistoricalEvidence {
@@ -68,27 +87,31 @@ export interface Reference {
 }
 
 export interface Story {
+  // --- News fields (from news table) ---
   id: string
   title: string
   summary: string
   category: string
   imageUrl: string
   date: string
-  status: 'active' | 'resolved'
+  sourceUrl?: string
   crisisLevel?: number
   coverEmoji?: string
+  cliffhanger?: string
   articleBody: string[]
   historicalContext: string
   historicalEvidence?: HistoricalEvidence
   references?: Reference[]
+  // --- Game fields (from stories table) ---
+  status: 'active' | 'resolved'
   roles: Role[]
   panels: Scene[]
   predictionOptions: Directive[]
-  cliffhanger?: string
   resolvedTimeline?: SimulationPhase[]
   resolvedOutcome?: string
   txHash?: string
-  // Aggregate metadata (populated from DB counts)
+  simulations?: Record<string, SimulationPhase[]>
+  // --- Aggregate metadata ---
   predictionCount?: number
   consensusOption?: string
   controversyScore?: number
