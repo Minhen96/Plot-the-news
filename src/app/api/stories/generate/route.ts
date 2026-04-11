@@ -21,8 +21,7 @@ import { news } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { upsertStory } from "@/lib/stories";
 import { toStorySlug } from "@/lib/utils";
-import { generateStoryContent } from "@/lib/generate/deepseek";
-import { generateStoryImages } from "@/lib/generate/images";
+import { generateStoryContent, generateStoryImages } from "@/lib/generate";
 import { searchNews } from "@/lib/gnews";
 import type { Story } from "@/lib/types";
 

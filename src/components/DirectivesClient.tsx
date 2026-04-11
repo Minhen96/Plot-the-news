@@ -46,282 +46,299 @@ export default function DirectivesClient({
   }, [])
 
   const effectiveId = selectedId ?? (customText ? 'custom' : null)
-  const effectiveLabel = selectedId
-    ? predictionOptions.find(o => o.id === selectedId)?.label ?? ''
-    : customText
+  
+  // Find label from options or use customText (will be refined by API)
+  const selectedOption = predictionOptions.find(o => o.id === selectedId)
+  const effectiveLabel = selectedOption?.label ?? customText
 
   async function handleLock() {
     if (!effectiveId) return
 
-    const userAddress = 'demo-user'
+    const userAddress = 'tester-0x123'
     const timestamp = Date.now()
+    
+    // Hash prediction for "on-chain" mock
     const hash = hashPrediction(storyId, effectiveId, userAddress, timestamp)
     setTxHash(hash)
 
     setLockPhase('hashing')
-    await delay(600)
+    await delay(800)
     setLockPhase('submitting')
 
-    // Fire-and-forget — don't block navigation on API response
-    fetch('/api/predict', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        storyId,
-        optionId: effectiveId,
-        optionLabel: effectiveLabel,
-        userAddress,
-        confidence,
-        justification: effectiveId === 'custom' ? customText : undefined,
-      }),
-    }).catch(() => { /* ignore */ })
-
-    await delay(600)
-    setLockPhase('locked')
-
-    // Save to sessionStorage for outcome page
     try {
-      sessionStorage.setItem('game_prediction', JSON.stringify({
-        storyId,
-        roleId,
-        optionId: effectiveId,
-        optionLabel: effectiveLabel,
-        confidence,
-        customText: effectiveId === 'custom' ? customText : undefined,
-        txHash: hash,
-      }))
-    } catch { /* ignore */ }
+      const res = await fetch('/api/predict', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          storyId,
+          optionId: effectiveId,
+          userAddress,
+          confidence,
+          justification: customText || undefined,
+        }),
+      })
+
+      if (res.ok) {
+        const data = await res.json()
+        // Save to sessionStorage for outcome page
+        sessionStorage.setItem('game_prediction', JSON.stringify({
+          storyId,
+          roleId,
+          optionId: data.prediction.optionId,
+          optionLabel: data.prediction.optionLabel,
+          confidence,
+          justification: customText || undefined,
+          txHash: hash,
+        }))
+      }
+    } catch (err) {
+      console.error('Prediction failed:', err)
+    }
 
     await delay(800)
+    setLockPhase('locked')
+    await delay(1000)
     router.push(`/story/${storyId}/outcome`)
   }
 
+  // Split options into Official vs Community
+  const officialOptions = predictionOptions.filter(o => !o.id.startsWith('community-'))
+  const communityOptions = predictionOptions.filter(o => o.id.startsWith('community-'))
+
   return (
     <div className="bg-surface text-on-surface min-h-screen flex flex-col">
-
       {/* Fixed background */}
       <div className="fixed inset-0 z-0">
         {backgroundUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={backgroundUrl} alt="" className="w-full h-full object-cover brightness-95" />
+          <img src={backgroundUrl} alt="" className="w-full h-full object-cover brightness-75 grayscale-[20%]" />
         ) : (
-          <div className="w-full h-full bg-on-surface/80" />
+          <div className="w-full h-full bg-slate-900" />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-surface via-surface/60 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-surface via-surface/40 to-transparent" />
       </div>
 
       {/* Header */}
-      <nav className="fixed top-0 w-full z-50 flex justify-between items-center px-8 py-4 bg-[#fefdf1]/80 backdrop-blur-md">
+      <nav className="fixed top-0 w-full z-50 flex justify-between items-center px-8 py-4 bg-surface/60 backdrop-blur-xl border-b border-white/5">
         <div className="text-2xl font-black text-primary italic font-headline tracking-tight">
-          The Illuminated Editorial
+          FutureLens <span className="text-on-surface/50 font-normal not-italic ml-2">strategic intel</span>
         </div>
         <div className="hidden md:flex gap-8 items-center">
-          <Link href="/" className="text-on-surface font-medium font-headline hover:text-primary transition-colors">Chronicle</Link>
-          <Link href="/archive" className="text-on-surface font-medium font-headline hover:text-primary transition-colors">Archives</Link>
+          <Link href="/" className="text-on-surface font-medium font-headline hover:text-primary transition-colors uppercase tracking-widest text-[11px]">Chronicle</Link>
+          <div className="h-4 w-px bg-white/10" />
+          <Link href="/archive" className="text-on-surface/60 font-medium font-headline hover:text-primary transition-colors uppercase tracking-widest text-[11px]">Archives</Link>
         </div>
       </nav>
 
       {/* Main */}
-      <main className="flex-grow pt-24 pb-40 flex flex-col items-center relative overflow-hidden">
-        <section className="relative z-10 w-full max-w-6xl px-6 mb-12">
-
-          {/* Section header */}
-          <div className="text-center mb-10">
-            <span className="inline-block px-4 py-1 bg-primary-container text-on-primary-container rounded-full font-headline text-xs font-bold tracking-widest mb-4">
-              COMMUNITY DIRECTIVES
+      <main className="flex-grow pt-24 pb-48 flex flex-col items-center relative z-10">
+        <section className="w-full max-w-6xl px-6">
+          <div className="text-center mb-12">
+            <span className="inline-block px-4 py-1 bg-primary/20 text-primary border border-primary/30 rounded-full font-headline text-[10px] font-bold tracking-[0.3em] mb-4 uppercase">
+              Phase 03: Strategic Directive
             </span>
-            <h2 className="font-headline text-4xl font-extrabold text-on-surface tracking-tight mb-2 uppercase">
-              Strategic Consensus
+            <h2 className="font-headline text-5xl font-black text-on-surface tracking-tighter mb-4 uppercase italic">
+              Deploy Your Consensus
             </h2>
-            <p className="text-on-surface-variant font-medium">
-              Real-time projections from the global intelligence network
+            <p className="text-on-surface-variant font-medium text-lg max-w-2xl mx-auto opacity-70">
+              Select an established baseline or contribute a unique strategic projection to the network.
             </p>
           </div>
 
-          {/* Directive cards + author panel */}
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
+            {/* Directives List */}
+            <div className="lg:col-span-8 flex flex-col gap-12">
+              
+              {/* Official Section */}
+              <div>
+                <h3 className="font-headline text-xs font-black tracking-[0.4em] text-primary mb-6 flex items-center gap-3 uppercase">
+                  <span className="w-8 h-px bg-primary/30" /> Baseline Projections
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {officialOptions.map(option => (
+                    <DirectiveCard
+                      key={option.id}
+                      option={option}
+                      isSelected={selectedId === option.id}
+                      onSelect={() => {
+                        setSelectedId(selectedId === option.id ? null : option.id)
+                        setCustomText('')
+                      }}
+                    />
+                  ))}
+                </div>
+              </div>
 
-            {/* Directive cards (3 col) */}
-            <div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-3 gap-6">
-              {predictionOptions.map((option) => {
-                const isSelected = selectedId === option.id
-                const isPopular = option.popular
-                return (
-                  <div
-                    key={option.id}
-                    className={`relative group p-6 rounded-xl bg-surface-container-lowest flex flex-col justify-between h-72 cursor-pointer transition-all ${
-                      isSelected
-                        ? 'border-2 border-primary shadow-xl shadow-primary/10'
-                        : isPopular
-                        ? 'border-2 border-primary shadow-xl shadow-primary/5'
-                        : 'border border-outline-variant/30 hover:border-secondary'
-                    }`}
-                    onClick={() => setSelectedId(isSelected ? null : option.id)}
-                  >
-                    {isPopular && (
-                      <div className="absolute -top-3 left-4">
-                        <span className="bg-primary text-white text-[10px] font-bold px-3 py-1 rounded-full flex items-center gap-1 shadow-md">
-                          ↑ MOST POPULAR
-                        </span>
-                      </div>
-                    )}
-                    <div>
-                      <div className="flex items-center gap-3 mb-4">
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm ${isPopular ? 'bg-primary/10 text-primary' : 'bg-secondary/10 text-secondary'}`}>
-                          {isPopular ? '🤝' : '🎯'}
-                        </div>
-                        <div className="flex flex-col">
-                          <span className="text-[10px] font-bold font-headline text-on-surface-variant uppercase tracking-tighter">
-                            Proposed by {option.proposedBy}
-                          </span>
-                          {isPopular && (
-                            <span className="text-[9px] font-bold text-primary">★ TRENDSETTER</span>
-                          )}
-                        </div>
-                      </div>
-                      <h3 className="font-headline font-bold text-xl text-on-surface mb-2 leading-tight">
-                        {option.label}
-                      </h3>
-                      <p className="text-on-surface-variant text-sm leading-relaxed line-clamp-3 italic">
-                        {option.description}
-                      </p>
-                    </div>
-                    <div className="flex items-center justify-between mt-4">
-                      <span className={`text-xs font-bold font-headline ${isPopular ? 'text-primary' : 'text-on-surface-variant'}`}>
-                        {option.votes.toLocaleString()} Votes
-                      </span>
-                      <button
-                        className={`px-4 py-2 rounded-full text-xs font-bold font-headline transition-all hover:scale-105 ${
-                          isSelected
-                            ? 'bg-primary text-on-primary'
-                            : isPopular
-                            ? 'bg-primary text-on-primary'
-                            : 'bg-surface-container text-on-surface hover:bg-secondary hover:text-white'
-                        }`}
-                        onClick={e => { e.stopPropagation(); setSelectedId(isSelected ? null : option.id) }}
-                      >
-                        {isSelected ? '✓ SELECTED' : 'SELECT'}
-                      </button>
-                    </div>
+              {/* Community Section */}
+              {communityOptions.length > 0 && (
+                <div>
+                  <h3 className="font-headline text-xs font-black tracking-[0.4em] text-secondary mb-6 flex items-center gap-3 uppercase">
+                    <span className="w-8 h-px bg-secondary/30" /> Community Insights
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {communityOptions.map(option => (
+                      <DirectiveCard
+                        key={option.id}
+                        option={option}
+                        isSelected={selectedId === option.id}
+                        isCommunity
+                        onSelect={() => {
+                          setSelectedId(selectedId === option.id ? null : option.id)
+                          setCustomText('')
+                        }}
+                      />
+                    ))}
                   </div>
-                )
-              })}
+                </div>
+              )}
             </div>
 
-            {/* Author directive panel */}
-            <div className="bg-surface-container/60 backdrop-blur-xl border border-primary/20 rounded-xl p-6 h-full flex flex-col">
-              <h4 className="font-headline font-extrabold text-sm text-primary uppercase tracking-widest mb-4 flex items-center gap-2">
-                ✏ Author Directive
-              </h4>
-              <p className="text-xs text-on-surface-variant mb-4 leading-relaxed font-medium">
-                Contribute your own strategic projection. High-performing directives earn <b>Trendsetter</b> status.
-              </p>
-              <textarea
-                className="flex-grow w-full bg-white border border-outline-variant/30 rounded-lg p-3 text-sm font-body placeholder:text-on-surface-variant/40 focus:ring-1 focus:ring-primary focus:border-primary mb-4 resize-none"
-                placeholder="Describe the outcome..."
-                rows={5}
-                value={customText}
-                onChange={e => {
-                  setCustomText(e.target.value)
-                  if (e.target.value) setSelectedId(null)
-                }}
-              />
-              <button
-                className="w-full py-4 bg-primary text-on-primary rounded-full font-headline font-bold text-xs uppercase tracking-widest shadow-lg shadow-primary/20 hover:scale-[1.02] transition-transform disabled:opacity-40"
-                disabled={!customText.trim()}
-                onClick={() => customText.trim() && handleLock()}
-              >
-                SUBMIT TO NETWORK
-              </button>
+            {/* Author Sidebar */}
+            <div className="lg:col-span-4 sticky top-28">
+              <div className="bg-white/5 backdrop-blur-3xl border border-white/10 rounded-2xl p-8 shadow-2xl overflow-hidden relative group">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 blur-3xl rounded-full -mr-16 -mt-16 group-hover:bg-primary/20 transition-colors" />
+                
+                <h4 className="font-headline font-black text-xs text-primary uppercase tracking-[0.2em] mb-6 flex items-center gap-3">
+                  <span className="p-1.5 bg-primary/10 rounded-lg">🖋</span> Contribute Intelligence
+                </h4>
+                
+                <p className="text-[13px] text-on-surface-variant mb-6 leading-relaxed opacity-70">
+                  Submit a custom outcome. Our strategic AI will refine your input into a professional directive for the network to verify.
+                </p>
+
+                <textarea
+                  className="w-full bg-black/40 border border-white/10 rounded-xl p-4 text-sm font-body placeholder:text-white/20 focus:ring-1 focus:ring-primary focus:border-primary/50 mb-4 resize-none min-h-[160px] transition-all"
+                  placeholder="Describe the geopolitical shift..."
+                  value={customText}
+                  onChange={e => {
+                    setCustomText(e.target.value)
+                    if (e.target.value) setSelectedId(null)
+                  }}
+                />
+
+                <button
+                  className="w-full py-4 bg-primary text-on-primary rounded-xl font-headline font-black text-[11px] uppercase tracking-[0.2em] shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-30 disabled:grayscale"
+                  disabled={!customText.trim() || lockPhase !== null}
+                  onClick={() => customText.trim() && handleLock()}
+                >
+                  SYNDICATE TO NETWORK
+                </button>
+              </div>
             </div>
           </div>
 
-          {/* Confidence + Lock bar */}
-          <div className="mt-12 flex flex-col md:flex-row items-center justify-between gap-8 p-6 bg-surface-container-low/80 backdrop-blur border border-outline-variant/10 rounded-full">
-            <div className="flex-grow flex items-center gap-8 w-full md:w-auto px-4">
-              <label className="font-headline font-bold text-[10px] text-on-surface-variant uppercase tracking-widest whitespace-nowrap">
-                Confidence Level
-              </label>
-              <div className="relative flex-grow">
+          {/* HUD Bar */}
+          <div className="mt-16 p-8 bg-white/5 backdrop-blur-2xl border border-white/10 rounded-3xl flex flex-col md:flex-row items-center justify-between gap-10 shadow-2xl">
+            <div className="flex-grow flex flex-col md:flex-row items-center gap-10 w-full md:w-auto px-4">
+              <div className="flex flex-col gap-1 min-w-[140px]">
+                <label className="font-headline font-black text-[10px] text-primary uppercase tracking-widest">
+                  Confidence
+                </label>
+                <span className="text-3xl font-black italic tracking-tighter text-on-surface">{confidence}%</span>
+              </div>
+              
+              <div className="relative flex-grow h-12 flex items-center">
                 <input
                   type="range"
                   min={0}
                   max={100}
                   value={confidence}
                   onChange={e => setConfidence(Number(e.target.value))}
-                  className="w-full h-1.5 bg-outline-variant/30 rounded-full appearance-none cursor-pointer accent-primary"
+                  className="w-full h-1 bg-white/10 rounded-full appearance-none cursor-pointer accent-primary"
                 />
-                <div className="flex justify-between mt-2 font-headline text-[9px] text-on-surface-variant/50 font-bold uppercase tracking-tighter">
-                  <span>Cautious</span>
-                  <span className="text-primary font-black">{confidence}%</span>
-                  <span>Absolute</span>
-                </div>
               </div>
             </div>
 
-            {/* Lock button / animation */}
-            {lockPhase === null ? (
-              <button
-                className="whitespace-nowrap px-10 py-4 bg-on-surface text-surface rounded-full font-headline font-extrabold tracking-widest text-xs flex items-center justify-center gap-3 hover:bg-primary transition-colors disabled:opacity-40"
-                disabled={!effectiveId}
-                onClick={handleLock}
-              >
-                🔒 LOCK PREDICTION
-              </button>
-            ) : (
-              <div className="whitespace-nowrap px-10 py-4 bg-on-surface text-surface rounded-full font-headline font-extrabold tracking-widest text-xs flex items-center justify-center gap-3 min-w-64">
-                {lockPhase === 'hashing' && <>⚙ Hashing prediction... ▓▓▓░░░</>}
-                {lockPhase === 'submitting' && <>📡 Submitting to L3... ▓▓▓▓▓░</>}
-                {lockPhase === 'locked' && <>✅ Locked · {txHash.slice(0, 10)}...</>}
-              </div>
-            )}
+            <div className="w-full md:w-auto">
+              {lockPhase === null ? (
+                <button
+                  className="w-full md:w-auto px-12 py-5 bg-on-surface text-surface rounded-2xl font-headline font-black tracking-[0.3em] text-xs flex items-center justify-center gap-3 hover:bg-primary hover:text-on-primary transition-all disabled:opacity-20 shadow-xl"
+                  disabled={!effectiveId}
+                  onClick={handleLock}
+                >
+                  <span className="text-lg">🔒</span> COMMENCE RECORDING
+                </button>
+              ) : (
+                <div className="w-full md:w-80 py-5 bg-primary/20 border border-primary/30 text-primary rounded-2xl font-headline font-black tracking-[0.2em] text-[10px] flex items-center justify-center gap-3 shadow-inner">
+                  {lockPhase === 'hashing' && <span className="animate-pulse">⚙ HASHING DATA...</span>}
+                  {lockPhase === 'submitting' && <span className="animate-pulse">📡 TRANSMITTING TO CHAIN...</span>}
+                  {lockPhase === 'locked' && <>✅ {txHash.slice(0, 16).toUpperCase()}</>}
+                </div>
+              )}
+            </div>
           </div>
         </section>
 
-        {/* Narrative anchor */}
-        <div className="relative z-20 w-full max-w-5xl px-6 mt-auto">
-          <div className="bg-surface-container-lowest/90 backdrop-blur border border-outline-variant/10 rounded-2xl p-8 flex flex-col md:flex-row gap-8 items-center shadow-[0_20px_50px_rgba(0,0,0,0.08)]">
-            <div className="relative flex-shrink-0">
-              <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-primary-container shadow-lg">
+        {/* Narrative Anchor */}
+        <div className="mt-20 w-full max-w-5xl px-6">
+          <div className="bg-black/60 backdrop-blur-xl border border-white/5 rounded-3xl p-10 flex flex-col md:flex-row gap-10 items-center">
+            <div className="relative">
+              <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-primary shadow-2xl">
                 {characterPortrait ? (
-                  // eslint-disable-next-line @next/next/no-img-element
                   <img src={characterPortrait} alt={characterName} className="w-full h-full object-cover" />
                 ) : (
                   <div className="w-full h-full bg-primary/20" />
                 )}
               </div>
-              <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-primary text-white font-headline text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-tighter whitespace-nowrap">
-                {characterName}
-              </div>
             </div>
             <div className="flex-grow text-center md:text-left">
-              <div className="flex items-center justify-center md:justify-start gap-2 mb-2">
-                <span className="text-primary text-sm">⚠</span>
-                <span className="font-headline font-bold text-[10px] uppercase tracking-[0.2em] text-on-surface-variant">
-                  Strategic Briefing
-                </span>
-              </div>
-              <p className="font-body text-xl md:text-2xl text-on-surface leading-snug italic">
+              <span className="font-headline font-black text-[10px] uppercase tracking-[0.4em] text-primary mb-3 block">Strategy Lead: {characterName}</span>
+              <p className="font-body text-2xl md:text-3xl text-on-surface leading-snug italic font-medium opacity-90">
                 &ldquo;{cliffhanger}&rdquo;
               </p>
             </div>
           </div>
         </div>
       </main>
+    </div>
+  )
+}
 
-      {/* Mobile bottom nav */}
-      <nav className="fixed bottom-0 w-full z-50 flex justify-around items-center px-6 pb-8 pt-4 bg-[#fefdf1]/90 backdrop-blur-xl shadow-[0_-8px_30px_rgb(53,58,38,0.06)] rounded-t-[2.5rem] md:hidden">
-        {[
-          { label: 'Continue', icon: '▶', active: true },
-          { label: 'Log', icon: '📋', active: false },
-          { label: 'Skip', icon: '⏩', active: false },
-        ].map(({ label, icon, active }) => (
-          <button key={label} className={`flex flex-col items-center justify-center p-3 rounded-full transition-all ${active ? 'bg-primary text-on-primary shadow-lg' : 'text-on-surface-variant/60'}`}>
-            <span className="text-lg">{icon}</span>
-            <span className="font-headline text-[9px] uppercase font-bold tracking-widest mt-1">{label}</span>
-          </button>
-        ))}
-      </nav>
+function DirectiveCard({ option, isSelected, onSelect, isCommunity = false }: { 
+  option: Directive, 
+  isSelected: boolean, 
+  onSelect: () => void,
+  isCommunity?: boolean
+}) {
+  return (
+    <div
+      className={`relative group p-8 rounded-2xl flex flex-col justify-between h-80 cursor-pointer transition-all duration-300 ${
+        isSelected
+          ? 'bg-primary/20 border-2 border-primary shadow-[0_0_40px_rgba(51,111,84,0.3)]'
+          : 'bg-white/5 border border-white/10 hover:border-white/30 hover:bg-white/[0.08]'
+      }`}
+      onClick={onSelect}
+    >
+      <div>
+        <div className="flex items-center justify-between mb-6">
+          <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-xl ${isCommunity ? 'bg-secondary/20 text-secondary' : 'bg-primary/20 text-primary'}`}>
+            {isCommunity ? '👤' : '🏢'}
+          </div>
+          <span className="font-headline font-bold text-[10px] text-on-surface/40 uppercase tracking-widest italic">
+            ID: {option.id.slice(0, 8)}
+          </span>
+        </div>
+        
+        <h3 className="font-headline font-black text-2xl text-on-surface mb-3 leading-tight tracking-tighter uppercase italic">
+          {option.label}
+        </h3>
+        <p className="text-on-surface/60 text-sm leading-relaxed font-medium">
+          {option.description}
+        </p>
+      </div>
+
+      <div className="flex items-center justify-between mt-auto pt-6 border-t border-white/5">
+        <div className="flex flex-col gap-0.5">
+          <span className="text-[10px] font-black text-on-surface/30 uppercase tracking-[0.1em]">PROPOSED BY</span>
+          <span className="text-[11px] font-black text-on-surface/70 truncate max-w-[120px] uppercase">
+             {option.proposedBy === 'system' ? 'Strategic AI' : option.proposedBy}
+          </span>
+        </div>
+        <div className={`px-4 py-2 rounded-lg text-[10px] font-black font-headline transition-all ${
+          isSelected ? 'bg-primary text-on-primary' : 'bg-white/10 text-on-surface/50 group-hover:bg-white/20'
+        }`}>
+          {isSelected ? 'SELECTED' : 'SELECT'}
+        </div>
+      </div>
     </div>
   )
 }

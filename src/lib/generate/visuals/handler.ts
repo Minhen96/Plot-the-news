@@ -1,38 +1,15 @@
-/**
- * images.ts
- *
- * Handles all image generation for FutureLens stories.
- *
- * generateStoryImages  — respects GENERATE_IMAGES env flag
- *   GENERATE_IMAGES=true  → calls FAL.ai at story creation time
- *   GENERATE_IMAGES=false → returns Picsum placeholders instantly (no API cost)
- *
- * generateFalImages    — always calls FAL.ai, ignores env flag
- *   Used by POST /api/stories/[id]/generate-images (on-demand, after story created)
- *
- * FAL.ai models:
- *   - Panel 1: fal-ai/flux/schnell (fast, cheap)
- *   - Panels 2–N: fal-ai/flux-pro/v1/redux with panel 1 as style reference (visual consistency)
- *   - Portraits: fal-ai/flux-realism (one per role)
- *   - Cover: Unsplash photo search, falls back to Picsum
- */
 import { fal } from "@fal-ai/client";
+import { GeneratedImages } from "../types";
 
 fal.config({ credentials: process.env.FAL_KEY });
-
-export interface GeneratedImages {
-  coverUrl: string;
-  panelUrls: string[];
-  portraitUrls: string[];
-}
 
 function usePlaceholders(): boolean {
   return process.env.GENERATE_IMAGES !== "true";
 }
 
 function picsumImages(
-  panels: { bgPrompt: string }[],
-  roles: { portraitPrompt: string }[],
+  panels: { bgPrompt?: string }[],
+  roles: { portraitPrompt?: string }[],
   existingCoverUrl?: string
 ): GeneratedImages {
   return {
@@ -42,10 +19,6 @@ function picsumImages(
   };
 }
 
-/**
- * Always calls FAL.ai — used by the on-demand generate-images route.
- * Does not check GENERATE_IMAGES env flag.
- */
 export async function generateFalImages(
   panels: { bgPrompt: string }[],
   roles: { portraitPrompt: string }[],
@@ -74,10 +47,6 @@ export async function generateFalImages(
   };
 }
 
-/**
- * Respects GENERATE_IMAGES env flag — used by the story creation route.
- * Returns Picsum placeholders when flag is false (no API cost during dev).
- */
 export async function generateStoryImages(
   panels: { bgPrompt: string }[],
   roles: { portraitPrompt: string }[],

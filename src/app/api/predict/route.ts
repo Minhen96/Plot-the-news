@@ -3,6 +3,11 @@ import { getStory } from "@/data/stories";
 import { getStoryById, upsertStory } from "@/lib/stories";
 import { addPrediction, getUserPredictionForStory } from "@/lib/predictions";
 import { hashPrediction, hashStory } from "@/lib/blockchain";
+import { refinePrediction } from "@/lib/generate";
+import { db } from "@/db";
+import { stories } from "@/db/schema";
+import { eq } from "drizzle-orm";
+import { v4 as uuidv4 } from "uuid";
 
 export async function POST(request: Request) {
   const body = await request.json();
@@ -27,9 +32,48 @@ export async function POST(request: Request) {
     await upsertStory(story).catch(() => { /* best-effort */ });
   }
 
-  const option = story.predictionOptions.find((o) => o.id === optionId);
-  if (!option) {
-    return NextResponse.json({ error: "Invalid option" }, { status: 400 });
+  let finalOptionId = optionId;
+  let finalOptionLabel = "";
+
+  if (optionId === 'custom') {
+    if (!justification) {
+      return NextResponse.json({ error: "Justification required for custom prediction" }, { status: 400 });
+    }
+
+    // Refine user input into a professional Directive
+    const refined = await refinePrediction(justification, {
+      title: story.title,
+      cliffhanger: story.cliffhanger ?? "",
+    });
+
+    const newOptionId = `community-${uuidv4().slice(0, 8)}`;
+    const newDirective = {
+      id: newOptionId,
+      label: refined.label,
+      description: refined.description,
+      votes: 1,
+      proposedBy: userAddress,
+      popular: false,
+    };
+
+    // Update story with new community directive
+    const currentOptions = story.predictionOptions || [];
+    const updatedOptions = [...currentOptions, newDirective];
+
+    await db
+      .update(stories)
+      .set({ predictionOptions: updatedOptions })
+      .where(eq(stories.id, storyId))
+      .catch(() => {});
+
+    finalOptionId = newOptionId;
+    finalOptionLabel = refined.label;
+  } else {
+    const option = story.predictionOptions.find((o) => o.id === optionId);
+    if (!option) {
+      return NextResponse.json({ error: "Invalid option" }, { status: 400 });
+    }
+    finalOptionLabel = option.label;
   }
 
   const existing = await getUserPredictionForStory(userAddress, storyId);
@@ -41,18 +85,21 @@ export async function POST(request: Request) {
   }
 
   const timestamp = Date.now();
-  const predictionHash = hashPrediction(storyId, optionId, userAddress, timestamp);
+  
+  // TODO: Implement on-chain recording
+  // The prediction and story hashes are calculated here but not yet sent to a contract.
+  const predictionHash = hashPrediction(storyId, finalOptionId, userAddress, timestamp);
   const storyHash = hashStory(storyId);
 
   const prediction = await addPrediction({
     storyId,
     userAddress,
-    optionId,
-    optionLabel: option.label,
-    confidence: confidence ?? 3,
+    optionId: finalOptionId,
+    optionLabel: finalOptionLabel,
+    confidence: confidence ?? 75,
     justification: justification ?? null,
     timestamp,
-    txHash: undefined,
+    txHash: undefined, // TODO: Store real transaction hash after on-chain record
     resolved: false,
     correct: undefined,
   });
@@ -62,10 +109,11 @@ export async function POST(request: Request) {
     blockchain: {
       predictionHash,
       storyHash,
-      message: "Sign this transaction in your wallet to record your prediction on-chain",
+      // TODO: Replace with real contract interaction in the future
+      message: "Sign this transaction in your wallet to record your prediction on-chain (SIMULATED)",
       contractCall: {
         method: "registerPrediction",
-        args: [storyHash, predictionHash, confidence ?? 3],
+        args: [storyHash, predictionHash, confidence ?? 75],
       },
     },
   });

@@ -1,15 +1,5 @@
-/**
- * deepseek.ts
- *
- * Calls DeepSeek (OpenAI-compatible API) to generate a full FutureLens story
- * from a news headline and description.
- *
- * Returns a typed DeepSeekStoryOutput containing article content, roles,
- * visual novel panels, and prediction options — ready to assemble into a Story.
- *
- * Used by: src/app/api/stories/generate/route.ts
- */
 import OpenAI from "openai";
+import { StoryGenerationOutput } from "../types";
 
 const deepseek = new OpenAI({
   apiKey: process.env.DEEPSEEK_API_KEY,
@@ -50,8 +40,7 @@ Generate a complete scenario as JSON with this exact shape:
       "stats": { "strategic": <0-100>, "stability": <0-100> },
       "keyPlayerStance": "e.g. Defensive / High Alert",
       "portraitPrompt": "FAL.ai prompt for cinematic character portrait, photorealistic"
-    },
-    { "id": "faction-slug-2", "name": "...", "faction": "...", "quote": "...", "stats": { "strategic": 0, "stability": 0 }, "keyPlayerStance": "...", "portraitPrompt": "..." }
+    }
   ],
   "panels": [
     {
@@ -59,10 +48,8 @@ Generate a complete scenario as JSON with this exact shape:
       "characterIndex": 0,
       "sectorBadge": "Location name e.g. Eastern Basin Alpha",
       "dialogue": "2-3 sentence in-character monologue, dramatic, present tense",
-      "bgPrompt": "Descriptive FAL.ai image prompt for this specific physical location. (e.g. 'Dark neon-lit hackerspace, glowing monitors, cinematic lighting, wide angle'). MUST BE UNIQUE for each scene."
-    },
-    { "id": "scene-2", "characterIndex": 0, "sectorBadge": "Different location...", "dialogue": "...", "bgPrompt": "Unique image prompt for this completely new location..." },
-    { "id": "scene-3", "characterIndex": 0, "sectorBadge": "Another location...", "dialogue": "...", "bgPrompt": "Unique image prompt for this third distinct location..." }
+      "bgPrompt": "Descriptive FAL.ai image prompt for this specific physical location."
+    }
   ],
   "predictionOptions": [
     {
@@ -72,51 +59,12 @@ Generate a complete scenario as JSON with this exact shape:
       "votes": <integer 3000-12000>,
       "proposedBy": "username like Stratos_Alpha",
       "popular": true
-    },
-    { "id": "option-slug-2", "label": "...", "description": "...", "votes": 0, "proposedBy": "...", "popular": false },
-    { "id": "option-slug-3", "label": "...", "description": "...", "votes": 0, "proposedBy": "...", "popular": false }
+    }
   ],
   "refs": [
     { "title": "Source title", "source": "Publication name", "url": "#" }
   ]
 }`;
-}
-
-export interface DeepSeekStoryOutput {
-  summary: string;
-  category: string;
-  crisisLevel: number;
-  coverEmoji: string;
-  coverImageQuery: string;
-  articleBody: string[];
-  historicalContext: string;
-  historicalEvidence: { title: string; quote: string; summary: string };
-  cliffhanger: string;
-  roles: {
-    id: string;
-    name: string;
-    faction: string;
-    quote: string;
-    stats: { strategic: number; stability: number };
-    keyPlayerStance: string;
-    portraitPrompt: string;
-  }[];
-  panels: {
-    id: string;
-    characterIndex: number;
-    sectorBadge: string;
-    dialogue: string;
-    bgPrompt: string;
-  }[];
-  predictionOptions: {
-    id: string;
-    label: string;
-    description: string;
-    votes: number;
-    proposedBy: string;
-    popular: boolean;
-  }[];
-  refs: { title: string; source: string; url: string }[];
 }
 
 /**
@@ -127,7 +75,7 @@ export async function generateStoryContent(
   description: string,
   source?: string,
   fullContent?: string | null
-): Promise<DeepSeekStoryOutput> {
+): Promise<StoryGenerationOutput> {
   const response = await deepseek.chat.completions.create({
     model: "deepseek-chat",
     max_tokens: 4096,
@@ -139,6 +87,5 @@ export async function generateStoryContent(
   });
 
   const rawText = response.choices[0].message.content ?? "";
-
-  return JSON.parse(rawText) as DeepSeekStoryOutput;
+  return JSON.parse(rawText) as StoryGenerationOutput;
 }

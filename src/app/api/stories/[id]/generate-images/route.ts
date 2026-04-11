@@ -13,7 +13,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getStory } from "@/data/stories";
 import { getStoryById, upsertStory } from "@/lib/stories";
-import { generateFalImages } from "@/lib/generate/images";
+import { generateFalImages } from "@/lib/generate";
 
 export async function POST(
   _req: NextRequest,

@@ -13,7 +13,7 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 import { fetchLatestNews } from "@/lib/newsdata";
-import { scrapeArticleText } from "@/lib/generate/scraper";
+import { scrapeArticleText } from "@/lib/generate";
 import { db } from "@/db";
 import { news } from "@/db/schema";
 import { inArray } from "drizzle-orm";

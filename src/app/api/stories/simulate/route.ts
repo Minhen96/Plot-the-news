@@ -17,7 +17,7 @@ import { getStoryById } from "@/lib/stories";
 import { db } from "@/db";
 import { stories } from "@/db/schema";
 import { eq } from "drizzle-orm";
-import { generateSimulation } from "@/lib/generate/simulate";
+import { generateSimulation } from "@/lib/generate";
 import type { SimulationPhase } from "@/lib/types";
 
 // Pre-built simulation data for the demo story — used when DeepSeek is unavailable

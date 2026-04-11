@@ -1,14 +1,3 @@
-/**
- * simulate.ts
- *
- * Calls DeepSeek to generate a 3-phase geopolitical simulation timeline
- * for a given story + prediction option.
- *
- * Returns SimulationPhase[] enriched with probability, operationalStatus,
- * and causalFactors for the Intel Analysis panel on the Outcome screen.
- *
- * Used by: src/app/api/stories/simulate/route.ts
- */
 import OpenAI from "openai";
 import type { SimulationPhase } from "@/lib/types";
 
