@@ -1,26 +1,27 @@
-# 📰 02. Media Verification: Training the Epistemic Muscle
+# 📰 02. Media Verification: Learning to Spot the Truth
 
-To survive in an age of misinformation, you need more than just "facts"—you need **Epistemic Resilience**. Information is not neutral; it is framed, curated, and often weaponized. FutureLens is designed to help you deconstruct these narratives rather than being consumed by them.
+To survive in a world full of misinformation, it's not enough to just read "facts." You need to learn how to judge them. This is what we call **Epistemic Resilience**—the ability to find the truth even when the news is trying to bias you.
 
-## Subverting "System 1" Architecture
-Most social media platforms are masterfully engineered for **"System 1" thinking**—the instinctive, emotional, and rapid-fire cognitive processing that leads to echo chambers and impulsive reactions. FutureLens is architected to do the opposite: it subverts the Dopamine Loop and encourages **"System 2" thinking**—analytical, reflective, and critical.
+## The Problem: We Don’t Trust the News
+The world is facing a trust crisis. New data from 2025 shows that **50% of young people see the media as a threat**, while only **17% see it as helpful**.3 When people don’t trust the news, they stop caring about reality.
 
-### The Power of Strategic Friction
-We believe that thinking takes time. Instead of infinite scrolls and instant likes, we introduce **Strategic Friction**.
-*   **Cognitive Gates**: Before you can place a prediction or commit to a simulation, the platform requires you to pause and evaluate. 
-*   **The Multi-Source Baseline**: We synthesize news from across the political spectrum (Left, Center, and Right). Before you play, you must navigate the "Raw Reality"—seeing how different outlets frame the same geopolitical shock.
+### How Isolation Leads to Bad Decisions
+If you only watch 15-second social media clips, you missing the "Big Picture." This leads to **Bad Decisions**—like voting for a policy you don't understand or making a prediction that is doomed to fail. FutureLens solves this by making you see the **entire context**.
 
 ---
 
-## Deconstructing the "Blindspots"
-Algorithmic feeds are designed to "agree with you." They hide information that might challenge your existing worldview, creating systemic **Epistemic Vulnerability**. 
-FutureLens identifies these **Blindspots**. We visually demonstrate coverage distribution—quantifying bias so you can see what is being omitted and who is providing exclusive narratives.
+## Moving from System 1 to System 2 Thinking
+Most apps want you to react with your emotions (**System 1**). This leads to echo chambers where everyone just agrees with each other. FutureLens encourages you to use your logic instead (**System 2**).
 
-## Source Credibility and Narrative Forensics
-We move beyond binary "True or False" labels. Our system employs **Source Credibility Scoring** to help users evaluate the weight of evidence.
-*   **Factuality Analysis**: We prioritize sources with a proven record of high-integrity journalism while algorithmically penalizing unverified rumors.
-*   **Framing Forensics**: By identifying framing variations, we expose users to the meta-narrative of a story. You don't just learn the news; you learn how the news is being "spun" globally.
+### Why We Make You Pause (Strategic Friction)
+We believe that thinking takes time. We don't want you to just "like" a post; we want you to understand it. 
+*   **Cognitive Gates**: Before you can make a major decision or a prediction, our app will make you pause and look at the evidence.
+*   **The Multi-Source Baseline**: We show you news from all sides—Left, Center, and Right. You have to see how different groups are "spinning" the story before you can play the game.
 
-By slowing down the engagement process, we inoculate the user against manipulative narratives and foster the analytical reasoning required for sound geopolitical forecasting.
+## Spotting the "Blindspots"
+Apps usually only show you things you already agree with. This creates **Blindspots**—important news that you are missing. FutureLens finds these gaps and shows them to you. We calculate a **Source Credibility Score** for every article, so you know who is telling the truth and who is leaving things out.
 
-**"FutureLens turns reading into a deliberate act of verification."**
+**"FutureLens turns reading into evidence-based judging—the only cure for bad decisions in a fake-news world."**
+
+---
+*For a full list of research data, statistics, and citations used in this guide, please see our [**Works Cited & Resources**](99-works_cited.md).*

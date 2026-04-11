@@ -1,20 +1,20 @@
-# 🤖 04. AI Simulation: Forensic Forecasting & Reflexivity
+# 🤖 04. AI Simulation: Seeing the Ripple Effects
 
-Traditional news is a passive thermometer; it simply measures the "temperature" of the current moment. FutureLens is a **thermostat**—a system that simulations how decisions shape reality. We use AI to solve the **"Consequence Awareness Gap,"** helping users understand that geopolitical events are not isolated data points, but interconnected cascades.
+Most news apps tell you what happened *now*. FutureLens tells you what might happen *next*. We use AI to solve the **"Consequence Gap"**—the fact that most of us don't realize how one small news event can lead to huge changes in our lives.
 
-## Beyond the Digital Twin: Dynamic World Modeling
-While many systems aim for a static "digital twin," FutureLens uses AI to build a **Dynamic World Model**. By tapping into planetary-scale data pipelines like GDELT—which monitors news in 100+ languages—our AI detects shifting emotional tones and emerging conflicts long before they reach the mainstream.
+## Real-Time World Modeling
+We don't just "summarize" the news. Our AI builds a living model of the world. It looks at millions of news stories in 100+ languages to find the patterns that most of us miss. 
 
-We ingest this information to highlight the **"If this, then what?"** scenarios. What if a major maritime route is closed? What if a specific trade tariff is imposed? Our simulation engine calculates the probable ripple effects across short, mid, and long-term horizons, giving users **Consequence Intimacy** with their choices.
+This engine is built for the **64% of young people** who are worried about their economic survival. It shows you that political decisions aren't just for TV—they directly affect the price of your food, your job prospects, and your safety.
 
 ---
 
-## Forensic Forensics & Timeline Replay
-History is not just what happened; it is a sequence of choices. Our **Event Timeline Replay** feature allows users to visualize how a single choice (e.g., a regional alliance) leads to specific downstream outcomes.
-*   **Trace the Chain**: See the direct mathematical and narrative link between a news event and its future simulated state.
-*   **The Power of Reflexivity**: Our simulations account for how market beliefs and public sentiment are not just "observations"—they are active forces that shape the final outcome. In FutureLens, your predictions and choices are part of the world being modeled.
+## Seeing How One Event Cascades
+If you raise a tax on trade, what happens next? 
+*   **Trace the Chain**: Our AI shows you the direct link between a news event and its real-world impact. High gas prices -> higher shipping costs -> higher grocery bills.
+*   **Interactive Forecasts**: The simulation isn't just about reading; it's about seeing. Our AI calculates the short-term and long-term effects of your choices so you can practice thinking like a global strategist.
 
-## Combating AI Hallucinations
-To ensure our simulations are educational and rigorous, we customize our LLM models with established bodies of political science and historical wargaming knowledge. This ensures that the simulated futures are **geopolitically logical** and high-fidelity, preventing the "hallucinated" outcomes common in generic AI models. We don't just generate stories; we generate **plausible futures**.
+## Plausible Futures, Not AI Hallucinations
+We make sure our AI is grounded in real political science and history. It's not just making up "cool stories." It's showing you **plausible futures**—things that could actually happen based on how the world works. This helps you build a better "muscle" for predicting what will happen in the real world.
 
-**“We don't just help people follow the news—we help them think through the future.”**
+**“We don't just show what happened—we show the 'if this, then what' of the future.”**

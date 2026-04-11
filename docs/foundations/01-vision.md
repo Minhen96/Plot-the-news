@@ -1,31 +1,52 @@
-# 🔭 01. The Vision: A Manifesto of Civic Agency
+# 🔭 01. The Vision: Why We Need FutureLens
 
-## The Crisis of Epistemic Fragmentation
-The contemporary global political landscape is characterized by a profound paradox: younger generations possess unprecedented, instantaneous access to planetary-scale information, yet they exhibit historically significant levels of political alienation. We are living through an **Attention Economy** optimized for emotional triggers, where the depth of human understanding is often sacrificed for the speed of a scroll.
+## The Problem: Information Without Action
+Today, young people have more information at their fingertips than any generation in history. Yet, they feel more disconnected from politics and world events than ever before. Why? 
 
-This has led to a state of **Epistemic Fragmentation**—a collapse in shared factual reality. When information is consumed passively through algorithms that reinforce existing biases, users lose the ability to see the world as a complex, multi-dimensional system. They become spectators of global shocks rather than participants.
+FutureLens transforms the news from a boring feed you scroll through into a **Civic Simulation Layer**. We turn spectators into active participants who learn how to make a real difference.
 
-## Our Mission: Reclaiming the Narrative
-FutureLens was born from a simple, radical idea: **What if we could transition from passive "Doom-scrolling" to active, consequential decision-making?**
+### The Numbers: A Generation Tuning Out
+Real-world data shows that this generation is under a lot of pressure. In the 2024 U.S. elections, only 47% of young people (aged 18–29) voted—a drop from 2020.1
 
-We are building more than a news app. We are building a **Civic Simulation Layer** for the next generation. Our mission is to transform news consumption into a journey of discovery, where people don’t just read headlines—they play through the consequences, challenge their own biases, and develop the intellectual agency to shape the future.
+| State | Youth Turnout (2024) | Why? (Policy Context) |
+| :--- | :--- | :--- |
+| **Minnesota** | 62% | Easy: Voted automatically when at the DMV.1 |
+| **Michigan** | 58% | Active: Lots of voting resources and access.1 |
+| **Maine** | 60% | Friendly: Can register and vote on the same day.1 |
+| **New Jersey** | 54% | Mixed: Fewer young people felt interested this time.1 |
+| **Oklahoma** | 33% | Hard: No online registration or early sign-up.1 |
 
 ---
 
-## The Problem Fit: Why Now?
-### 1. The Death of Institutional Trust
-As traditional pillars of statecraft and legacy media face a systemic collapse in trust, youth are migrating toward personality-led and algorithmic platforms. While these platforms democratize access, they inherently incentivize **System 1 Thinking**—instinctive, rapid, and often reactionary.
+## Three Ways Young People Feel (Gen Z Profiles)
+Research shows that young people today usually fall into one of three groups. FutureLens is built to reach all of them:
 
-### 2. The Consequence awareness Gap
-Traditional news explains *what happened*, but it leaves the *why* and the *what's next* as abstract mysteries. This prevents people from understanding how a single trade agreement or a regional conflict cascades into long-term geopolitical shifts.
+1.  **"I Care but Don’t Act" (Passive - 63%)**: People who like democracy but don't know how to get involved. They read news but feel like they can't change anything.
+2.  **"I’m Checked Out" (Dismissive - 31%)**: People who have completely given up on "the system" because they don't trust it.
+3.  **"I’m Angry" (Hostile - 7%)**: People who are so polarized and upset that they are open to extreme ideas because there’s no place for calm, structured debate.
 
-### 3. The Identity Void
-Younger generations want to express their ideas and build a reputation, but existing platforms reward **Attention** over **Thought**. There is no "Safe Harbor" for structured debate and verifiable analytical rigor.
+### 🇲🇾 Spotlight: Malaysia and the "Literacy Gap"
+In Malaysia, the **Undi18** move lowered the voting age to 18. While lots of young people voted in GE15 (around 75–79%), many did so as a "protest" without knowing the full story. 
 
-## The FutureLens Solution
-FutureLens turns the raw data of the world into a **Playable Geopolitical Experience**. 
-*   **From Passive to Interactive**: We transform the act of reading into an act of participation.
-*   **From Single-Source to Multi-Perspective**: we force a confrontation with diverse realities.
-*   **From Theoretical to Consequential**: We provide a simulation where every decision has a simulated ripple effect, anchored by on-chain predictions.
+When you vote based on a 15-second TikTok clip, you might make a choice that doesn't help you in the long run. FutureLens fixes this by making sure you understand the **entire context** before you make a prediction about the future.
+
+---
+
+## 🌩️ Politics is Personal (Money & Survival)
+For young people, politics isn't just a debate—it's about survival.
+*   **Cost of Living**: 64% of young people say inflation and high prices are their #1 problem.
+*   **Failed Systems**: Only 16% of young Americans believe the current system is working for them.1
+
+FutureLens shows you the **real consequences** of global events. When you make a decision in our simulation, the AI calculates how it will affect your wallet, your job prospects, and your local community.
+
+---
+
+## Our Mission: Moving from System 1 to System 2 Thinking
+Most apps want you to react with your emotions (**System 1**). This leads to echo chambers where everyone just agrees with each other. FutureLens encourages you to use your logic instead (**System 2**).
+
+If you want to predict the future, you have to understand the context first.
 
 **“We don’t just help people follow the news—we help them think through the future.”**
+
+---
+*For a full list of research data, statistics, and citations used in this manifesto, please see our [**Works Cited & Resources**](99-works_cited.md).*

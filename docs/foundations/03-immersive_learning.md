@@ -1,26 +1,26 @@
-# 🎮 03. Immersive Learning: The Journey of Transformation
+# 🎮 03. Immersive Learning: Learning by Doing
 
-Traditional civic technology often fails because it treats participation as a dry, academic obligation. At FutureLens, we understand that to engage the next generation, we must transition from **"Transactional Mobilizing"** to **"Transformational Organizing."** We don't just ask you to click a button; we ask you to synthesize a world.
+Most news apps are boring because they just want you to read and comment. FutureLens is different. We believe that to understand the world, you have to **live in it.** We turn a generation of "Passive Readers (63%)" into active participants who learn through experience.
 
-## The Power of Participatory Wargaming
-By turning news headlines into interactive **Visual Novels**, we make geopolitical education deeply personal and visceral. You are no longer reading about a conflict in a distant land; you are assuming the role of a stakeholder tasked with navigating it.
+## The Rule: Mastery Before Prediction
+In FutureLens, you aren't allowed to just guess. To click the "Predict" or "Decide" button, you have to prove you understand the story first. **Bad decisions happen when you have power without knowledge.** 
 
-Whether you are a **Head of State** deciding on trade sanctions, or a **Regional Guard** defending a sovereign coastline, the visual novel format acts as a powerful accelerant for critical thinking. It captures the nuance, the human cost, and the profound trade-offs of global statecraft in a way that long-form essays never can.
+Our Visual Novels put you in the middle of real news stories. You aren't just reading about a trade war; you are the one deciding whether to raise taxes or sign a treaty. But the game won't let you win if you haven't read the multi-source briefs. **To see the future, you have to master the present.**
 
 ---
 
-## The 7-Step Journey of Agency
-The FutureLens experience is architected around a specific pedagogical "Experience Loop"—a cycle designed to build collective efficacy through participation:
+## The 7-Step Experience Loop
+Every story in FutureLens follows a simple 7-step path to help you learn:
 
-1.  **READ**: Access the Foundation. You parse multi-source briefs to establish an unassailable factual baseline.
-2.  **CHOOSE**: Commit to a Faction. By assumed a specific stakeholder perspective, you begin the process of perspective-shifting.
-3.  **PLAY**: Enter the Narrative. You live the news as an active participant in our branching visual-novel world.
-4.  **DECIDE**: Exercise Agency. Every choice you make in the narrative is a test of your geopolitical intuition.
-5.  **PREDICT**: Lock Conviction. You move from theory to high-stakes forecasting, anchoring your belief on-chain.
-6.  **SIMULATE**: Witness Consequences. Our AI calculates the ripple effect of your decisions across time and space.
-7.  **COMPARE**: Refine Synthesis. You compare your simulated timeline with peers, discovering the diverse ways a single event can unfold.
+1.  **READ**: Get the facts. Read the multi-source briefs to find the "middle ground" of truth.
+2.  **CHOOSE**: Pick a side. Assumed a role so you can see how an event feels for different people.
+3.  **PLAY**: Step into the story. Live the news through an interactive, branching visual-novel.
+4.  **DECIDE**: Make a choice. Use your power to change the outcome of the story.
+5.  **PREDICT**: Lock in your belief. Put your reputation on the line by predicting what will happen in the real world.
+6.  **SIMULATE**: See the ripple effect. Watch the AI calculate how your choice affects the world's economy and stability.
+7.  **COMPARE**: Learn from others. See how your choices compare to the real world and other players.
 
-## Collaborative Intelligence
-FutureLens is not a solitary experience. We foster **Community Playthroughs** where groups can debate strategies and witness how collective choices lead to drastically different future scenarios. We provide structured prompts during these sessions—asking users to identify their evidence and underlying assumptions—transforming a simulation into a rigorous dialectical process.
+## Building Real Knowledge
+In places like **Malaysia**, many young people vote as a "protest" without knowing the full story. This tool helps close that **Knowledge Gap**. Instead of reacting to a 15-second TikTok video, you learn the complex rules of the world by playing through them.
 
-**"FutureLens turns every headline into a playable geopolitical strategy."**
+**"FutureLens = The bridge between just voting and actually understanding."**
