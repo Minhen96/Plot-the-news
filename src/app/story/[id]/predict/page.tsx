@@ -9,7 +9,8 @@ export default async function PredictPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
-  const story = getStory(id) ?? await getStoryById(id).catch(() => undefined)
+  // DB first (has real FAL.ai images) → static demo story fallback
+  const story = await getStoryById(id).catch(() => undefined) ?? getStory(id)
 
   if (!story) notFound()
 

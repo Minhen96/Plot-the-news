@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 import Header from '@/components/Header'
 import RoleSelector from '@/components/RoleSelector'
 import { getStory } from '@/data/stories'
+import { getStoryById } from '@/lib/stories'
 
 export default async function RoleSelectionPage({
   params,
@@ -9,7 +10,8 @@ export default async function RoleSelectionPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
-  const story = getStory(id)
+  // DB first (has real FAL.ai images) → static demo story fallback
+  const story = await getStoryById(id).catch(() => undefined) ?? getStory(id)
   if (!story) notFound()
 
   return (

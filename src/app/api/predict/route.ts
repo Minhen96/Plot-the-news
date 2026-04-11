@@ -15,8 +15,8 @@ export async function POST(request: Request) {
     );
   }
 
-  // Find story — static first, then DB
-  let story = getStory(storyId) ?? await getStoryById(storyId).catch(() => undefined);
+  // Find story — DB first, then static
+  let story = await getStoryById(storyId).catch(() => undefined) ?? getStory(storyId);
   if (!story) {
     return NextResponse.json({ error: "Story not found" }, { status: 404 });
   }
