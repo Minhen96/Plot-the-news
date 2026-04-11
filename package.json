@@ -10,6 +10,7 @@
     "db:push": "drizzle-kit push"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.88.0",
     "@fal-ai/client": "^1.9.5",
     "@mozilla/readability": "^0.6.0",
     "@privy-io/react-auth": "^3.20.0",
@@ -34,6 +35,7 @@
     "drizzle-kit": "^0.31.10",
     "eslint": "^9",
     "eslint-config-next": "16.2.2",
+    "solc": "^0.8.34",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
