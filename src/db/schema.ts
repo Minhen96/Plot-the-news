@@ -10,6 +10,21 @@ import {
   jsonb
 } from 'drizzle-orm/pg-core';
 
+// SQL to create the analyses table (run once in Supabase SQL editor):
+//
+// CREATE TABLE IF NOT EXISTS analyses (
+//   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+//   story_id TEXT NOT NULL,
+//   option_id TEXT,
+//   prediction_id TEXT,
+//   is_custom BOOLEAN DEFAULT false,
+//   factors TEXT[] DEFAULT '{}',
+//   evidence JSONB DEFAULT '[]',
+//   reasoning TEXT,
+//   status TEXT DEFAULT 'pending',
+//   created_at TIMESTAMPTZ DEFAULT now()
+// );
+
 // 1. Profiles Table
 export const profiles = pgTable('profiles', {
   id: uuid('id').primaryKey(),
@@ -61,7 +76,21 @@ export const stories = pgTable('stories', {
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 });
 
-// 4. Predictions Table
+// 4. Analyses Table — multi-agent AI analysis per story × option
+export const analyses = pgTable('analyses', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  storyId: text('story_id').notNull(),
+  optionId: text('option_id'),
+  predictionId: text('prediction_id'),
+  isCustom: boolean('is_custom').default(false),
+  factors: text('factors').array().default([]),
+  evidence: jsonb('evidence').default([]),
+  reasoning: text('reasoning'),
+  status: text('status', { enum: ['pending', 'ready'] }).default('pending'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+// 5. Predictions Table
 export const predictions = pgTable('predictions', {
   id: uuid('id').defaultRandom().primaryKey(),
   storyId: text('story_id').references(() => stories.id, { onDelete: 'cascade' }),

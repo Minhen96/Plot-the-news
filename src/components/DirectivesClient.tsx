@@ -3,7 +3,9 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { hashPrediction } from '@/lib/blockchain'
+import { usePrivy } from '@privy-io/react-auth'
+import { hashPrediction, hashStory } from '@/lib/blockchain'
+import { useRegisterPrediction } from '@/lib/wallet'
 import type { Directive } from '@/lib/types'
 
 interface Props {
@@ -30,6 +32,8 @@ export default function DirectivesClient({
   backgroundUrl,
 }: Props) {
   const router = useRouter()
+  const { user } = usePrivy()
+  const registerOnChain = useRegisterPrediction()
 
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [confidence, setConfidence] = useState(75)
@@ -54,46 +58,66 @@ export default function DirectivesClient({
   async function handleLock() {
     if (!effectiveId) return
 
-    const userAddress = 'tester-0x123'
+    // Use real wallet address when authenticated, fall back to demo for dev
+    const userAddress = user?.wallet?.address ?? 'demo-user'
     const timestamp = Date.now()
-    
-    // Hash prediction for "on-chain" mock
-    const hash = hashPrediction(storyId, effectiveId, userAddress, timestamp)
-    setTxHash(hash)
+    const localHash = hashPrediction(storyId, effectiveId, userAddress, timestamp)
+    setTxHash(localHash)
 
     setLockPhase('hashing')
     await delay(800)
     setLockPhase('submitting')
 
-    try {
-      const res = await fetch('/api/predict', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          storyId,
-          optionId: effectiveId,
-          userAddress,
-          confidence,
-          justification: customText || undefined,
-        }),
-      })
+    // Save prediction to DB (fire-and-forget)
+    fetch('/api/predict', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        storyId,
+        optionId: effectiveId,
+        optionLabel: effectiveLabel,
+        userAddress,
+        confidence,
+        justification: effectiveId === 'custom' ? customText : undefined,
+      }),
+    }).catch(() => { /* ignore */ })
 
-      if (res.ok) {
-        const data = await res.json()
-        // Save to sessionStorage for outcome page
-        sessionStorage.setItem('game_prediction', JSON.stringify({
-          storyId,
-          roleId,
-          optionId: data.prediction.optionId,
-          optionLabel: data.prediction.optionLabel,
-          confidence,
-          justification: customText || undefined,
-          txHash: hash,
-        }))
-      }
-    } catch (err) {
-      console.error('Prediction failed:', err)
+    // Attempt on-chain registration in the background — update txHash if it succeeds
+    if (user?.wallet?.address) {
+      const storyHashBytes = hashStory(storyId)
+      registerOnChain({
+        storyHash: storyHashBytes,
+        predictionHash: localHash,
+        confidence,
+      })
+        .then(({ txHash: confirmedHash }) => {
+          setTxHash(confirmedHash)
+          try {
+            const stored = sessionStorage.getItem('game_prediction')
+            if (stored) {
+              const parsed = JSON.parse(stored)
+              sessionStorage.setItem('game_prediction', JSON.stringify({ ...parsed, txHash: confirmedHash }))
+            }
+          } catch { /* ignore */ }
+        })
+        .catch(() => { /* wallet rejected or no contract — local hash stays */ })
     }
+
+    await delay(600)
+    setLockPhase('locked')
+
+    // Save to sessionStorage for outcome page
+    try {
+      sessionStorage.setItem('game_prediction', JSON.stringify({
+        storyId,
+        roleId,
+        optionId: effectiveId,
+        optionLabel: effectiveLabel,
+        confidence,
+        customText: effectiveId === 'custom' ? customText : undefined,
+        txHash: localHash,
+      }))
+    } catch { /* ignore */ }
 
     await delay(800)
     setLockPhase('locked')

@@ -104,6 +104,14 @@ export async function POST(request: Request) {
     correct: undefined,
   });
 
+  // Kick off multi-agent analysis in the background (best-effort)
+  if (optionId !== 'custom') {
+    fetch(
+      `${process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'}/api/analysis/${storyId}/${optionId}`,
+      { method: 'GET' }
+    ).catch(() => { /* ignore */ })
+  }
+
   return NextResponse.json({
     prediction,
     blockchain: {
