@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import type { Scene, Role } from '@/lib/types'
@@ -21,6 +21,7 @@ export default function PlayClient({ storyId, panels: initialPanels, roles: init
   const [currentPanel, setCurrentPanel] = useState(0)
   const [displayed, setDisplayed] = useState('')
   const [isTyping, setIsTyping] = useState(true)
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   // On-demand image generation: if panels have Picsum placeholders, generate real images
   useEffect(() => {
@@ -57,20 +58,20 @@ export default function PlayClient({ storyId, panels: initialPanels, roles: init
     setDisplayed('')
     setIsTyping(true)
     let i = 0
-    const interval = setInterval(() => {
+    intervalRef.current = setInterval(() => {
       i++
       setDisplayed(full.slice(0, i))
       if (i >= full.length) {
-        clearInterval(interval)
+        clearInterval(intervalRef.current!)
         setIsTyping(false)
       }
     }, 28)
-    return () => clearInterval(interval)
+    return () => clearInterval(intervalRef.current!)
   }, [currentPanel, panel.dialogue])
 
   const handleClick = useCallback(() => {
     if (isTyping) {
-      // Skip to full text
+      clearInterval(intervalRef.current!)
       setDisplayed(panel.dialogue)
       setIsTyping(false)
       return
