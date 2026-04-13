@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import Header from '@/components/Header'
+import SimulationLoading from '@/components/SimulationLoading'
 import type { NewsArticle } from '@/lib/types'
 
 interface Props {
@@ -78,9 +79,12 @@ export default function LiveArticleView({ slug }: Props) {
   const [genStep, setGenStep]           = useState('')
 
   useEffect(() => {
+    let retries = 0
+    const maxRetries = 3
+
     async function loadArticle() {
       // If we already have the full body in the cached article, we're done
-      if (article && (article as any).articleBody) {
+      if (article && (article as any).articleBody && (article as any).articleBody.length > 0) {
         setReady(true)
         setIsCrawling(false)
         return
@@ -91,6 +95,10 @@ export default function LiveArticleView({ slug }: Props) {
         const res = await fetch(`/api/stories/generate?newsId=${slug}`)
         if (res.ok) {
           const data = await res.json()
+          
+          // Check if we still have an empty body
+          const hasBody = data.articleBody && data.articleBody.length > 0
+          
           const fullArticle = {
             title: data.title,
             description: data.summary,
@@ -99,30 +107,72 @@ export default function LiveArticleView({ slug }: Props) {
             publishedAt: data.date,
             source: { name: data.sourceUrl ? new URL(data.sourceUrl).hostname : 'Intelligence', url: '' },
             articleBody: data.articleBody,
+            references: data.refs || [],
           } as any
+
           setArticle(fullArticle)
-          // Also update session storage with the full body for NEXT time
-          try { sessionStorage.setItem(`article:${slug}`, JSON.stringify(fullArticle)) } catch {}
+
+          // If body is STILL missing, retry after a delay
+          if (!hasBody && retries < maxRetries) {
+            retries++
+            setTimeout(loadArticle, 2000)
+            return
+          }
+
+          // Once we have a body OR maxed out retries, update cache and UI
+          if (hasBody) {
+            try { sessionStorage.setItem(`article:${slug}`, JSON.stringify(fullArticle)) } catch {}
+            setReady(true)
+            setIsCrawling(false)
+          } else if (retries >= maxRetries) {
+            setReady(true)
+            setIsCrawling(false)
+          }
         }
       } catch (err) {
         console.error('Failed to load article:', err)
-      } finally {
         setReady(true)
         setIsCrawling(false)
       }
     }
     
     loadArticle()
-  }, [slug, article])
+  }, [slug])
 
   useEffect(() => {
     if (!article) return
+    
+    // OPTIMIZATION: If we already have references from the DB, don't hunt for more
+    if ((article as any).references?.length > 0) {
+      setRelated((article as any).references)
+      return
+    }
+
     const q = toSearchQuery(article)
     fetch(`/api/news/related?q=${encodeURIComponent(q)}`)
       .then(r => r.json())
-      .then(d => {
+      .then(async d => {
         const articles: RelatedArticle[] = d.articles ?? []
         setRelated(articles)
+        
+        // PERSISTENCE: Save these discovered refs back to the DB to avoid future API costs
+        if (articles.length > 0 && slug) {
+          try {
+            await fetch('/api/stories/save-refs', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                newsId: slug,
+                refs: articles.map(a => ({
+                  title: a.title,
+                  source: a.source.name,
+                  url: a.url
+                }))
+              })
+            })
+          } catch (e) { console.error('Failed to cache refs:', e) }
+        }
+
         if (articles.length > 0 && articles[0].description) {
           const own = article.content || article.description || ''
           if (own.length < 200 && articles[0].description.length > own.length) {
@@ -131,7 +181,7 @@ export default function LiveArticleView({ slug }: Props) {
         }
       })
       .catch(() => {})
-  }, [article])
+  }, [article, slug])
 
   async function activateMission() {
     setIsGenerating(true)
@@ -187,20 +237,8 @@ export default function LiveArticleView({ slug }: Props) {
     <>
       {/* Simulation Activation Overlay */}
       {isGenerating && (
-        <div className="fixed inset-0 z-200 flex flex-col items-center justify-center bg-on-surface text-surface backdrop-blur-2xl">
-          <div className="w-24 h-24 mb-8 relative">
-            <div className="absolute inset-0 border-2 border-primary/30 rounded-full animate-ping" />
-            <div className="absolute inset-2 border-2 border-primary/50 rounded-full animate-[ping_1.5s_infinite]" />
-            <div className="absolute inset-0 flex items-center justify-center font-headline font-black text-primary text-xl">
-              ✦
-            </div>
-          </div>
-          <h2 className="text-sm font-label font-black uppercase tracking-[0.4em] text-primary mb-2 animate-pulse">
-            Terminal Active
-          </h2>
-          <p className="text-xs font-label uppercase tracking-widest opacity-50 px-8 text-center max-w-xs">
-            {genStep}
-          </p>
+        <div className="fixed inset-0 z-200 bg-background overflow-hidden animate-in fade-in duration-500">
+          <SimulationLoading />
         </div>
       )}
 
@@ -391,7 +429,7 @@ export default function LiveArticleView({ slug }: Props) {
                             {ref.title}
                           </span>
                           <span className="font-label text-[10px] uppercase tracking-widest text-tertiary mt-1">
-                            {ref.source.name} · {new Date(ref.publishedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                            {typeof ref.source === 'string' ? ref.source : (ref.source as any)?.name || 'News'} · {new Date(ref.publishedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                           </span>
                         </div>
                       </div>

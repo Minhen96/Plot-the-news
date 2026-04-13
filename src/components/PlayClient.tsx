@@ -19,37 +19,10 @@ export default function PlayClient({ storyId, panels: initialPanels, roles: init
   const [activeRoles, setActiveRoles] = useState<Role[]>(initialRoles)
   const [generatingImages, setGeneratingImages] = useState(false)
   const [isPicsum, setIsPicsum] = useState(false)
-  const [showConfirm, setShowConfirm] = useState(false)
-  
   const [currentPanel, setCurrentPanel] = useState(0)
   const [displayed, setDisplayed] = useState('')
   const [isTyping, setIsTyping] = useState(true)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
-
-  // Detect Picsum placeholders
-  useEffect(() => {
-    if (initialPanels[0]?.backgroundUrl?.includes('picsum.photos')) {
-      setIsPicsum(true)
-      setShowConfirm(true)
-    }
-  }, [initialPanels])
-
-  const generateImages = async () => {
-    setShowConfirm(false)
-    setGeneratingImages(true)
-    
-    try {
-      const r = await fetch(`/api/stories/${storyId}/generate-images`, { method: 'POST' })
-      if (!r.ok) throw new Error()
-      const data = await r.json()
-      if (data.panels?.length) setActivePanels(data.panels)
-      if (data.roles?.length) setActiveRoles(data.roles)
-    } catch {
-      /* keep Picsum if FAL.ai fails */
-    } finally {
-      setGeneratingImages(false)
-    }
-  }
 
   const panel = activePanels[currentPanel]
 
@@ -100,44 +73,11 @@ export default function PlayClient({ storyId, panels: initialPanels, roles: init
   }
 
   return (
-    <>
-      {/* AI Image Generation Confirmation Modal */}
-      {showConfirm && (
-        <div className="fixed inset-0 z-100 flex items-center justify-center bg-surface/80 backdrop-blur-xl animate-in fade-in duration-500">
-          <div className="max-w-md w-full bg-surface-container-high p-8 rounded-3xl shadow-[0_32px_64px_-15px_rgba(0,0,0,0.2)] border border-primary/10 mx-4">
-            <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center text-primary text-2xl mb-6">
-              🎨
-            </div>
-            <h2 className="text-2xl font-headline font-black text-on-surface mb-3 tracking-tight">
-              AI Intel Not Visualized
-            </h2>
-            <p className="text-on-surface/70 font-body leading-relaxed mb-8">
-              This dossier has been compiled, but its visuals are currently placeholders. 
-              Would you like to generate custom AI comic panels now? (Takes ~30s)
-            </p>
-            <div className="flex flex-col gap-3">
-              <button
-                onClick={generateImages}
-                className="w-full py-4 bg-primary text-on-primary rounded-xl font-headline font-black uppercase tracking-widest text-[11px] hover:shadow-lg hover:-translate-y-0.5 transition-all"
-              >
-                Generate Custom Visuals
-              </button>
-              <button
-                onClick={() => setShowConfirm(false)}
-                className="w-full py-4 bg-surface-container-highest text-on-surface/50 rounded-xl font-headline font-black uppercase tracking-widest text-[11px] hover:bg-surface-container-highest/80 transition-all"
-              >
-                Continue with Placeholders
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <div
-        className="relative w-full h-screen overflow-hidden flex flex-col"
-        onClick={handleClick}
-        style={{ cursor: 'pointer' }}
-      >
+    <div
+      className="relative w-full h-screen overflow-hidden flex flex-col"
+      onClick={handleClick}
+      style={{ cursor: 'pointer' }}
+    >
         {/* Background image */}
         <div className="absolute inset-0 z-0">
           {panel.backgroundUrl ? (
@@ -264,6 +204,5 @@ export default function PlayClient({ storyId, panels: initialPanels, roles: init
           ))}
         </footer>
       </div>
-    </>
   )
 }

@@ -19,6 +19,8 @@ function picsumImages(
   };
 }
 
+const STYLE_PREFIX = "Cinematic concept art, gritty geopolitical atmosphere, high detail, masterpiece, atmospheric lighting, detailed textures, professional digital painting style, ";
+
 export async function generateFalImages(
   panels: { bgPrompt: string }[],
   roles: { portraitPrompt: string }[],
@@ -31,18 +33,17 @@ export async function generateFalImages(
       : fetchUnsplashImage(coverImageQuery).then(
           (url) => url ?? `https://picsum.photos/seed/cover/1200/630`
         ),
-    ...roles.map((role) => fetchFalPortrait(role.portraitPrompt)),
+    ...roles.map((role) => fetchFalPortrait(`${STYLE_PREFIX} ${role.portraitPrompt}`)),
   ]);
 
-  const panel1Url = await fetchFalPanel(panels[0].bgPrompt);
-  const remainingUrls: string[] = [];
-  for (const panel of panels.slice(1)) {
-    remainingUrls.push(await fetchFalPanelWithReference(panel.bgPrompt, panel1Url));
-  }
+  // Generate all panels independently with Style Prefix for scene variety
+  const panelUrls = await Promise.all(
+    panels.map((panel) => fetchFalPanel(`${STYLE_PREFIX} ${panel.bgPrompt}`))
+  );
 
   return {
     coverUrl,
-    panelUrls: [panel1Url, ...remainingUrls],
+    panelUrls,
     portraitUrls,
   };
 }

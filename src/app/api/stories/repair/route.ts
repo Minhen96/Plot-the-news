@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { news } from "@/db/schema";
-import { searchNews } from "@/lib/gnews";
-import { eq, isNull, sql } from "drizzle-orm";
+import { hybridSearch } from "@/lib/research";
+import { eq, sql } from "drizzle-orm";
 
 /**
  * GET /api/stories/repair
@@ -28,40 +28,19 @@ export async function GET() {
       // Clean query for better hit rate
       const query = story.title.replace(/[^\w\s]/gi, ' ').split(' ').slice(0, 8).join(' ');
       
-      let gNewsRefs = await searchNews({
-        q: query,
-        lang: "en",
-        max: 3,
-        in: ['title']
-      }).then((res) =>
-        res.articles.map((a) => ({
-          title: a.title,
-          source: a.source.name,
-          url: a.url,
-        }))
-      ).catch(() => []);
+      let gNewsRefs = await hybridSearch(query, 3).catch(() => []);
 
       // Fallback: If no refs found by title, try a broader search
       if (gNewsRefs.length === 0) {
         const fallbackQuery = story.title.slice(0, 40);
-        gNewsRefs = await searchNews({
-          q: fallbackQuery,
-          lang: "en",
-          max: 2,
-        }).then((res) =>
-          res.articles.map((a) => ({
-            title: a.title,
-            source: a.source.name,
-            url: a.url,
-          }))
-        ).catch(() => []);
+        gNewsRefs = await hybridSearch(fallbackQuery, 2).catch(() => []);
       }
 
       if (gNewsRefs.length > 0) {
         await db
           .update(news)
           .set({ refs: gNewsRefs })
-          .where(sql`id = ${story.id}`);
+          .where(eq(news.id, story.id));
         repaired++;
       }
     }

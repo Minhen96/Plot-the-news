@@ -12,12 +12,12 @@
  * Returns: { generated: string[], skipped: number, failed: number }
  */
 import { NextRequest, NextResponse } from "next/server";
-import { fetchLatestNews, fetchCryptoNews } from "@/lib/newsdata";
+import { fetchLatestNews } from "@/lib/newsdata";
+import { hybridSearch } from "@/lib/research";
 import { db } from "@/db";
 import { news } from "@/db/schema";
 import { inArray } from "drizzle-orm";
 import { toStorySlug } from "@/lib/utils";
-import { searchNews } from "@/lib/gnews";
 import { scrapeArticleText } from "@/lib/generate";
 
 export async function GET(req: NextRequest) {
@@ -37,14 +37,6 @@ export async function GET(req: NextRequest) {
   // Specific order: search specific categories first, then world (fallback)
   const categoryKeys = ['breaking', 'crime', 'politics', 'economy', 'tech', 'health', 'sports', 'entertainment', 'world'];
   
-  // Fetch from all categories
-  const categoryResults = await Promise.all(
-    categoryKeys.map(async (key) => {
-      const res = await fetchLatestNews(key, 10).catch(() => ({ articles: [] }));
-      return { key, articles: res.articles };
-    })
-  ).catch(() => []);
-
   const allArticles: any[] = [];
   const urlToCategory = new Map<string, string>();
 
@@ -60,13 +52,54 @@ export async function GET(req: NextRequest) {
     entertainment: 'Entertainment'
   };
 
-  // Populate articles and map URLs to categories (prioritizing specific ones)
-  for (const { key, articles } of categoryResults) {
-    for (const article of articles) {
-      if (!urlToCategory.has(article.url)) {
-        urlToCategory.set(article.url, catMap[key]);
-        allArticles.push(article);
+  // 1. Intake: Fetch and paginate through categories
+  for (const key of categoryKeys) {
+    try {
+      // Page 1
+      let { articles, nextPage } = await fetchLatestNews(key, 10);
+      
+      if (articles.length === 0) continue;
+
+      // Identify which are NEW before deciding to paginate
+      const urls = articles.map(a => a.url);
+      const existing = await db
+        .select({ url: news.sourceUrl })
+        .from(news)
+        .where(inArray(news.sourceUrl as any, urls));
+      const existingUrls = new Set(existing.map(r => r.url));
+      
+      // Filter p1 for new items
+      const p1Filtered = articles.filter(a => !existingUrls.has(a.url));
+      let newCount = p1Filtered.length;
+
+      // Deep Sync: If we have very few new items, go to Page 2
+      if (newCount < 3 && nextPage) {
+        console.log(`[sync] Deep syncing ${key} (Page 2)...`);
+        const p2 = await fetchLatestNews(key, 10, nextPage);
+        const p2Urls = p2.articles.map(a => a.url);
+        
+        // Deduplicate P2
+        const p2Existing = await db
+          .select({ url: news.sourceUrl })
+          .from(news)
+          .where(inArray(news.sourceUrl as any, p2Urls));
+        const p2ExistingUrls = new Set(p2Existing.map(r => r.url));
+        const p2Filtered = p2.articles.filter(a => !p2ExistingUrls.has(a.url));
+        
+        articles = [...p1Filtered, ...p2Filtered];
+      } else {
+        articles = p1Filtered;
       }
+
+      // Add to global set (now purely new articles)
+      for (const article of articles) {
+        if (!urlToCategory.has(article.url)) {
+          urlToCategory.set(article.url, catMap[key]);
+          allArticles.push(article);
+        }
+      }
+    } catch (err) {
+      console.error(`[sync] category ${key} failed:`, err);
     }
   }
 
@@ -74,15 +107,8 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ processed: 0, skipped: 0 });
   }
 
-  // Deduplicate by sourceUrl against DB
-  const urls = allArticles.map((a) => a.url);
-  const existing = await db
-    .select({ url: news.sourceUrl })
-    .from(news)
-    .where(inArray(news.sourceUrl as any, urls));
-
-  const existingUrls = new Set(existing.map((r) => r.url));
-  const newArticles = allArticles.filter((a) => !existingUrls.has(a.url));
+  // Final check: filter allArticles purely for safety (though they should already be filtered)
+  const newArticles = allArticles;
 
   let saved = 0;
   for (const article of newArticles) {
@@ -98,37 +124,16 @@ export async function GET(req: NextRequest) {
         continue;
       }
 
-      // 2. Intelligence: Fetch real-world GNews references
+      // 2. Intelligence: Fetch real-world hybrid references (GNews first, fallback NewsData)
       // Clean query for better hit rate
       const query = article.title.replace(/[^\w\s]/gi, ' ').split(' ').slice(0, 8).join(' ');
       
-      let gNewsRefs = await searchNews({
-        q: query,
-        lang: "en",
-        max: 3,
-        in: ['title']
-      }).then((res) =>
-        res.articles.map((a) => ({
-          title: a.title,
-          source: a.source.name,
-          url: a.url,
-        }))
-      ).catch(() => []);
+      let gNewsRefs = await hybridSearch(query, 3).catch(() => []);
 
       // Fallback: If no refs found by title, try a broader search
       if (gNewsRefs.length === 0) {
         const fallbackQuery = (article.keywords?.slice(0, 3).join(' ') || article.title.slice(0, 30));
-        gNewsRefs = await searchNews({
-          q: fallbackQuery,
-          lang: "en",
-          max: 2,
-        }).then((res) =>
-          res.articles.map((a) => ({
-            title: a.title,
-            source: a.source.name,
-            url: a.url,
-          }))
-        ).catch(() => []);
+        gNewsRefs = await hybridSearch(fallbackQuery, 2).catch(() => []);
       }
       
       const displayCat = urlToCategory.get(article.url) || 'World';

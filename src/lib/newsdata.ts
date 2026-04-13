@@ -71,13 +71,14 @@ function map(raw: NewsdataRaw): NewsArticle {
 export async function fetchLatestNews(
   category: string,
   size = 10,
+  page?: string,
 ): Promise<{ articles: NewsArticle[]; nextPage: string | null }> {
   const key = process.env.NEWSDATA_API_KEY
   if (!key) return { articles: [], nextPage: null }
   const cat = CAT[category] ?? 'top'
   try {
     const res = await fetch(
-      `${BASE}/latest?apikey=${key}&category=${cat}&size=${size}&${COMMON}`,
+      `${BASE}/latest?apikey=${key}&category=${cat}&size=${size}${page ? `&page=${page}` : ""}&${COMMON}`,
       { next: { revalidate: 43200 } },
     )
     if (!res.ok) {
@@ -160,5 +161,26 @@ export async function fetchCryptoNews(
     return { articles: (data.results ?? []).map(map), nextPage: data.nextPage ?? null }
   } catch {
     return { articles: [], nextPage: null }
+  }
+}
+
+// ── Keyword search (Related news / Discovery) ──────────────────────────────
+export async function searchNews(q: string, size = 5): Promise<NewsArticle[]> {
+  const key = process.env.NEWSDATA_API_KEY
+  if (!key) return []
+  try {
+    const res = await fetch(
+      `${BASE}/latest?apikey=${key}&q=${encodeURIComponent(q)}&${COMMON}&size=${size}`,
+      { next: { revalidate: 43200 } },
+    )
+    if (!res.ok) {
+      console.error(`[newsdata] search ${res.status}:`, await res.text())
+      return []
+    }
+    const data: NewsdataResponse = await res.json()
+    return (data.results ?? []).map(map)
+  } catch (err) {
+    console.error('[newsdata] search caught error:', err)
+    return []
   }
 }

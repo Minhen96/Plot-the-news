@@ -43,13 +43,33 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Story not found" }, { status: 404 });
   }
 
-  // On-Demand Hydration: If body is missing (legacy sync), scrape it now!
+  // On-Demand AI Hydration: If body is missing, synthesize it now!
   if (!item.articleBody || (Array.isArray(item.articleBody) && item.articleBody.length === 0)) {
-    const scrapedText = await scrapeArticleText(item.sourceUrl || '');
-    if (scrapedText) {
-      const articleBody = [scrapedText];
-      await db.update(news).set({ articleBody }).where(eq(news.id, newsId));
-      item.articleBody = articleBody;
+    try {
+      const scrapedText = await scrapeArticleText(item.sourceUrl || '');
+      // Use AI to create the premium 5-paragraph version instead of raw scrape
+      const storyData = await generateStoryContent(
+        item.title, 
+        item.summary || "", 
+        item.sourceUrl || "", 
+        scrapedText
+      );
+      
+      if (storyData.articleBody && storyData.articleBody.length > 0) {
+        await db.update(news).set({ 
+          articleBody: storyData.articleBody,
+          historicalContext: storyData.historicalContext,
+          historicalEvidence: storyData.historicalEvidence,
+          crisisLevel: storyData.crisisLevel,
+          coverEmoji: storyData.coverEmoji
+        }).where(eq(news.id, newsId));
+        
+        item.articleBody = storyData.articleBody;
+        item.historicalContext = storyData.historicalContext;
+        item.historicalEvidence = storyData.historicalEvidence;
+      }
+    } catch (err) {
+      console.error("[generate-get] on-demand hydration failed:", err);
     }
   }
 
