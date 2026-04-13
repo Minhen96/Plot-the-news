@@ -168,29 +168,46 @@ export default async function ChronicleHub({
   const { category } = await searchParams
   const activeCategory = category && CATEGORY_MAP[category] ? category : 'world'
 
-  // Try DB first — if empty, fall back to live news, then static
-  const dbStories = await getAllStories().catch(() => [])
+  // Fetch categorized stories from DB
+  const [dbStories, marketDB, cryptoDB] = await Promise.all([
+    getAllStories().catch(() => []),
+    getStoriesByCategory('Finance', 6).catch(() => []),
+    getStoriesByCategory('Technology', 6).catch(() => []),
+  ])
+
   const hasDbStories = dbStories.length > 0
+  const hasMarketDB = marketDB.length > 0
+  const hasCryptoDB = cryptoDB.length > 0
 
   const [
     lastWeekArticles,
-    { articles: marketArticles, nextPage: marketNextPage },
-    { articles: cryptoArticles, nextPage: cryptoNextPage },
+    marketAPI,
+    cryptoAPI,
     primaryResult,
   ] = await Promise.all([
     fetchLastWeekNews(activeCategory, 6).catch(() => []),
-    fetchMarketNews(6).catch(() => ({ articles: [], nextPage: null })),
-    fetchCryptoNews(6).catch(() => ({ articles: [], nextPage: null })),
-    // Fetch live news when DB is empty OR has too few stories to fill the feed
+    // Only fetch live if DB is empty
+    hasMarketDB ? Promise.resolve({ articles: [] }) : fetchMarketNews(6).catch(() => ({ articles: [], nextPage: null })),
+    hasCryptoDB ? Promise.resolve({ articles: [] }) : fetchCryptoNews(6).catch(() => ({ articles: [], nextPage: null })),
     hasDbStories && dbStories.length >= 4
       ? Promise.resolve(null)
       : fetchLatestNews(activeCategory, 10).catch(() => null),
   ])
 
-  // Resolve main feed source
+  // Resolve sources
   const liveArticles = primaryResult?.articles ?? []
   const primary = liveArticles.length > 0 ? liveArticles : WORLD_FALLBACK
   const lastWeek = lastWeekArticles.length > 0 ? lastWeekArticles : LAST_WEEK_FALLBACK
+
+  // Market section resolution
+  const marketArticles = hasMarketDB 
+    ? marketDB.map(s => ({ title: s.title, description: s.summary, url: `/story/${s.id}`, image: s.imageUrl, publishedAt: s.date, source: { name: s.coverEmoji ? `${s.coverEmoji} Intelligence` : 'Finance' } }))
+    : marketAPI.articles
+
+  // Crypto section resolution
+  const cryptoArticles = hasCryptoDB
+    ? cryptoDB.map(s => ({ title: s.title, description: s.summary, url: `/story/${s.id}`, image: s.imageUrl, publishedAt: s.date, source: { name: s.coverEmoji ? `${s.coverEmoji} Intelligence` : 'Crypto' } }))
+    : cryptoAPI.articles
 
   const marketFeatured = marketArticles[0]
   const marketList     = marketArticles.slice(1)

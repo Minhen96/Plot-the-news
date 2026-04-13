@@ -21,6 +21,21 @@ export async function getAllStories(): Promise<Story[]> {
   return result.map((r) => mapJoinToStory(r.news, r.stories));
 }
 
+/**
+ * Filter stories by category (e.g. 'Finance', 'Technology', 'World')
+ */
+export async function getStoriesByCategory(category: string, limit = 10): Promise<Story[]> {
+  const result = await db
+    .select()
+    .from(news)
+    .innerJoin(stories, eq(stories.id, news.id))
+    .where(eq(news.category, category))
+    .orderBy(desc(news.createdAt))
+    .limit(limit);
+
+  return result.map((r) => mapJoinToStory(r.news, r.stories));
+}
+
 export async function getStoryById(id: string): Promise<Story | undefined> {
   const [result] = await db
     .select()

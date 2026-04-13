@@ -10,8 +10,9 @@ function saveArticle(article: NewsArticle) {
 }
 
 function ArticleRow({ article }: { article: NewsArticle }) {
+  const href = article.url.startsWith('/story/') ? article.url : `/story/${toStorySlug(article.title)}`
   return (
-    <Link href={`/story/${toStorySlug(article.title)}`} onClick={() => saveArticle(article)} className="group block py-4 first:pt-0">
+    <Link href={href} onClick={() => saveArticle(article)} className="group block py-4 first:pt-0">
       <div className="flex gap-3">
         <div className="flex-1 min-w-0">
           <h4 className="font-headline font-bold text-base leading-snug mt-1 mb-1 group-hover:text-primary transition-colors line-clamp-2">

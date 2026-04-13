@@ -27,13 +27,14 @@ import type { Story } from "@/lib/types";
 
 export async function POST(req: NextRequest) {
   try {
-    const { headline, description, url, imageUrl, source, fullContent } = await req.json() as {
+    const { headline, description, url, imageUrl, source, fullContent, category } = await req.json() as {
       headline: string;
       description: string;
       url: string;
       imageUrl?: string;
       source?: string;
       fullContent?: string | null;
+      category?: string;
     };
 
     if (!headline || !description || !url) {
@@ -88,7 +89,7 @@ export async function POST(req: NextRequest) {
       id,
       title: headline,
       summary: storyData.summary,
-      category: storyData.category,
+      category: category || storyData.category,
       imageUrl: coverUrl,
       date: new Date().toISOString().split("T")[0],
       sourceUrl: url,

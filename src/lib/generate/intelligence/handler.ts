@@ -2,7 +2,31 @@ import { Readability } from "@mozilla/readability";
 import { JSDOM } from "jsdom";
 
 const SCRAPE_TIMEOUT_MS = 8000;
-const MAX_CONTENT_CHARS = 4000;
+const MAX_CONTENT_CHARS = 5000; // Increased slightly for better context
+const CONTENT_MIN_LENGTH = 200;
+
+/**
+ * Strips common web UI noise from crawled article text:
+ * social share buttons, live-blog timestamps, nav/footer boilerplate.
+ */
+function cleanCrawledText(text: string): string {
+  return text
+    // Social share blocks (various formats from different sites)
+    .replace(/Share\s*Share\s*Copy\s*link[\s\S]*?Email/gi, '')
+    .replace(/\b(Share|ShareShare)\b\s*(Copy link\s*)?(Facebook\s*)?(X\s*\(Twitter\)\s*)?(LinkedIn\s*)?(Email\s*)?/gi, '')
+    // Live-blog / timestamped entry separators (e.g. "19:01" or "12:18 GMT+")
+    .replace(/\b\d{1,2}:\d{2}(\s*(GMT|UTC|EST|PST|BST)[+-]?\d*)?/g, '')
+    // "Load more", "Read more", "See also", "Click here" CTA noise
+    .replace(/\b(Load more|Read more|See also[:\s]*|Click here|Subscribe now|Sign up)\b[^\n]*/gi, '')
+    // Social platform names as standalone words (leftover from share widgets)
+    .replace(/\b(Facebook|Twitter|LinkedIn|Instagram|WhatsApp|Telegram|Pinterest)\b/g, '')
+    // Copyright / footer lines
+    .replace(/©[^\n]*/g, '')
+    .replace(/All rights reserved[^\n]*/gi, '')
+    // Collapse multiple spaces/newlines created by the above removals
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+}
 
 export async function scrapeArticleText(url: string): Promise<string | null> {
   try {
@@ -28,9 +52,15 @@ export async function scrapeArticleText(url: string): Promise<string | null> {
 
     if (!article?.textContent) return null;
 
-    const text = article.textContent.replace(/\s+/g, " ").trim();
-    return text.slice(0, MAX_CONTENT_CHARS);
-  } catch {
+    const rawText = article.textContent.replace(/\s+/g, " ").trim();
+    const cleanedText = cleanCrawledText(rawText);
+
+    // Ensure we have a minimum amount of meaningful content
+    if (cleanedText.length < CONTENT_MIN_LENGTH) return null;
+
+    return cleanedText.slice(0, MAX_CONTENT_CHARS);
+  } catch (err) {
+    console.error(`[scraper] error for ${url}:`, err);
     return null;
   }
 }

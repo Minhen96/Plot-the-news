@@ -28,25 +28,36 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // Fetch latest world/geopolitics headlines from newsdata
-  const { articles } = await fetchLatestNews("world", 10).catch(() => ({ articles: [] }));
+  // Fetch from multiple channels
+  const [worldResp, marketResp, cryptoResp] = await Promise.all([
+    fetchLatestNews("world", 6),
+    fetchLatestNews("economy", 6), // Business -> Finance
+    fetchLatestNews("science", 6), // Science/Tech -> Technology
+  ]).catch(() => [ { articles: [] }, { articles: [] }, { articles: [] } ]);
 
-  if (articles.length === 0) {
+  // Tag articles by category
+  const tagged = [
+    ...(worldResp?.articles || []).map(a => ({ ...a, cat: 'World' })),
+    ...(marketResp?.articles || []).map(a => ({ ...a, cat: 'Finance' })),
+    ...(cryptoResp?.articles || []).map(a => ({ ...a, cat: 'Technology' })),
+  ];
+
+  if (tagged.length === 0) {
     return NextResponse.json({ generated: [], skipped: 0, failed: 0 });
   }
 
   // Filter out articles already in DB by sourceUrl
-  const urls = articles.map((a) => a.url);
+  const urls = tagged.map((a) => a.url);
   const existing = await db
     .select({ id: news.sourceUrl })
     .from(news)
     .where(inArray(news.sourceUrl as any, urls));
 
   const existingUrls = new Set(existing.map((r) => r.id));
-  const newArticles = articles.filter((a) => !existingUrls.has(a.url));
+  const newArticles = tagged.filter((a) => !existingUrls.has(a.url));
 
   const toProcess = newArticles.slice(0, BATCH_SIZE);
-  const skipped = articles.length - toProcess.length;
+  const skipped = tagged.length - toProcess.length;
 
   const generated: string[] = [];
   let failed = 0;
@@ -54,15 +65,12 @@ export async function GET(req: NextRequest) {
   // Process sequentially to avoid hammering DeepSeek + FAL.ai
   for (const article of toProcess) {
     try {
-      // Scrape full article content (best-effort, null if blocked/paywalled)
       const fullContent = await scrapeArticleText(article.url);
-
       const baseUrl = req.nextUrl.origin;
       const res = await fetch(`${baseUrl}/api/stories/generate`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          // Pass cron secret so generate endpoint can trust internal calls if needed
           Authorization: `Bearer ${process.env.CRON_SECRET}`,
         },
         body: JSON.stringify({
@@ -72,6 +80,7 @@ export async function GET(req: NextRequest) {
           imageUrl: article.image ?? undefined,
           source: article.source.name,
           fullContent,
+          category: article.cat, // Passing the tagged category
         }),
       });
 

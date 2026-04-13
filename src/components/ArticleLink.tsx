@@ -11,7 +11,9 @@ interface Props {
 }
 
 export default function ArticleLink({ article, className, children }: Props) {
-  const slug = toStorySlug(article.title)
+  const isInternal = article.url.startsWith('/story/')
+  const slug = isInternal ? article.url.split('/').pop() || '' : toStorySlug(article.title)
+  const href = isInternal ? article.url : `/story/${slug}`
 
   function handleClick() {
     try {
