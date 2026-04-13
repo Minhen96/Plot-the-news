@@ -1,5 +1,5 @@
 import {
-  pgTable,
+  pgSchema,
   text,
   integer,
   decimal,
@@ -10,23 +10,10 @@ import {
   jsonb
 } from 'drizzle-orm/pg-core';
 
-// SQL to create the analyses table (run once in Supabase SQL editor):
-//
-// CREATE TABLE IF NOT EXISTS analyses (
-//   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-//   story_id TEXT NOT NULL,
-//   option_id TEXT,
-//   prediction_id TEXT,
-//   is_custom BOOLEAN DEFAULT false,
-//   factors TEXT[] DEFAULT '{}',
-//   evidence JSONB DEFAULT '[]',
-//   reasoning TEXT,
-//   status TEXT DEFAULT 'pending',
-//   created_at TIMESTAMPTZ DEFAULT now()
-// );
+export const plotNewsSchema = pgSchema('plot_news_app');
 
 // 1. Profiles Table
-export const profiles = pgTable('profiles', {
+export const profiles = plotNewsSchema.table('profiles', {
   id: uuid('id').primaryKey(),
   walletAddress: text('wallet_address').unique(),
   displayName: text('display_name'),
@@ -41,7 +28,7 @@ export const profiles = pgTable('profiles', {
 });
 
 // 2. News Table — editorial content (title, article body, historical context)
-export const news = pgTable('news', {
+export const news = plotNewsSchema.table('news', {
   id: text('id').primaryKey(),                         // slug-based, e.g. "strait-of-hormuz"
   title: text('title').notNull(),
   summary: text('summary'),
@@ -60,7 +47,7 @@ export const news = pgTable('news', {
 });
 
 // 3. Stories Table — game content only (1:1 with news, shares same id)
-export const stories = pgTable('stories', {
+export const stories = plotNewsSchema.table('stories', {
   id: text('id').primaryKey().references(() => news.id, { onDelete: 'cascade' }),
   status: text('status', { enum: ['active', 'resolved'] }).default('active'),
   roles: jsonb('roles').default([]),                    // Role[]
@@ -77,7 +64,7 @@ export const stories = pgTable('stories', {
 });
 
 // 4. Analyses Table — multi-agent AI analysis per story × option
-export const analyses = pgTable('analyses', {
+export const analyses = plotNewsSchema.table('analyses', {
   id: uuid('id').defaultRandom().primaryKey(),
   storyId: text('story_id').notNull(),
   optionId: text('option_id'),
@@ -91,7 +78,7 @@ export const analyses = pgTable('analyses', {
 });
 
 // 5. Predictions Table
-export const predictions = pgTable('predictions', {
+export const predictions = plotNewsSchema.table('predictions', {
   id: uuid('id').defaultRandom().primaryKey(),
   storyId: text('story_id').references(() => stories.id, { onDelete: 'cascade' }),
   userAddress: text('user_address').notNull(),
@@ -105,3 +92,4 @@ export const predictions = pgTable('predictions', {
   correct: boolean('correct'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 });
+
