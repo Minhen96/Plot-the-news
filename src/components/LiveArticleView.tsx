@@ -153,9 +153,12 @@ export default function LiveArticleView({ slug }: Props) {
   })
 
   const body = enrichedBody || (article as any).content || article.description || ''
-  const paragraphs = Array.isArray((article as any).articleBody) && (article as any).articleBody.length > 0
-    ? (article as any).articleBody 
-    : toParagraphs(body)
+  // Ensure even DB-stored articleBody gets formatted into readable chunks
+  const paragraphs = toParagraphs(
+    Array.isArray((article as any).articleBody) 
+      ? (article as any).articleBody.join('\n\n') 
+      : body
+  )
 
   return (
     <>
@@ -252,16 +255,32 @@ export default function LiveArticleView({ slug }: Props) {
           </div>
         </div>
 
+        {/* Intelligence Briefing */}
+        <div className="max-w-2xl mx-auto bg-surface-container-low rounded-2xl p-6 mb-12 border-l-2 border-primary/40 relative overflow-hidden group/briefing">
+          <div className="absolute top-0 right-0 p-4 opacity-5 text-4xl select-none group-hover/briefing:opacity-10 transition-opacity">✦</div>
+          <h3 className="text-[10px] font-label font-black uppercase tracking-[0.2em] text-primary mb-4">
+            Intelligence Briefing
+          </h3>
+          <ul className="space-y-3">
+            {paragraphs.slice(0, 2).map((p, i) => (
+              <li key={i} className="flex gap-3 text-sm font-body leading-relaxed text-on-surface/80">
+                <span className="text-primary/40 shrink-0 mt-1.5">•</span>
+                <span className="line-clamp-3">{p}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
         {/* Article body */}
-        <article className="mb-16 space-y-6">
+        <article className="max-w-2xl mx-auto mb-16 space-y-8">
           {paragraphs.length > 0 ? (
             paragraphs.map((para: string, i: number) => (
               <p
                 key={i}
-                className={`font-body leading-relaxed text-on-surface ${
+                className={`font-body leading-relaxed text-on-surface/90 ${
                   i === 0
                     ? 'text-xl md:text-2xl first-letter:text-7xl first-letter:font-bold first-letter:text-primary first-letter:mr-4 first-letter:float-left first-letter:font-headline first-letter:leading-none'
-                    : 'text-lg'
+                    : 'text-lg italic:mb-4'
                 }`}
               >
                 {para}

@@ -61,6 +61,12 @@ export async function GET(req: NextRequest) {
       const fullText = await scrapeArticleText(article.url).catch(() => null);
       const articleBody = fullText ? [fullText] : [];
 
+      // Quality Gate: Skip articles with no body content
+      if (articleBody.length === 0) {
+        console.log(`[sync] skipping article due to no body content: ${article.title}`);
+        continue;
+      }
+
       // 2. Intelligence: Fetch real-world GNews references
       const gNewsRefs = await searchNews({
         q: article.title.slice(0, 100),
