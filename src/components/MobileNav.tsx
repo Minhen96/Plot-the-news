@@ -4,15 +4,15 @@ import { useState } from 'react'
 import Link from 'next/link'
 
 const NAV_TABS = [
-  { label: 'World',     href: '/?category=world',     category: 'world' },
-  { label: 'Politics',  href: '/?category=politics',  category: 'politics' },
-  { label: 'Economy',   href: '/?category=economy',   category: 'economy' },
-  { label: 'Culture',   href: '/?category=culture',   category: 'culture' },
-  { label: 'Science',   href: '/?category=science',   category: 'science' },
-  { label: 'Health',    href: '/?category=health',    category: 'health' },
-  { label: 'Sports',    href: '/?category=sports',    category: 'sports' },
-  { label: 'Opinion',   href: '/?category=opinion',   category: 'opinion' },
-  { label: 'Interactive', href: '/story/strait-of-hormuz', category: null },
+  { label: 'World',         href: '/?category=world',         category: 'world' },
+  { label: 'Breaking',      href: '/?category=breaking',      category: 'breaking' },
+  { label: 'Crime',         href: '/?category=crime',         category: 'crime' },
+  { label: 'Politics',      href: '/?category=politics',      category: 'politics' },
+  { label: 'Finance',       href: '/?category=economy',       category: 'economy' },
+  { label: 'Tech',          href: '/?category=tech',          category: 'tech' },
+  { label: 'Health',        href: '/?category=health',        category: 'health' },
+  { label: 'Sports',        href: '/?category=sports',        category: 'sports' },
+  { label: 'Entertainment', href: '/?category=entertainment',   category: 'entertainment' },
 ]
 
 const NAV_LINKS = [

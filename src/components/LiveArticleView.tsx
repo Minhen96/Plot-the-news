@@ -48,10 +48,20 @@ function toSearchQuery(article: NewsArticle): string {
 }
 
 export default function LiveArticleView({ slug }: Props) {
-  const [article, setArticle]           = useState<NewsArticle | null>(null)
+  // Synchronous initialization to avoid blank frame
+  const [article, setArticle] = useState<NewsArticle | null>(() => {
+    if (typeof window === 'undefined') return null
+    try {
+      const raw = sessionStorage.getItem(`article:${slug}`)
+      if (raw) return JSON.parse(raw) as NewsArticle
+    } catch { /* ignore */ }
+    return null
+  })
+
   const [related, setRelated]           = useState<RelatedArticle[]>([])
   const [enrichedBody, setEnrichedBody] = useState<string>('')
-  const [ready, setReady]               = useState(false)
+  const [ready, setReady]               = useState(!!article)
+  const [isCrawling, setIsCrawling]     = useState(!article || !(article as any).articleBody)
   
   const [showConfirm, setShowConfirm]   = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
@@ -59,38 +69,41 @@ export default function LiveArticleView({ slug }: Props) {
 
   useEffect(() => {
     async function loadArticle() {
-      try {
-        // Try session first (fastest for live clicks)
-        const raw = sessionStorage.getItem(`article:${slug}`)
-        if (raw) {
-          setArticle(JSON.parse(raw) as NewsArticle)
-          setReady(true)
-          return
-        }
+      // If we already have the full body in the cached article, we're done
+      if (article && (article as any).articleBody) {
+        setReady(true)
+        setIsCrawling(false)
+        return
+      }
 
-        // Fallback: Fetch from our DB (for synced headlines)
+      try {
+        // Fetch/Generate from our DB (handles Deep Crawl if needed)
         const res = await fetch(`/api/stories/generate?newsId=${slug}`)
         if (res.ok) {
           const data = await res.json()
-          setArticle({
+          const fullArticle = {
             title: data.title,
             description: data.summary,
             url: data.sourceUrl || '',
             image: data.imageUrl,
             publishedAt: data.date,
             source: { name: data.sourceUrl ? new URL(data.sourceUrl).hostname : 'Intelligence', url: '' },
-            articleBody: data.articleBody, // Map the full crawled content
-          } as any)
+            articleBody: data.articleBody,
+          } as any
+          setArticle(fullArticle)
+          // Also update session storage with the full body for NEXT time
+          try { sessionStorage.setItem(`article:${slug}`, JSON.stringify(fullArticle)) } catch {}
         }
       } catch (err) {
         console.error('Failed to load article:', err)
       } finally {
         setReady(true)
+        setIsCrawling(false)
       }
     }
     
     loadArticle()
-  }, [slug])
+  }, [slug, article])
 
   useEffect(() => {
     if (!article) return
@@ -286,6 +299,18 @@ export default function LiveArticleView({ slug }: Props) {
                 {para}
               </p>
             ))
+          ) : isCrawling ? (
+            <div className="space-y-6 animate-pulse">
+              <div className="h-4 bg-on-surface/5 rounded w-full" />
+              <div className="h-4 bg-on-surface/5 rounded w-5/6" />
+              <div className="h-4 bg-on-surface/5 rounded w-4/6" />
+              <div className="pt-8 flex items-center gap-3">
+                <div className="w-2 h-2 bg-primary rounded-full animate-bounce" />
+                <span className="text-[10px] font-label font-bold uppercase tracking-[0.2em] text-primary/60">
+                  Synchronizing Deep Intelligence...
+                </span>
+              </div>
+            </div>
           ) : (
             <div className="py-10 border-l-4 border-outline/20 pl-6">
               <p className="font-headline font-bold text-on-surface/50 mb-1">Preview not available</p>

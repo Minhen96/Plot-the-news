@@ -1,25 +1,30 @@
+import { Suspense } from 'react'
 import Link from 'next/link'
 import Header from '@/components/Header'
 import SectionFeed from '@/components/SectionFeed'
-import TopFeed from '@/components/TopFeed'
 import ArticleLink from '@/components/ArticleLink'
 import { fetchLatestNews, fetchLastWeekNews, fetchMarketNews, fetchCryptoNews } from '@/lib/newsdata'
-import { WORLD_FALLBACK, LAST_WEEK_FALLBACK } from '@/data/news'
+import { LAST_WEEK_FALLBACK } from '@/data/news'
 import { getAllStories, getStoriesByCategory } from '@/lib/stories'
 import type { NewsArticle, Story } from '@/lib/types'
+import { toStorySlug } from '@/lib/utils'
+
+// Revalidate the hub every 5 minutes
+export const revalidate = 300
 
 const CATEGORY_MAP: Record<string, string> = {
-  world:    'World',
-  politics: 'Politics',
-  economy:  'Finance',
-  culture:  'Culture',
-  science:  'Technology',
-  health:   'Health',
-  sports:   'Sports',
-  opinion:  'Opinion',
+  world:         'World',
+  breaking:      'Breaking',
+  crime:         'Crime',
+  politics:      'Politics',
+  economy:       'Finance',
+  tech:          'Tech',
+  health:        'Health',
+  sports:        'Sports',
+  entertainment: 'Entertainment',
 }
 
-// ── Shared sub-components ─────────────────────────────────────────────────────
+// ── Shared sub-components ────────────────────────────────────────────────────
 
 function ArticleImage({ src, alt, className }: { src: string | null; alt: string; className: string }) {
   if (!src) return <div className={`${className} bg-surface-container-high`} />
@@ -39,7 +44,6 @@ function SectionDivider({ label }: { label: string }) {
   )
 }
 
-// Lead story card for live news — used in Markets/Crypto sections
 function LeadStory({ article, size = 'large' }: { article: NewsArticle; size?: 'large' | 'medium' }) {
   return (
     <ArticleLink article={article} className="group block">
@@ -76,7 +80,7 @@ function LeadStory({ article, size = 'large' }: { article: NewsArticle; size?: '
   )
 }
 
-// ── DB story sub-components ───────────────────────────────────────────────────
+// ── Story Card Logic ──────────────────────────────────────────────────────────
 
 function CrisisBadge({ level }: { level?: number }) {
   if (!level) return null
@@ -89,8 +93,16 @@ function CrisisBadge({ level }: { level?: number }) {
 }
 
 function FeaturedStory({ story }: { story: Story }) {
+  const article: NewsArticle = {
+    title: story.title,
+    description: story.summary || '',
+    url: `/story/${story.id}`,
+    image: story.imageUrl,
+    publishedAt: story.date,
+    source: { name: story.category, url: '' }
+  }
   return (
-    <Link href={`/story/${story.id}`} className="group block">
+    <ArticleLink article={article} className="group block">
       <article className="flex flex-col gap-4">
         <div className="overflow-hidden">
           <ArticleImage
@@ -116,49 +128,46 @@ function FeaturedStory({ story }: { story: Story }) {
             <span className="text-[10px] font-label opacity-50 uppercase tracking-widest">
               {new Date(story.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
             </span>
-            <div className="text-[10px] font-label font-black uppercase tracking-widest text-primary flex items-center gap-1 group/btn">
-              Read &amp; Play <span className="transition-transform duration-300 group-hover/btn:translate-x-1 group-hover:translate-x-1">→</span>
-            </div>
           </div>
         </div>
       </article>
-    </Link>
+    </ArticleLink>
   )
 }
 
 function StoryItem({ story }: { story: Story }) {
+  const article: NewsArticle = {
+    title: story.title,
+    description: story.summary || '',
+    url: `/story/${story.id}`,
+    image: story.imageUrl,
+    publishedAt: story.date,
+    source: { name: story.category, url: '' }
+  }
   return (
-    <Link href={`/story/${story.id}`} className="group block py-4 border-b border-outline/15 last:border-0">
+    <ArticleLink article={article} className="group block py-4 border-b border-outline/15 last:border-0">
       <div className="flex gap-3">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5 mb-1">
             <span className="text-[9px] font-label font-black uppercase tracking-widest text-primary/60">
               {story.isGenerated ? `${story.coverEmoji} ${story.category}` : '🛰️ Live Dispatch'}
             </span>
-            {story.isGenerated && <CrisisBadge level={story.crisisLevel} />}
           </div>
           <h4 className="font-headline font-bold text-sm leading-snug mb-1 group-hover:text-primary transition-colors line-clamp-2">
             {story.title}
           </h4>
-          {story.summary && (
-            <p className="text-xs font-body opacity-60 line-clamp-2 leading-relaxed">{story.summary}</p>
-          )}
-          <span className="text-[10px] font-label opacity-40 uppercase tracking-widest mt-1 block">
-            {new Date(story.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-          </span>
         </div>
         {story.imageUrl && (
-          <div className="w-14 h-14 shrink-0 overflow-hidden ring-1 ring-outline/10 group-hover:ring-primary/30 transition-all">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={story.imageUrl} alt={story.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+          <div className="w-14 h-14 shrink-0 overflow-hidden ring-1 ring-outline/10">
+            <ArticleImage src={story.imageUrl} alt={story.title} className="w-full h-full object-cover" />
           </div>
         )}
       </div>
-    </Link>
+    </ArticleLink>
   )
 }
 
-// ── Page ──────────────────────────────────────────────────────────────────────
+// ── MAIN HUB (Server Component) ─────────────────────────────────────────────
 
 export default async function ChronicleHub({
   searchParams,
@@ -168,204 +177,183 @@ export default async function ChronicleHub({
   const { category } = await searchParams
   const activeCategory = category && CATEGORY_MAP[category] ? category : 'world'
 
-  // Fetch categorized stories from DB
-  const [dbStories, marketDB, cryptoDB] = await Promise.all([
-    (activeCategory === 'world' ? getAllStories() : getStoriesByCategory(CATEGORY_MAP[activeCategory] || 'World', 12)).catch(() => []),
-    getStoriesByCategory('Finance', 6).catch(() => []),
-    getStoriesByCategory('Technology', 6).catch(() => []),
-  ])
-
-  const hasDbStories = dbStories.length > 0
-  const hasMarketDB = marketDB.length > 0
-  const hasCryptoDB = cryptoDB.length > 0
-
-  const [
-    lastWeekArticles,
-    marketAPI,
-    cryptoAPI,
-    primaryResult,
-  ] = await Promise.all([
-    fetchLastWeekNews(activeCategory, 6).catch(() => []),
-    // Only fetch live if DB has NO items
-    hasMarketDB ? Promise.resolve({ articles: [] }) : fetchMarketNews(6).catch(() => ({ articles: [], nextPage: null })),
-    hasCryptoDB ? Promise.resolve({ articles: [] }) : fetchCryptoNews(6).catch(() => ({ articles: [], nextPage: null })),
-    hasDbStories
-      ? Promise.resolve(null)
-      : fetchLatestNews(activeCategory, 10).catch(() => null),
-  ])
-
-  // Resolve sources
-  const liveArticles = primaryResult?.articles ?? []
-  const primary = liveArticles.length > 0 ? liveArticles : WORLD_FALLBACK
-  const lastWeek = lastWeekArticles.length > 0 ? lastWeekArticles : LAST_WEEK_FALLBACK
-
-  // Market section resolution
-  const marketArticles: NewsArticle[] = hasMarketDB 
-    ? marketDB.map((s: Story) => ({ title: s.title, description: s.summary, url: `/story/${s.id}`, image: s.imageUrl, publishedAt: s.date, source: { name: s.coverEmoji ? `${s.coverEmoji} Intelligence` : 'Finance', url: '' } }))
-    : marketAPI.articles
-  const marketNextPage = (marketAPI as any).nextPage
-
-  // Crypto section resolution
-  const cryptoArticles: NewsArticle[] = hasCryptoDB
-    ? cryptoDB.map((s: Story) => ({ title: s.title, description: s.summary, url: `/story/${s.id}`, image: s.imageUrl, publishedAt: s.date, source: { name: s.coverEmoji ? `${s.coverEmoji} Intelligence` : 'Crypto', url: '' } }))
-    : cryptoAPI.articles
-  const cryptoNextPage = (cryptoAPI as any).nextPage
-
-  const marketFeatured = marketArticles[0]
-  const marketList     = marketArticles.slice(1)
-  const cryptoFeatured = cryptoArticles[0]
-  const cryptoList     = cryptoArticles.slice(1)
-
   return (
     <div className="max-w-[1400px] mx-auto px-6 lg:px-12 py-6">
       <Header brand="editorial" activeCategory={activeCategory} />
 
       <main className="mt-8">
-
-        {/* ── Top section: main feed + The Week Before ── */}
         <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-8 items-start">
+          
+          <Suspense fallback={<MainFeedSkeleton />}>
+            <MainNewsFeed activeCategory={activeCategory} />
+          </Suspense>
 
-          {/* Left 2/3 — DB stories OR live news TopFeed */}
-          {hasDbStories ? (
-            <div className="relative border-r border-outline/15 pr-4">
-              {/* Precision News Vault: Entire Left/Mid Section Scrolls Together */}
-              <div 
-                className="max-h-[calc(100vh-80px)] overflow-y-auto overscroll-contain custom-scrollbar pr-6 scroll-smooth"
-                style={{ scrollbarGutter: 'stable' }}
-              >
-                <div className="flex flex-col gap-10">
-                  {/* Panoramic Lead Section */}
-                  <div className="pb-10 border-b border-outline/15">
-                    <h4 className="font-headline font-black uppercase text-xs tracking-widest mb-6 border-b-2 border-on-background pb-1 w-fit">
-                      Lead Story
-                    </h4>
-                    <FeaturedStory story={dbStories[0]} />
-                  </div>
-
-                  {/* Symmetric Twin-Column Feed */}
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-10 items-start pb-12">
-                    {/* Left Mini-Column */}
-                    <div className="flex flex-col gap-2">
-                      <h4 className="font-headline font-black uppercase text-[10px] tracking-widest mb-4 opacity-40">
-                        Dispatch Briefs
-                      </h4>
-                      {dbStories.slice(1, Math.ceil((dbStories.length - 1) / 2) + 1).map((story: Story) => (
-                        <StoryItem key={story.id} story={story} />
-                      ))}
-                    </div>
-
-                    {/* Right Mini-Column */}
-                    <div className="lg:border-l lg:border-outline/10 lg:pl-10 flex flex-col gap-2">
-                      <h4 className="font-headline font-black uppercase text-[10px] tracking-widest mb-4 opacity-40">
-                        Active Scenarios
-                      </h4>
-                      {dbStories.slice(Math.ceil((dbStories.length - 1) / 2) + 1).map((story: Story) => (
-                        <StoryItem key={story.id} story={story} />
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-              {/* Subtle Indicator of Scroll Zone */}
-              <div className="absolute bottom-0 left-0 right-0 h-12 bg-linear-to-t from-background to-transparent pointer-events-none z-10" />
-            </div>
-          ) : (
-            <TopFeed
-              key={activeCategory}
-              featured={primary[0]}
-              initialArticles={primary.slice(1)}
-              nextPage={primaryResult?.nextPage ?? null}
-              category={activeCategory}
-              sectionLabel={activeCategory.charAt(0).toUpperCase() + activeCategory.slice(1)}
-            />
-          )}
-
-          {/* Right 1/3 — The Week Before (always live) */}
-          <aside className="lg:sticky lg:top-6">
-            <div className="mb-4">
-              <h4 className="font-headline font-black uppercase text-xs tracking-widest border-b-2 border-on-background pb-1 w-fit">
-                The Week Before
-              </h4>
-              <p className="text-[10px] font-label opacity-50 uppercase tracking-widest mt-1">
-                {activeCategory} · earlier
-              </p>
-            </div>
-            <div className="divide-y divide-outline/20">
-              {lastWeek.map((article) => (
-                <ArticleLink key={article.url} article={article} className="group block pt-5 first:pt-0">
-                  <article>
-                    <h5 className="text-sm font-headline font-bold leading-tight mb-1 group-hover:text-primary transition-colors line-clamp-2">
-                      {article.title}
-                    </h5>
-                    {article.description && (
-                      <p className="text-xs opacity-60 font-body line-clamp-2 mb-2">
-                        {article.description}
-                      </p>
-                    )}
-                    <span className="text-[10px] font-label opacity-40 uppercase tracking-widest">
-                      {new Date(article.publishedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                      {' · '}{article.source.name}
-                    </span>
-                  </article>
-                </ArticleLink>
-              ))}
-            </div>
-          </aside>
+          <Suspense fallback={<SidebarSkeleton />}>
+            <SidebarArchiveWrapper activeCategory={activeCategory} />
+          </Suspense>
         </div>
 
-        {/* ── Markets section (always live) ── */}
-        {marketFeatured && (
-          <>
-            <SectionDivider label="Markets" />
-            <div className="grid grid-cols-1 lg:grid-cols-[3fr_2fr] gap-8 items-start">
-              <LeadStory article={marketFeatured} size="medium" />
-              <SectionFeed initialArticles={marketList} nextPage={marketNextPage} category="economy" />
-            </div>
-          </>
-        )}
+        {/* Streaming Sections */}
+        <Suspense fallback={<SectionSkeleton label="Markets" />}>
+          <MarketSectionWrapper />
+        </Suspense>
 
-        {/* ── Crypto section (always live) ── */}
-        {cryptoFeatured && (
-          <>
-            <SectionDivider label="Crypto" />
-            <div className="grid grid-cols-1 lg:grid-cols-[3fr_2fr] gap-8 items-start">
-              <LeadStory article={cryptoFeatured} size="medium" />
-              <SectionFeed initialArticles={cryptoList} nextPage={cryptoNextPage} q="bitcoin,ethereum,cryptocurrency" />
-            </div>
-          </>
-        )}
-
+        <Suspense fallback={<SectionSkeleton label="Crypto" />}>
+          <CryptoSectionWrapper />
+        </Suspense>
       </main>
 
-      {/* Footer */}
-      <footer className="mt-20 pt-10 border-t-4 border-on-background">
-        <div className="flex flex-col md:flex-row justify-between items-start gap-12 mb-12">
-          <div>
-            <h2 className="text-3xl font-headline font-extrabold italic mb-4 leading-none text-on-background">
-              The Illuminated Editorial
-            </h2>
-            <p className="max-w-md text-sm opacity-70 leading-relaxed font-body italic">
-              Established 2026. A journal dedicated to the intersection of human narrative
-              and systemic complexity. Powered by AI foresight and blockchain-verified truth.
-            </p>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-x-12 gap-y-4 font-label text-[10px] font-black uppercase tracking-widest">
-            {['Archives', 'Ethics Policy', 'Masthead', 'Contact', 'Privacy', 'Newsletter'].map((link) => (
-              <a key={link} href="#" className="hover:text-primary transition-colors hover:underline">
-                {link}
-              </a>
-            ))}
-          </div>
-        </div>
-        <div className="flex flex-col md:flex-row justify-between items-center py-6 border-t border-outline/20 text-[10px] font-label font-bold tracking-[0.2em] uppercase opacity-50">
-          <span>© 2026 The Illuminated Editorial · FutureLens. All Rights Reserved.</span>
-          <div className="flex gap-6 mt-4 md:mt-0">
-            {['Twitter', 'Instagram', 'RSS'].map((s) => (
-              <span key={s} className="cursor-pointer hover:opacity-100">{s}</span>
-            ))}
+      <footer className="mt-20 pt-10 border-t border-on-background/10 opacity-50 text-[10px] font-label font-bold uppercase tracking-[0.2em]">
+        <div className="flex justify-between items-center py-6">
+          <span>© 2026 The Illuminated Editorial</span>
+          <div className="flex gap-8">
+            <Link href="/archive">Archive</Link>
+            <span>Privacy</span>
+            <span>Ethic</span>
           </div>
         </div>
       </footer>
     </div>
+  )
+}
+
+// ── STREAMING WRAPPERS (Async Components) ─────────────────────────────────────
+
+async function MainNewsFeed({ activeCategory }: { activeCategory: string }) {
+  // Level 1: Check Database (Deep Intelligence)
+  const dbStories = await (activeCategory === 'world' 
+    ? getAllStories() 
+    : getStoriesByCategory(CATEGORY_MAP[activeCategory] || 'World', 12)
+  ).catch(() => []) as Story[]
+
+  // Level 2: Fallback to Live Dispatch if DB is empty for this category
+  let stories = dbStories
+  if (stories.length === 0) {
+    const live = await fetchLatestNews(activeCategory, 10).catch(() => ({ articles: [] }))
+    stories = live.articles.map(a => ({
+      id: toStorySlug(a.title),
+      title: a.title,
+      summary: a.description,
+      imageUrl: a.image || '',
+      date: a.publishedAt,
+      category: CATEGORY_MAP[activeCategory] || 'World',
+      articleBody: [],
+      historicalContext: '',
+      isGenerated: false,
+      status: 'active' as const,
+      roles: [],
+      panels: [],
+      predictionOptions: [],
+    }))
+  }
+
+  if (stories.length === 0) {
+    return (
+      <div className="flex flex-col gap-10 border-r border-outline/15 pr-8 py-20 text-center opacity-40 italic font-headline">
+        Syncing localized dispatches...
+      </div>
+    )
+  }
+
+  return (
+    <div className="relative border-r border-outline/15 pr-4">
+      <div 
+        className="max-h-[calc(100vh-100px)] overflow-y-auto overscroll-contain custom-scrollbar pr-6 scroll-smooth"
+        style={{ scrollbarGutter: 'stable' }}
+      >
+        <div className="flex flex-col gap-10">
+          <div className="pb-10 border-b border-outline/15">
+            <h4 className="font-headline font-black uppercase text-xs tracking-widest mb-6 border-b-2 border-on-background pb-1 w-fit">
+              Lead Story
+            </h4>
+            <FeaturedStory story={stories[0]} />
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-10 items-start pb-12">
+            <div className="flex flex-col gap-4">
+              <h4 className="font-headline font-black uppercase text-[10px] tracking-widest opacity-40">Dispatch Briefs</h4>
+              <div className="flex flex-col">
+                {stories.slice(1, Math.ceil((stories.length - 1) / 2) + 1).map((story) => (
+                  <StoryItem key={story.id} story={story} />
+                ))}
+              </div>
+            </div>
+            <div className="lg:border-l lg:border-outline/10 lg:pl-10 flex flex-col gap-4">
+              <h4 className="font-headline font-black uppercase text-[10px] tracking-widest opacity-40">Active Scenarios</h4>
+              <div className="flex flex-col">
+                {stories.slice(Math.ceil((stories.length - 1) / 2) + 1).map((story) => (
+                  <StoryItem key={story.id} story={story} />
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="absolute bottom-0 left-0 right-0 h-12 bg-linear-to-t from-background to-transparent pointer-events-none z-10" />
+    </div>
+  )
+}
+
+async function SidebarArchiveWrapper({ activeCategory }: { activeCategory: string }) {
+  const archive = await fetchLastWeekNews(activeCategory, 6).catch(() => LAST_WEEK_FALLBACK)
+  return (
+    <aside className="lg:sticky lg:top-6">
+      <div className="mb-4">
+        <h4 className="font-headline font-black uppercase text-xs tracking-widest border-b-2 border-on-background pb-1 w-fit">The Week Before</h4>
+      </div>
+      <div className="divide-y divide-outline/20">
+        {archive.map((article: NewsArticle, i: number) => (
+          <article key={i} className="py-4">
+            <ArticleLink article={article}>
+              <h5 className="text-sm font-headline font-bold leading-tight hover:text-primary transition-colors">{article.title}</h5>
+              <p className="text-[10px] font-label opacity-40 uppercase tracking-widest mt-2">
+                {new Date(article.publishedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} · {article.source?.name}
+              </p>
+            </ArticleLink>
+          </article>
+        ))}
+      </div>
+    </aside>
+  )
+}
+
+async function MarketSectionWrapper() {
+  const res = await fetchMarketNews(6).catch(() => ({ articles: [] }))
+  if (res.articles.length === 0) return null
+  return (
+    <>
+      <SectionDivider label="Markets" />
+      <div className="grid grid-cols-1 lg:grid-cols-[3fr_2fr] gap-8">
+        <LeadStory article={res.articles[0]} size="medium" />
+        <SectionFeed initialArticles={res.articles.slice(1)} nextPage={null} category="economy" />
+      </div>
+    </>
+  )
+}
+
+async function CryptoSectionWrapper() {
+  const res = await fetchCryptoNews(6).catch(() => ({ articles: [] }))
+  if (res.articles.length === 0) return null
+  return (
+    <>
+      <SectionDivider label="Crypto" />
+      <div className="grid grid-cols-1 lg:grid-cols-[3fr_2fr] gap-8">
+        <LeadStory article={res.articles[0]} size="medium" />
+        <SectionFeed initialArticles={res.articles.slice(1)} nextPage={null} category="tech" />
+      </div>
+    </>
+  )
+}
+
+// ── SKELETONS ──────────────────────────────────────────────────────────────
+
+function MainFeedSkeleton() { return <div className="border-r border-outline/15 pr-8 pointer-events-none opacity-20 bg-on-background/5 h-[80vh] rounded-lg animate-pulse" /> }
+function SidebarSkeleton() { return <div className="animate-pulse bg-on-background/5 h-64 rounded-lg" /> }
+function SectionSkeleton({ label }: { label: string }) { 
+  return (
+    <>
+      <SectionDivider label={label} />
+      <div className="animate-pulse bg-on-background/5 h-48 rounded-lg" />
+    </>
   )
 }

@@ -103,7 +103,7 @@ export default function PlayClient({ storyId, panels: initialPanels, roles: init
     <>
       {/* AI Image Generation Confirmation Modal */}
       {showConfirm && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-surface/80 backdrop-blur-xl animate-in fade-in duration-500">
+        <div className="fixed inset-0 z-100 flex items-center justify-center bg-surface/80 backdrop-blur-xl animate-in fade-in duration-500">
           <div className="max-w-md w-full bg-surface-container-high p-8 rounded-3xl shadow-[0_32px_64px_-15px_rgba(0,0,0,0.2)] border border-primary/10 mx-4">
             <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center text-primary text-2xl mb-6">
               🎨
@@ -151,11 +151,11 @@ export default function PlayClient({ storyId, panels: initialPanels, roles: init
           ) : (
             <div className="w-full h-full bg-on-surface" />
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-[#fefdf1] via-transparent to-transparent opacity-40" />
+          <div className="absolute inset-0 bg-linear-to-t from-surface via-transparent to-transparent opacity-40" />
         </div>
 
         {/* Header */}
-        <header className="fixed top-0 w-full z-50 bg-[#fefdf1]/80 backdrop-blur-md shadow-sm flex justify-between items-center px-6 py-4">
+        <header className="fixed top-0 w-full z-50 bg-surface/80 backdrop-blur-md shadow-sm flex justify-between items-center px-6 py-4">
           <span className="text-xl font-black text-primary tracking-tighter font-headline">
             The Illuminated Editorial
           </span>
@@ -190,8 +190,8 @@ export default function PlayClient({ storyId, panels: initialPanels, roles: init
           <div className="flex items-end gap-6">
 
             {/* Character portrait */}
-            <div className="flex-shrink-0 w-48 md:w-64 h-[400px] relative">
-              <div className="absolute bottom-0 w-full aspect-[3/4] rounded-t-full overflow-hidden bg-surface-container-high shadow-lg">
+            <div className="shrink-0 w-48 md:w-64 h-[400px] relative">
+              <div className="absolute bottom-0 w-full aspect-3/4 rounded-t-full overflow-hidden bg-surface-container-high shadow-lg">
                 {(activeRole?.portraitUrl || panel.characterPortrait) ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
@@ -201,7 +201,7 @@ export default function PlayClient({ storyId, panels: initialPanels, roles: init
                     style={{ filter: 'grayscale(10%)' }}
                   />
                 ) : (
-                  <div className="w-full h-full bg-gradient-to-b from-primary/20 to-primary/40" />
+                  <div className="w-full h-full bg-linear-to-b from-primary/20 to-primary/40" />
                 )}
               </div>
               {/* Character name label */}
@@ -213,7 +213,7 @@ export default function PlayClient({ storyId, panels: initialPanels, roles: init
             </div>
 
             {/* Speech bubble */}
-            <div className="flex-grow mb-4">
+            <div className="grow mb-4">
               <div className="relative bg-surface-container-lowest/90 backdrop-blur-xl p-8 md:p-10 rounded-2xl md:rounded-3xl shadow-[0_32px_64px_-15px_rgba(53,58,38,0.12)] border-l-8 border-primary">
                 <div className="max-w-3xl">
                   <p className="font-body text-xl md:text-2xl leading-relaxed text-on-surface min-h-[80px]">
@@ -245,7 +245,7 @@ export default function PlayClient({ storyId, panels: initialPanels, roles: init
         </main>
 
         {/* Mobile bottom nav */}
-        <footer className="md:hidden fixed bottom-0 w-full h-20 bg-[#fefdf1]/80 backdrop-blur-xl rounded-t-[2rem] shadow-[0_-8px_30px_rgba(53,58,38,0.04)] flex justify-around items-center px-4 z-50">
+        <footer className="md:hidden fixed bottom-0 w-full h-20 bg-surface/80 backdrop-blur-xl rounded-t-4xl shadow-[0_-8px_30px_rgba(53,58,38,0.04)] flex justify-around items-center px-4 z-50">
           {[
             { label: 'Chronicle', icon: '📰', href: '/' },
             { label: 'Archive', icon: '📚', href: '/archive' },

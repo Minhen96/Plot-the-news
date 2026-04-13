@@ -28,21 +28,47 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // All categories from newsdata.ts (plus 'crypto' as a special search)
-  const categories = ['world', 'politics', 'economy', 'culture', 'science', 'health', 'sports', 'opinion'];
+  // Specific order: search specific categories first, then world (fallback)
+  const categoryKeys = ['breaking', 'crime', 'politics', 'economy', 'tech', 'health', 'sports', 'entertainment', 'world'];
   
-  const results = await Promise.all([
-    ...categories.map(c => fetchLatestNews(c, 10)),
-    fetchCryptoNews(10)
-  ]).catch(() => []);
+  // Fetch from all categories
+  const categoryResults = await Promise.all(
+    categoryKeys.map(async (key) => {
+      const res = await fetchLatestNews(key, 10).catch(() => ({ articles: [] }));
+      return { key, articles: res.articles };
+    })
+  ).catch(() => []);
 
-  const allArticles = results.flatMap(r => (r as any).articles || []);
+  const allArticles: any[] = [];
+  const urlToCategory = new Map<string, string>();
+
+  const catMap: Record<string, string> = {
+    world: 'World',
+    breaking: 'Breaking',
+    crime: 'Crime',
+    politics: 'Politics',
+    economy: 'Finance',
+    tech: 'Tech',
+    health: 'Health',
+    sports: 'Sports',
+    entertainment: 'Entertainment'
+  };
+
+  // Populate articles and map URLs to categories (prioritizing specific ones)
+  for (const { key, articles } of categoryResults) {
+    for (const article of articles) {
+      if (!urlToCategory.has(article.url)) {
+        urlToCategory.set(article.url, catMap[key]);
+        allArticles.push(article);
+      }
+    }
+  }
 
   if (allArticles.length === 0) {
     return NextResponse.json({ processed: 0, skipped: 0 });
   }
 
-  // Deduplicate by sourceUrl
+  // Deduplicate by sourceUrl against DB
   const urls = allArticles.map((a) => a.url);
   const existing = await db
     .select({ url: news.sourceUrl })
@@ -63,15 +89,18 @@ export async function GET(req: NextRequest) {
 
       // Quality Gate: Skip articles with no body content
       if (articleBody.length === 0) {
-        console.log(`[sync] skipping article due to no body content: ${article.title}`);
         continue;
       }
 
       // 2. Intelligence: Fetch real-world GNews references
-      const gNewsRefs = await searchNews({
-        q: article.title.slice(0, 100),
+      // Clean query for better hit rate
+      const query = article.title.replace(/[^\w\s]/gi, ' ').split(' ').slice(0, 8).join(' ');
+      
+      let gNewsRefs = await searchNews({
+        q: query,
         lang: "en",
         max: 3,
+        in: 'title'
       }).then((res) =>
         res.articles.map((a) => ({
           title: a.title,
@@ -79,25 +108,24 @@ export async function GET(req: NextRequest) {
           url: a.url,
         }))
       ).catch(() => []);
-      
-      // Determine display category
-      let displayCat = 'World';
-      if (article.url.includes('crypto')) displayCat = 'Technology';
-      // Find which search category this came from (best effort)
-      const foundCat = categories.find(c => results.some(r => (r as any).articles?.some((a: any) => a.url === article.url)));
-      if (foundCat) {
-        const catMap: Record<string, string> = {
-          world: 'World',
-          politics: 'Politics',
-          economy: 'Finance',
-          culture: 'Culture',
-          science: 'Technology',
-          health: 'Health',
-          sports: 'Sports',
-          opinion: 'Opinion'
-        };
-        displayCat = catMap[foundCat] || 'World';
+
+      // Fallback: If no refs found by title, try a broader search
+      if (gNewsRefs.length === 0) {
+        const fallbackQuery = (article.keywords?.slice(0, 3).join(' ') || article.title.slice(0, 30));
+        gNewsRefs = await searchNews({
+          q: fallbackQuery,
+          lang: "en",
+          max: 2,
+        }).then((res) =>
+          res.articles.map((a) => ({
+            title: a.title,
+            source: a.source.name,
+            url: a.url,
+          }))
+        ).catch(() => []);
       }
+      
+      const displayCat = urlToCategory.get(article.url) || 'World';
 
       await db.insert(news).values({
         id,

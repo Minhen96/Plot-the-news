@@ -157,6 +157,7 @@ export interface NewsArticle {
   description: string
   content?: string
   keywords?: string[]
+  category?: string[]
   url: string
   image: string | null
   publishedAt: string

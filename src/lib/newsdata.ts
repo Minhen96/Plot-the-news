@@ -4,14 +4,15 @@ const BASE = 'https://newsdata.io/api/1'
 
 // Maps our category slugs → newsdata category names
 const CAT: Record<string, string> = {
-  world:    'world',
-  politics: 'politics',
-  economy:  'business',
-  culture:  'entertainment',
-  science:  'science',
-  health:   'health',
-  sports:   'sports',
-  opinion:  'top',
+  world:         'world',
+  breaking:      'top',
+  crime:         'crime',
+  politics:      'politics',
+  economy:       'business',
+  tech:          'technology',
+  health:        'health',
+  sports:        'sports',
+  entertainment: 'entertainment',
 }
 
 const COMMON = 'language=en&removeduplicate=1&image=1'
@@ -22,6 +23,7 @@ interface NewsdataRaw {
   description: string | null
   content:     string | null
   keywords:    string[] | null
+  category:    string[] | null
   link:        string
   image_url:   string | null
   pubDate:     string
@@ -56,6 +58,7 @@ function map(raw: NewsdataRaw): NewsArticle {
     description: clean(raw.description),
     content:     cleanContent(raw.content) || undefined,
     keywords:    raw.keywords?.length ? raw.keywords.slice(0, 8) : undefined,
+    category:    raw.category || [],
     url:         raw.link,
     image:       raw.image_url,
     publishedAt: raw.pubDate,

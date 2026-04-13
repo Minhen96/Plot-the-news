@@ -106,7 +106,7 @@ export default function TopFeed({ featured, initialArticles, nextPage: initialNe
 
   return (
     // Fixed-height scroll box — scrolls internally, does not expand the page
-    <div ref={containerRef} className="h-[680px] overflow-y-auto pr-1 scrollbar-thin">
+    <div ref={containerRef} className="h-[calc(100vh-100px)] overflow-y-auto pr-1 scrollbar-thin">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-8 items-start">
 
         {/* Left column — Lead Story + articles */}

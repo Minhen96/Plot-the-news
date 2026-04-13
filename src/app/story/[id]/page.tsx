@@ -4,6 +4,9 @@ import LiveArticleView from '@/components/LiveArticleView'
 import { getStory } from '@/data/stories'
 import { getStoryById } from '@/lib/stories'
 
+// Articles are persistent; cache for 1 hour to ensure maximum performance
+export const revalidate = 3600
+
 export default async function ArticlePage({
   params,
 }: {
