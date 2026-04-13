@@ -23,9 +23,15 @@ import { scrapeArticleText } from "@/lib/generate";
 export async function GET(req: NextRequest) {
   // Auth check
   const cronSecret = process.env.CRON_SECRET;
+  const isEnabled = process.env.ENABLE_CRON === "true";
   const auth = req.headers.get("authorization");
+  
   if (!cronSecret || auth !== `Bearer ${cronSecret}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  if (!isEnabled) {
+    return NextResponse.json({ message: "Cron sync is currently disabled via ENABLE_CRON" });
   }
 
   // Specific order: search specific categories first, then world (fallback)
@@ -100,7 +106,7 @@ export async function GET(req: NextRequest) {
         q: query,
         lang: "en",
         max: 3,
-        in: 'title'
+        in: ['title']
       }).then((res) =>
         res.articles.map((a) => ({
           title: a.title,

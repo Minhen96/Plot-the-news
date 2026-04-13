@@ -41,10 +41,20 @@ function toParagraphs(raw: string): string[] {
 
 // Extract a short search query from article title
 function toSearchQuery(article: NewsArticle): string {
+  // Priority 1: Use keywords if available
   if (article.keywords?.length) return article.keywords.slice(0, 3).join(' ')
-  const stop = new Set(['the', 'a', 'an', 'is', 'are', 'was', 'and', 'or', 'in', 'on', 'at', 'to', 'of', 'for', 'with', 'by'])
-  const words = article.title.split(/\s+/).filter(w => !stop.has(w.toLowerCase()) && w.length > 2)
-  return words.slice(0, 5).join(' ')
+  
+  // Priority 2: Cleaned headline (first 6 words, no special chars)
+  const clean = article.title
+    .replace(/[^\w\s]/gi, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .split(' ')
+    .filter(w => w.length > 2)
+    .slice(0, 6)
+    .join(' ')
+    
+  return clean || article.title.slice(0, 30)
 }
 
 export default function LiveArticleView({ slug }: Props) {
