@@ -1,17 +1,17 @@
-# 🔭 FutureLens: Turning News into Action
+# 🧭 Plot the News!: Turning News into Action
 
 [![Next.js](https://img.shields.io/badge/Next.js-15-black?logo=next.js)](https://nextjs.org/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-v4-38B2AC?logo=tailwind-css)](https://tailwindcss.com/)
 [![DCAI L3](https://img.shields.io/badge/Blockchain-DCAI%20L3-blue)](http://139.180.140.143/)
 [![Hackathon](https://img.shields.io/badge/NottsHack-2026-orange)](https://nottshack.com)
 
-**FutureLens is more than just a news app. It's an interactive simulation platform that helps you understand world events by playing through them. We help the next generation move from passive scrolling to active, informed participation.**
+**Plot the News! is more than just a news app. It's an interactive simulation platform that helps you understand world events by playing through them. We help the next generation move from passive scrolling to active, informed participation.**
 
 ---
 
 ## 🏛️ How it Works: The 7-Step Experience Loop
 
-FutureLens helps you learn world affairs by taking you through a structured cycle, moving from learning facts to seeing real-world consequences:
+Plot the News! helps you learn world affairs by taking you through a structured cycle, moving from learning facts to seeing real-world consequences:
 
 ```mermaid
 graph TD
@@ -25,8 +25,8 @@ graph TD
 
 ---
 
-## 🔥 Why FutureLens?
-FutureLens is the intersection of **News + Simulation + Social + AI**. It turns the raw news into a **Playable Geopolitical Game** that subverts the fast-scrolling **System 1** architecture of modern social media, grounding users in deep, analytical **System 2** thinking.
+## 🔥 Why Plot the News!?
+Plot the News! is the intersection of **News + Simulation + Social + AI**. It turns the raw news into a **Playable Geopolitical Game** that subverts the fast-scrolling **System 1** architecture of modern social media, grounding users in deep, analytical **System 2** thinking.
 
 ## ✨ The Four Pillars
 
@@ -48,23 +48,32 @@ Filter out the noise. Lock your predictions on-chain to build a **Verifiable Tra
 
 ### 1. Clone & Install
 ```bash
-git clone https://github.com/07alexmak04/NottsHack.git
-cd NottsHack
-npm install
+git clone https://github.com/Minhen/Plot-the-News.git
+cd Plot-the-News
+pnpm install
 ```
 
 ### 2. Environment Setup
-Create a `.env.local` file with the following (see [.env.example](.env.example) for details):
-- `DATABASE_URL`: Supabase Postgres connection.
+Create a `.env.local` file (see [.env.example](.env.example) for details):
+- `DATABASE_URL`: Supabase Transaction Pooler (Port 6543).
+- `DIRECT_URL`: Supabase Direct Connection (Port 5432).
 - `DEEPSEEK_API_KEY`: For story & scenario generation.
 - `FAL_KEY`: For on-demand AI image generation.
 - `NEWSDATA_API_KEY` & `GNEWS_API_KEY`: Real-time news feeds.
 - `NEXT_PUBLIC_PRIVY_APP_ID`: Web3 Auth.
 
 ### 3. Database & Development
+This project uses a custom schema named `plot_news_app` to isolate its data.
+
 ```bash
-npm run db:push  # Sync schema
-npm run dev      # Start Next.js
+# 1. Verify your database connections
+npx tsx scripts/db-check.ts
+
+# 2. Sync schema (Non-destructive)
+npm run db:push
+
+# 3. Start development
+npm run dev
 ```
 Open [http://localhost:3000](http://localhost:3000) to enter the lens.
 
@@ -72,7 +81,7 @@ Open [http://localhost:3000](http://localhost:3000) to enter the lens.
 
 ## 📚 Learn the Philosophy
 
-For a deeper dive into the data and the logic behind FutureLens, explore our simplified foundational guides:
+For a deeper dive into the data and the logic behind Plot the News!, explore our simplified foundational guides:
 
 1. [🔭 **The Vision**](docs/foundations/01-vision.md): Why we need to move from scrolling to solving.
 2. [📰 **Spotting the Truth**](docs/foundations/02-media_verification.md): How we fight media bias and misinformation.
