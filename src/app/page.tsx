@@ -5,18 +5,18 @@ import TopFeed from '@/components/TopFeed'
 import ArticleLink from '@/components/ArticleLink'
 import { fetchLatestNews, fetchLastWeekNews, fetchMarketNews, fetchCryptoNews } from '@/lib/newsdata'
 import { WORLD_FALLBACK, LAST_WEEK_FALLBACK } from '@/data/news'
-import { getAllStories } from '@/lib/stories'
+import { getAllStories, getStoriesByCategory } from '@/lib/stories'
 import type { NewsArticle, Story } from '@/lib/types'
 
 const CATEGORY_MAP: Record<string, string> = {
-  world:    'world',
-  politics: 'politics',
-  economy:  'economy',
-  culture:  'culture',
-  science:  'science',
-  health:   'health',
-  sports:   'sports',
-  opinion:  'opinion',
+  world:    'World',
+  politics: 'Politics',
+  economy:  'Finance',
+  culture:  'Culture',
+  science:  'Technology',
+  health:   'Health',
+  sports:   'Sports',
+  opinion:  'Opinion',
 }
 
 // ── Shared sub-components ─────────────────────────────────────────────────────
@@ -102,9 +102,9 @@ function FeaturedStory({ story }: { story: Story }) {
         <div className="space-y-2">
           <div className="flex items-center gap-2">
             <span className="text-[10px] font-label font-black uppercase tracking-widest text-primary/70">
-              {story.coverEmoji} {story.category}
+              {story.isGenerated ? `${story.coverEmoji} ${story.category}` : '🛰️ Satellite Uplink • Breaking'}
             </span>
-            <CrisisBadge level={story.crisisLevel} />
+            {story.isGenerated && <CrisisBadge level={story.crisisLevel} />}
           </div>
           <h3 className="text-xl md:text-2xl font-headline font-extrabold leading-tight text-on-background group-hover:text-primary transition-colors">
             {story.title}
@@ -133,9 +133,9 @@ function StoryItem({ story }: { story: Story }) {
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5 mb-1">
             <span className="text-[9px] font-label font-black uppercase tracking-widest text-primary/60">
-              {story.coverEmoji} {story.category}
+              {story.isGenerated ? `${story.coverEmoji} ${story.category}` : '🛰️ Live Dispatch'}
             </span>
-            <CrisisBadge level={story.crisisLevel} />
+            {story.isGenerated && <CrisisBadge level={story.crisisLevel} />}
           </div>
           <h4 className="font-headline font-bold text-sm leading-snug mb-1 group-hover:text-primary transition-colors line-clamp-2">
             {story.title}
@@ -170,7 +170,7 @@ export default async function ChronicleHub({
 
   // Fetch categorized stories from DB
   const [dbStories, marketDB, cryptoDB] = await Promise.all([
-    getAllStories().catch(() => []),
+    (activeCategory === 'world' ? getAllStories() : getStoriesByCategory(CATEGORY_MAP[activeCategory] || 'World', 12)).catch(() => []),
     getStoriesByCategory('Finance', 6).catch(() => []),
     getStoriesByCategory('Technology', 6).catch(() => []),
   ])
@@ -186,10 +186,10 @@ export default async function ChronicleHub({
     primaryResult,
   ] = await Promise.all([
     fetchLastWeekNews(activeCategory, 6).catch(() => []),
-    // Only fetch live if DB is empty
+    // Only fetch live if DB has NO items
     hasMarketDB ? Promise.resolve({ articles: [] }) : fetchMarketNews(6).catch(() => ({ articles: [], nextPage: null })),
     hasCryptoDB ? Promise.resolve({ articles: [] }) : fetchCryptoNews(6).catch(() => ({ articles: [], nextPage: null })),
-    hasDbStories && dbStories.length >= 4
+    hasDbStories
       ? Promise.resolve(null)
       : fetchLatestNews(activeCategory, 10).catch(() => null),
   ])
@@ -200,14 +200,16 @@ export default async function ChronicleHub({
   const lastWeek = lastWeekArticles.length > 0 ? lastWeekArticles : LAST_WEEK_FALLBACK
 
   // Market section resolution
-  const marketArticles = hasMarketDB 
-    ? marketDB.map(s => ({ title: s.title, description: s.summary, url: `/story/${s.id}`, image: s.imageUrl, publishedAt: s.date, source: { name: s.coverEmoji ? `${s.coverEmoji} Intelligence` : 'Finance' } }))
+  const marketArticles: NewsArticle[] = hasMarketDB 
+    ? marketDB.map((s: Story) => ({ title: s.title, description: s.summary, url: `/story/${s.id}`, image: s.imageUrl, publishedAt: s.date, source: { name: s.coverEmoji ? `${s.coverEmoji} Intelligence` : 'Finance', url: '' } }))
     : marketAPI.articles
+  const marketNextPage = (marketAPI as any).nextPage
 
   // Crypto section resolution
-  const cryptoArticles = hasCryptoDB
-    ? cryptoDB.map(s => ({ title: s.title, description: s.summary, url: `/story/${s.id}`, image: s.imageUrl, publishedAt: s.date, source: { name: s.coverEmoji ? `${s.coverEmoji} Intelligence` : 'Crypto' } }))
+  const cryptoArticles: NewsArticle[] = hasCryptoDB
+    ? cryptoDB.map((s: Story) => ({ title: s.title, description: s.summary, url: `/story/${s.id}`, image: s.imageUrl, publishedAt: s.date, source: { name: s.coverEmoji ? `${s.coverEmoji} Intelligence` : 'Crypto', url: '' } }))
     : cryptoAPI.articles
+  const cryptoNextPage = (cryptoAPI as any).nextPage
 
   const marketFeatured = marketArticles[0]
   const marketList     = marketArticles.slice(1)
@@ -237,7 +239,7 @@ export default async function ChronicleHub({
                   {dbStories.slice(1).length > 0 ? 'Active Scenarios' : 'Latest Dispatches'}
                 </h4>
                 {dbStories.slice(1).length > 0
-                  ? dbStories.slice(1).map(story => (
+                  ? dbStories.slice(1).map((story: Story) => (
                       <StoryItem key={story.id} story={story} />
                     ))
                   : primary.slice(0, 6).map(article => (

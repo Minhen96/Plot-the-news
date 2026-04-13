@@ -14,7 +14,7 @@ export default async function ArticlePage({
   // DB first (has real FAL.ai images) → static demo story fallback
   const story = await getStoryById(id).catch(() => undefined) ?? getStory(id)
 
-  if (!story) {
+  if (!story || (!story.isGenerated && !story.id.startsWith('static-'))) {
     return (
       <>
         <Header variant="article" brand="editorial" />

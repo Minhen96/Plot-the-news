@@ -20,9 +20,10 @@ function cleanCrawledText(text: string): string {
     .replace(/\b(Load more|Read more|See also[:\s]*|Click here|Subscribe now|Sign up)\b[^\n]*/gi, '')
     // Social platform names as standalone words (leftover from share widgets)
     .replace(/\b(Facebook|Twitter|LinkedIn|Instagram|WhatsApp|Telegram|Pinterest)\b/g, '')
-    // Copyright / footer lines
+    // Copyright / footer lines and RSS bridges
     .replace(/©[^\n]*/g, '')
     .replace(/All rights reserved[^\n]*/gi, '')
+    .replace(/\bThe post\s+.*?\s+appeared first on\s+.*?\s*$/gi, '')
     // Collapse multiple spaces/newlines created by the above removals
     .replace(/\s{2,}/g, ' ')
     .trim();

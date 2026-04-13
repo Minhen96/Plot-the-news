@@ -15,10 +15,10 @@ export async function getAllStories(): Promise<Story[]> {
   const result = await db
     .select()
     .from(news)
-    .innerJoin(stories, eq(stories.id, news.id))
+    .leftJoin(stories, eq(stories.id, news.id))
     .orderBy(desc(news.createdAt));
 
-  return result.map((r) => mapJoinToStory(r.news, r.stories));
+  return result.map((r) => mapJoinToStory(r.news, r.stories || null));
 }
 
 /**
@@ -28,23 +28,23 @@ export async function getStoriesByCategory(category: string, limit = 10): Promis
   const result = await db
     .select()
     .from(news)
-    .innerJoin(stories, eq(stories.id, news.id))
+    .leftJoin(stories, eq(stories.id, news.id))
     .where(eq(news.category, category))
     .orderBy(desc(news.createdAt))
     .limit(limit);
 
-  return result.map((r) => mapJoinToStory(r.news, r.stories));
+  return result.map((r) => mapJoinToStory(r.news, r.stories || null));
 }
 
 export async function getStoryById(id: string): Promise<Story | undefined> {
   const [result] = await db
     .select()
     .from(news)
-    .innerJoin(stories, eq(stories.id, news.id))
+    .leftJoin(stories, eq(stories.id, news.id))
     .where(eq(news.id, id))
     .limit(1);
 
-  return result ? mapJoinToStory(result.news, result.stories) : undefined;
+  return result ? mapJoinToStory(result.news, result.stories || null) : undefined;
 }
 
 export async function upsertStory(story: Story): Promise<void> {
@@ -93,7 +93,7 @@ export async function upsertStory(story: Story): Promise<void> {
 
 function mapJoinToStory(
   n: typeof news.$inferSelect,
-  s: typeof stories.$inferSelect
+  s: (typeof stories.$inferSelect) | null
 ): Story {
   return {
     id: n.id,
@@ -110,16 +110,17 @@ function mapJoinToStory(
     historicalContext: n.historicalContext || "",
     historicalEvidence: n.historicalEvidence as HistoricalEvidence | undefined,
     references: (n.refs as Reference[]) || [],
-    status: (s.status as "active" | "resolved") || "active",
-    roles: (s.roles as Role[]) || [],
-    panels: (s.panels as Scene[]) || [],
-    predictionOptions: (s.predictionOptions as Directive[]) || [],
-    resolvedTimeline: s.resolvedTimeline as SimulationPhase[] | undefined,
-    resolvedOutcome: s.resolvedOutcome ?? undefined,
-    txHash: s.txHash ?? undefined,
-    simulations: s.simulations as Record<string, SimulationPhase[]> | undefined,
-    predictionCount: s.predictionCount ?? 0,
-    consensusOption: s.consensusOption ?? undefined,
-    controversyScore: s.controversyScore ?? 0,
+    isGenerated: n.isGenerated,
+    status: (s?.status as "active" | "resolved") || "active",
+    roles: (s?.roles as Role[]) || [],
+    panels: (s?.panels as Scene[]) || [],
+    predictionOptions: (s?.predictionOptions as Directive[]) || [],
+    resolvedTimeline: s?.resolvedTimeline as SimulationPhase[] | undefined,
+    resolvedOutcome: s?.resolvedOutcome ?? undefined,
+    txHash: s?.txHash ?? undefined,
+    simulations: s?.simulations as Record<string, SimulationPhase[]> | undefined,
+    predictionCount: s?.predictionCount ?? 0,
+    consensusOption: s?.consensusOption ?? undefined,
+    controversyScore: s?.controversyScore ?? 0,
   };
 }

@@ -117,6 +117,7 @@ export interface Story {
   txHash?: string
   simulations?: Record<string, SimulationPhase[]>
   // --- Aggregate metadata ---
+  isGenerated: boolean
   predictionCount?: number
   consensusOption?: string
   controversyScore?: number

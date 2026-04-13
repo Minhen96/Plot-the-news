@@ -43,6 +43,7 @@ export const news = plotNewsSchema.table('news', {
   historicalContext: text('historical_context'),
   historicalEvidence: jsonb('historical_evidence'),     // HistoricalEvidence
   refs: jsonb('refs').default([]),                      // Reference[]
+  isGenerated: boolean('is_generated').default(false).notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 });
 

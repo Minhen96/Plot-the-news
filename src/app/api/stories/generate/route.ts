@@ -17,25 +17,77 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { news } from "@/db/schema";
+import { news, stories } from "@/db/schema";
 import { eq } from "drizzle-orm";
-import { upsertStory } from "@/lib/stories";
+import { upsertStory, getStoriesByCategory } from "@/lib/stories";
 import { toStorySlug } from "@/lib/utils";
-import { generateStoryContent, generateStoryImages } from "@/lib/generate";
+import { generateStoryContent, generateStoryImages, scrapeArticleText } from "@/lib/generate";
 import { searchNews } from "@/lib/gnews";
 import type { Story } from "@/lib/types";
 
+export async function GET(req: NextRequest) {
+  const { searchParams } = new URL(req.url);
+  const newsId = searchParams.get("newsId");
+
+  if (!newsId) {
+    return NextResponse.json({ error: "newsId is required" }, { status: 400 });
+  }
+
+  const [item] = await db
+    .select()
+    .from(news)
+    .where(eq(news.id, newsId))
+    .limit(1);
+
+  if (!item) {
+    return NextResponse.json({ error: "Story not found" }, { status: 404 });
+  }
+
+  // On-Demand Hydration: If body is missing (legacy sync), scrape it now!
+  if (!item.articleBody || (Array.isArray(item.articleBody) && item.articleBody.length === 0)) {
+    const scrapedText = await scrapeArticleText(item.sourceUrl || '');
+    if (scrapedText) {
+      const articleBody = [scrapedText];
+      await db.update(news).set({ articleBody }).where(eq(news.id, newsId));
+      item.articleBody = articleBody;
+    }
+  }
+
+  return NextResponse.json(item);
+}
+
 export async function POST(req: NextRequest) {
   try {
-    const { headline, description, url, imageUrl, source, fullContent, category } = await req.json() as {
-      headline: string;
-      description: string;
-      url: string;
+    const body = await req.json();
+    let { headline, description, url, imageUrl, source, fullContent, category, newsId } = body as {
+      headline?: string;
+      description?: string;
+      url?: string;
       imageUrl?: string;
       source?: string;
       fullContent?: string | null;
       category?: string;
+      newsId?: string;
     };
+
+    // If newsId is provided, fetch missing info from DB
+    if (newsId && !headline) {
+      const [existingNews] = await db
+        .select()
+        .from(news)
+        .where(eq(news.id, newsId))
+        .limit(1);
+      
+      if (existingNews) {
+        headline = existingNews.title;
+        description = existingNews.summary || "";
+        url = existingNews.sourceUrl || "";
+        imageUrl = existingNews.imageUrl || undefined;
+        source = existingNews.sourceUrl || ""; 
+        category = existingNews.category;
+        fullContent = (existingNews.articleBody as string[])?.[0] || null;
+      }
+    }
 
     if (!headline || !description || !url) {
       return NextResponse.json(
@@ -44,18 +96,23 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Deduplicate by sourceUrl
-    const [existing] = await db
-      .select({ id: news.id })
-      .from(news)
-      .where(eq(news.sourceUrl, url))
+    // Check if already fully generated in stories table
+    const [existingStory] = await db
+      .select({ id: stories.id })
+      .from(stories)
+      .where(eq(stories.id, newsId || toStorySlug(headline)))
       .limit(1);
 
-    if (existing) {
-      return NextResponse.json({ id: existing.id });
+    if (existingStory) {
+      return NextResponse.json({ id: existingStory.id });
     }
 
-    const id = toStorySlug(headline);
+    const id = newsId || toStorySlug(headline);
+
+    // Scrape full article if missing
+    if (!fullContent) {
+      fullContent = await scrapeArticleText(url);
+    }
 
     // Generate story content (DeepSeek gets full article text if available)
     const storyData = await generateStoryContent(headline, description, source, fullContent);
@@ -78,8 +135,8 @@ export async function POST(req: NextRequest) {
 
     // Generate images
     const { coverUrl, panelUrls, portraitUrls } = await generateStoryImages(
-      storyData.panels,
-      storyData.roles,
+      storyData.panels as any[],
+      storyData.roles as any[],
       storyData.coverImageQuery,
       imageUrl
     );
@@ -101,6 +158,7 @@ export async function POST(req: NextRequest) {
       historicalEvidence: storyData.historicalEvidence,
       references: refs,
       status: "active",
+      isGenerated: true,
       roles: storyData.roles.map((role, i) => ({
         id: role.id,
         name: role.name,
@@ -111,7 +169,7 @@ export async function POST(req: NextRequest) {
         keyPlayerStance: role.keyPlayerStance,
         portraitPrompt: role.portraitPrompt,
       })),
-      panels: storyData.panels.map((panel, i) => ({
+      panels: (storyData.panels as any[]).map((panel, i) => ({
         id: panel.id,
         characterName: storyData.roles[panel.characterIndex]?.name ?? "The Analyst",
         characterPortrait: portraitUrls[panel.characterIndex] ?? "",
@@ -125,6 +183,11 @@ export async function POST(req: NextRequest) {
     };
 
     await upsertStory(story);
+
+    // Mark news as fully generated
+    await db.update(news)
+      .set({ isGenerated: true })
+      .where(eq(news.id, id));
 
     return NextResponse.json({ id });
   } catch (err) {

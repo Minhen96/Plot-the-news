@@ -12,13 +12,13 @@
  * Returns: { generated: string[], skipped: number, failed: number }
  */
 import { NextRequest, NextResponse } from "next/server";
-import { fetchLatestNews } from "@/lib/newsdata";
-import { scrapeArticleText } from "@/lib/generate";
+import { fetchLatestNews, fetchCryptoNews } from "@/lib/newsdata";
 import { db } from "@/db";
 import { news } from "@/db/schema";
 import { inArray } from "drizzle-orm";
-
-const BATCH_SIZE = 3; // Max stories generated per cron run
+import { toStorySlug } from "@/lib/utils";
+import { searchNews } from "@/lib/gnews";
+import { scrapeArticleText } from "@/lib/generate";
 
 export async function GET(req: NextRequest) {
   // Auth check
@@ -28,75 +28,89 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // Fetch from multiple channels
-  const [worldResp, marketResp, cryptoResp] = await Promise.all([
-    fetchLatestNews("world", 6),
-    fetchLatestNews("economy", 6), // Business -> Finance
-    fetchLatestNews("science", 6), // Science/Tech -> Technology
-  ]).catch(() => [ { articles: [] }, { articles: [] }, { articles: [] } ]);
+  // All categories from newsdata.ts (plus 'crypto' as a special search)
+  const categories = ['world', 'politics', 'economy', 'culture', 'science', 'health', 'sports', 'opinion'];
+  
+  const results = await Promise.all([
+    ...categories.map(c => fetchLatestNews(c, 10)),
+    fetchCryptoNews(10)
+  ]).catch(() => []);
 
-  // Tag articles by category
-  const tagged = [
-    ...(worldResp?.articles || []).map(a => ({ ...a, cat: 'World' })),
-    ...(marketResp?.articles || []).map(a => ({ ...a, cat: 'Finance' })),
-    ...(cryptoResp?.articles || []).map(a => ({ ...a, cat: 'Technology' })),
-  ];
+  const allArticles = results.flatMap(r => (r as any).articles || []);
 
-  if (tagged.length === 0) {
-    return NextResponse.json({ generated: [], skipped: 0, failed: 0 });
+  if (allArticles.length === 0) {
+    return NextResponse.json({ processed: 0, skipped: 0 });
   }
 
-  // Filter out articles already in DB by sourceUrl
-  const urls = tagged.map((a) => a.url);
+  // Deduplicate by sourceUrl
+  const urls = allArticles.map((a) => a.url);
   const existing = await db
-    .select({ id: news.sourceUrl })
+    .select({ url: news.sourceUrl })
     .from(news)
     .where(inArray(news.sourceUrl as any, urls));
 
-  const existingUrls = new Set(existing.map((r) => r.id));
-  const newArticles = tagged.filter((a) => !existingUrls.has(a.url));
+  const existingUrls = new Set(existing.map((r) => r.url));
+  const newArticles = allArticles.filter((a) => !existingUrls.has(a.url));
 
-  const toProcess = newArticles.slice(0, BATCH_SIZE);
-  const skipped = tagged.length - toProcess.length;
-
-  const generated: string[] = [];
-  let failed = 0;
-
-  // Process sequentially to avoid hammering DeepSeek + FAL.ai
-  for (const article of toProcess) {
+  let saved = 0;
+  for (const article of newArticles) {
     try {
-      const fullContent = await scrapeArticleText(article.url);
-      const baseUrl = req.nextUrl.origin;
-      const res = await fetch(`${baseUrl}/api/stories/generate`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${process.env.CRON_SECRET}`,
-        },
-        body: JSON.stringify({
-          headline: article.title,
-          description: article.description ?? "",
-          url: article.url,
-          imageUrl: article.image ?? undefined,
-          source: article.source.name,
-          fullContent,
-          category: article.cat, // Passing the tagged category
-        }),
-      });
+      const id = toStorySlug(article.title);
 
-      if (!res.ok) {
-        console.error(`[generate-batch] failed for ${article.url}:`, await res.text());
-        failed++;
-        continue;
+      // 1. Deep-Crawl: Fetch full article body
+      const fullText = await scrapeArticleText(article.url).catch(() => null);
+      const articleBody = fullText ? [fullText] : [];
+
+      // 2. Intelligence: Fetch real-world GNews references
+      const gNewsRefs = await searchNews({
+        q: article.title.slice(0, 100),
+        lang: "en",
+        max: 3,
+      }).then((res) =>
+        res.articles.map((a) => ({
+          title: a.title,
+          source: a.source.name,
+          url: a.url,
+        }))
+      ).catch(() => []);
+      
+      // Determine display category
+      let displayCat = 'World';
+      if (article.url.includes('crypto')) displayCat = 'Technology';
+      // Find which search category this came from (best effort)
+      const foundCat = categories.find(c => results.some(r => (r as any).articles?.some((a: any) => a.url === article.url)));
+      if (foundCat) {
+        const catMap: Record<string, string> = {
+          world: 'World',
+          politics: 'Politics',
+          economy: 'Finance',
+          culture: 'Culture',
+          science: 'Technology',
+          health: 'Health',
+          sports: 'Sports',
+          opinion: 'Opinion'
+        };
+        displayCat = catMap[foundCat] || 'World';
       }
 
-      const { id } = await res.json();
-      generated.push(id);
+      await db.insert(news).values({
+        id,
+        title: article.title,
+        summary: article.description,
+        imageUrl: article.image,
+        date: article.publishedAt,
+        category: displayCat,
+        sourceUrl: article.url,
+        isGenerated: false,
+        articleBody,
+        refs: gNewsRefs,
+      }).onConflictDoNothing();
+      
+      saved++;
     } catch (err) {
-      console.error(`[generate-batch] error for ${article.url}:`, err);
-      failed++;
+      console.error(`[sync] failed to save article:`, err);
     }
   }
 
-  return NextResponse.json({ generated, skipped, failed });
+  return NextResponse.json({ processed: saved, skipped: allArticles.length - saved });
 }
