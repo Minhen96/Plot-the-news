@@ -227,46 +227,47 @@ export default async function ChronicleHub({
 
           {/* Left 2/3 — DB stories OR live news TopFeed */}
           {hasDbStories ? (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-8 items-start border-r border-outline/15 pr-8">
-              <div>
-                <h4 className="font-headline font-black uppercase text-xs tracking-widest mb-4 border-b-2 border-on-background pb-1 w-fit">
-                  Lead Story
-                </h4>
-                <FeaturedStory story={dbStories[0]} />
+            <div className="relative border-r border-outline/15 pr-4">
+              {/* Precision News Vault: Entire Left/Mid Section Scrolls Together */}
+              <div 
+                className="max-h-[calc(100vh-80px)] overflow-y-auto overscroll-contain custom-scrollbar pr-6 scroll-smooth"
+                style={{ scrollbarGutter: 'stable' }}
+              >
+                <div className="flex flex-col gap-10">
+                  {/* Panoramic Lead Section */}
+                  <div className="pb-10 border-b border-outline/15">
+                    <h4 className="font-headline font-black uppercase text-xs tracking-widest mb-6 border-b-2 border-on-background pb-1 w-fit">
+                      Lead Story
+                    </h4>
+                    <FeaturedStory story={dbStories[0]} />
+                  </div>
+
+                  {/* Symmetric Twin-Column Feed */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-10 items-start pb-12">
+                    {/* Left Mini-Column */}
+                    <div className="flex flex-col gap-2">
+                      <h4 className="font-headline font-black uppercase text-[10px] tracking-widest mb-4 opacity-40">
+                        Dispatch Briefs
+                      </h4>
+                      {dbStories.slice(1, Math.ceil((dbStories.length - 1) / 2) + 1).map((story: Story) => (
+                        <StoryItem key={story.id} story={story} />
+                      ))}
+                    </div>
+
+                    {/* Right Mini-Column */}
+                    <div className="lg:border-l lg:border-outline/10 lg:pl-10 flex flex-col gap-2">
+                      <h4 className="font-headline font-black uppercase text-[10px] tracking-widest mb-4 opacity-40">
+                        Active Scenarios
+                      </h4>
+                      {dbStories.slice(Math.ceil((dbStories.length - 1) / 2) + 1).map((story: Story) => (
+                        <StoryItem key={story.id} story={story} />
+                      ))}
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div>
-                <h4 className="font-headline font-black uppercase text-xs tracking-widest mb-4 border-b-2 border-on-background pb-1 w-fit">
-                  {dbStories.slice(1).length > 0 ? 'Active Scenarios' : 'Latest Dispatches'}
-                </h4>
-                {dbStories.slice(1).length > 0
-                  ? dbStories.slice(1).map((story: Story) => (
-                      <StoryItem key={story.id} story={story} />
-                    ))
-                  : primary.slice(0, 6).map(article => (
-                      <ArticleLink key={article.url} article={article} className="group block py-4 border-b border-outline/15 last:border-0">
-                        <article className="flex gap-3">
-                          <div className="flex-1 min-w-0">
-                            <span className="text-[9px] font-label font-black uppercase tracking-widest text-primary/60 block mb-1">
-                              {article.source.name}
-                            </span>
-                            <h4 className="font-headline font-bold text-sm leading-snug mb-1 group-hover:text-primary transition-colors line-clamp-2">
-                              {article.title}
-                            </h4>
-                            <span className="text-[10px] font-label opacity-40 uppercase tracking-widest">
-                              {new Date(article.publishedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                            </span>
-                          </div>
-                          {article.image && (
-                            <div className="w-14 h-14 shrink-0 overflow-hidden ring-1 ring-outline/10">
-                              {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img src={article.image} alt={article.title} className="w-full h-full object-cover" />
-                            </div>
-                          )}
-                        </article>
-                      </ArticleLink>
-                    ))
-                }
-              </div>
+              {/* Subtle Indicator of Scroll Zone */}
+              <div className="absolute bottom-0 left-0 right-0 h-12 bg-linear-to-t from-background to-transparent pointer-events-none z-10" />
             </div>
           ) : (
             <TopFeed

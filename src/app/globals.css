@@ -83,3 +83,19 @@ body {
 .animate-fade-up {
   animation: fade-up 0.5s ease-out forwards;
 }
+
+/* Custom Scrollbar for Intelligence Vault */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 3px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--color-outline-variant);
+  border-radius: 10px;
+  opacity: 0.3;
+}
+.custom-scrollbar:hover::-webkit-scrollbar-thumb {
+  background: var(--color-primary);
+}
