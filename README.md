@@ -71,16 +71,15 @@ Two functions, two purposes:
 | Function              | When used                                       | Respects `GENERATE_IMAGES`?       |
 | --------------------- | ----------------------------------------------- | --------------------------------- |
 | `generateStoryImages` | Story creation (cron / generate route)          | Yes — returns Picsum when `false` |
-| `generateFalImages`   | On-demand (`/api/stories/[id]/generate-images`) | No — always calls FAL.ai          |
+| `generateFalImages`   | On-demand (`/api/stories/[id]/generate-images`) | Yes — returns Picsum when `false` |
 
-### `GENERATE_IMAGES=false` (default in dev)
+### `GENERATE_IMAGES=false` (safe / dev mode)
 
 - Story creation → Picsum placeholders saved instantly, no API cost
-- User visits Role page → detects Picsum portraits → calls FAL.ai → swaps portraits in state → saves to DB
-- User visits Play page → detects Picsum backgrounds → calls FAL.ai → swaps silently in background
-- Next visit → images already real in DB → no generation, served from cache
+- User visits Role / Play pages → route detects placeholders, but respects your `false` flag → skips FAL.ai entirely to save cost.
+- Result: You can safely demo the narrative flow with placeholder images without burning any FAL credits.
 
-### `GENERATE_IMAGES=true` (production)
+### `GENERATE_IMAGES=true` (production mode)
 
 - Story creation → FAL.ai called immediately as part of generation
 - Role/Play pages → images already real → no lazy generation needed

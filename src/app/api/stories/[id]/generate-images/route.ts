@@ -4,8 +4,8 @@
  * On-demand FAL.ai image generation — called when a user hits the Play page
  * and the story still has Picsum placeholder images.
  *
- * Always calls FAL.ai regardless of the GENERATE_IMAGES env flag (force=true).
- * Falls back gracefully if FAL_KEY is missing (keeps existing URLs).
+ * Generates AI images only if GENERATE_IMAGES=true, preventing accidental
+ * cost burning in environments where we want to keep using Picsum placeholders.
  *
  * Returns the updated panels and roles so PlayClient can swap images
  * without a page refresh.
@@ -34,6 +34,19 @@ export async function POST(
   const allBgsReal = story.panels.every(p => !isPicsum(p.backgroundUrl))
   if (allPortraitsReal && allBgsReal) {
     return NextResponse.json({ id, panels: story.panels, roles: story.roles, coverUrl: story.imageUrl, cached: true })
+  }
+
+  // Safety check: if the user explicitly disabled image generation across the app,
+  // do not generate images here and burn cost. Just return the existing mock images.
+  if (process.env.GENERATE_IMAGES !== "true") {
+    return NextResponse.json({ 
+      id, 
+      panels: story.panels, 
+      roles: story.roles, 
+      coverUrl: story.imageUrl, 
+      cached: true, 
+      disabled: true 
+    });
   }
 
   // Build prompts — use stored bgPrompt/portraitPrompt, fall back to dialogue/name
