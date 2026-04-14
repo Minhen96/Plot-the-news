@@ -10,6 +10,9 @@ export interface StoryGenerationOutput {
   historicalContext: string;
   historicalEvidence: HistoricalEvidence;
   cliffhanger: string;
+  author: string;
+  authorTitle: string;
+  impactSummary: string[];
   roles: Role[];
   panels: Scene[];
   predictionOptions: Directive[];

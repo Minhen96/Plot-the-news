@@ -75,6 +75,9 @@ export interface News {
   historicalContext: string
   historicalEvidence?: HistoricalEvidence
   references?: Reference[]
+  author?: string
+  authorTitle?: string
+  impactSummary?: string[]
 }
 
 // --- Story ---
@@ -107,6 +110,9 @@ export interface Story {
   historicalContext: string
   historicalEvidence?: HistoricalEvidence
   references?: Reference[]
+  author?: string
+  authorTitle?: string
+  impactSummary?: string[]
   // --- Game fields (from stories table) ---
   status: 'active' | 'resolved'
   roles: Role[]

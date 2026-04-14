@@ -66,6 +66,9 @@ export async function upsertStory(story: Story): Promise<void> {
     historicalContext: story.historicalContext,
     historicalEvidence: story.historicalEvidence ?? null,
     refs: story.references ?? [],
+    author: story.author ?? 'The Chronicle Intelligence',
+    authorTitle: story.authorTitle ?? 'Geopolitical Analyst',
+    impactSummary: story.impactSummary ?? [],
   };
 
   const storyValues = {
@@ -113,6 +116,9 @@ function mapJoinToStory(
     historicalContext: n.historicalContext || "",
     historicalEvidence: n.historicalEvidence as HistoricalEvidence | undefined,
     references: (n.refs as Reference[]) || [],
+    author: n.author ?? undefined,
+    authorTitle: n.authorTitle ?? undefined,
+    impactSummary: (n.impactSummary as string[]) ?? [],
     isGenerated: n.isGenerated,
     status: (s?.status as "active" | "resolved") || "active",
     roles: (s?.roles as Role[]) || [],

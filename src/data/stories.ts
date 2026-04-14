@@ -16,6 +16,14 @@ export const STORIES: Story[] = [
       'At the heart of the current stalemate is the legacy of the nuclear deal and the struggle for regional hegemony. While the JCPOA once promised a path toward Iranian reintegration into the global economy in exchange for nuclear oversight, the withdrawal of the U.S. triggered a spiral of mistrust. Today, the focus has pivoted to maritime security and the protection of global energy supply lines, which remain vulnerable to any sudden shift in the status quo.',
       'Strategic experts warn that this "Maritime Chessboard" could remain volatile for years, creating a potential choke point for global trade not seen in decades of naval history. Three U.S. carrier groups have repositioned. Allied navies from the UK, France, and Australia are converging. The question is no longer whether a miscalculation will occur — but who blinks first.',
     ],
+    author: 'Elias Thorne',
+    authorTitle: 'Foreign Affairs Analyst',
+    cliffhanger: 'The narrow artery of global commerce in the Strait of Hormuz remains the primary theater for a decades-long chess match between Washington and Tehran.',
+    impactSummary: [
+      'Global oil prices remain highly sensitive to maritime incidents, with a projected 10% premium on insurance for tankers in the Gulf.',
+      'Regional stability in the Levant and Yemen is increasingly tied to the outcome of direct and indirect U.S.–Iran communications.',
+      'Active diplomatic backchannels through Oman and Qatar remain the only firewall against unintended kinetic escalation.'
+    ],
     historicalContext:
       'The Strait of Hormuz is only 33 kilometres wide at its narrowest point. Approximately 20% of the world\'s oil supply — and nearly 30% of global LNG — transits through it daily, making it the single most important energy chokepoint on the planet.',
     historicalEvidence: {

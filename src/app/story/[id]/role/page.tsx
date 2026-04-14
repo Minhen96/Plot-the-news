@@ -30,7 +30,7 @@ export default async function RoleSelectionPage({
             {story.title}
           </h1>
           <p className="font-body text-lg md:text-xl text-on-background/60 max-w-2xl mx-auto italic">
-            Choose your lens. The narrative of history is shaped by those who hold the pen — and the sword.
+            Choose your POV. The narrative of history is shaped by those who hold the pen — and the sword.
           </p>
         </header>
 

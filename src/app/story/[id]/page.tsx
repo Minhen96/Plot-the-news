@@ -17,6 +17,7 @@ export default async function ArticlePage({
   // DB first (has real FAL.ai images) → static demo story fallback
   const story = await getStoryById(id).catch(() => undefined) ?? getStory(id)
 
+  // if no story, return LiveArticleView with undefined initialData
   if (!story || (!story.isGenerated && !story.id.startsWith('static-'))) {
     return (
       <>
@@ -65,9 +66,9 @@ export default async function ArticlePage({
               <div className="w-full h-full bg-linear-to-br from-primary/20 to-primary-container/40" />
             </div>
             <div>
-              <p className="font-headline font-bold text-sm text-on-surface">By Elias Thorne</p>
+              <p className="font-headline font-bold text-sm text-on-surface">By {story.author || 'The Chronicle Intelligence'}</p>
               <p className="font-body text-sm text-on-surface/60 italic">
-                Foreign Affairs Analyst · {formattedDate}
+                {story.authorTitle || 'Geopolitical Analyst'} · {formattedDate}
               </p>
             </div>
           </div>
@@ -77,6 +78,7 @@ export default async function ArticlePage({
         <div className="relative group mb-16">
           <div className="absolute -top-6 -left-6 w-24 h-24 bg-primary-container/20 rounded-full blur-3xl -z-10" />
           <div className="rounded-xl overflow-hidden bg-surface-container-high aspect-video">
+            {/* if story.imageUrl is undefined, use the placeholder */}
             {story.imageUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -92,10 +94,11 @@ export default async function ArticlePage({
               </div>
             )}
           </div>
-          <p className="mt-4 font-body text-sm text-on-surface/50 italic text-center max-w-2xl mx-auto">
-            &ldquo;The narrow artery of global commerce in the Strait of Hormuz remains the
-            primary theater for a decades-long chess match between Washington and Tehran.&rdquo;
-          </p>
+          {story.cliffhanger && (
+            <p className="mt-4 font-body text-sm text-on-surface/50 italic text-center max-w-2xl mx-auto">
+              &ldquo;{story.cliffhanger}&rdquo;
+            </p>
+          )}
         </div>
 
         {/* Article body */}
@@ -115,23 +118,21 @@ export default async function ArticlePage({
         </article>
 
         {/* Summary of impact */}
-        <div className="bg-surface-container-low rounded-lg p-8 mb-12 border-l-4 border-primary">
-          <h3 className="font-headline font-bold text-sm mb-4 uppercase tracking-wider text-primary">
-            Summary of Impact
-          </h3>
-          <ul className="space-y-4">
-            {[
-              'Global oil prices remain highly sensitive to maritime incidents, with a projected 10% premium on insurance for tankers in the Gulf.',
-              'Regional stability in the Levant and Yemen is increasingly tied to the outcome of direct and indirect U.S.–Iran communications.',
-              'Active diplomatic backchannels through Oman and Qatar remain the only firewall against unintended kinetic escalation.',
-            ].map((point) => (
-              <li key={point} className="flex items-start gap-3">
-                <span className="text-primary mt-1 shrink-0">◆</span>
-                <span className="font-body text-on-surface text-base leading-relaxed">{point}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
+        {story.impactSummary && story.impactSummary.length > 0 && (
+          <div className="bg-surface-container-low rounded-lg p-8 mb-12 border-l-4 border-primary">
+            <h3 className="font-headline font-bold text-sm mb-4 uppercase tracking-wider text-primary">
+              Summary of Impact
+            </h3>
+            <ul className="space-y-4">
+              {story.impactSummary.map((point) => (
+                <li key={point} className="flex items-start gap-3">
+                  <span className="text-primary mt-1 shrink-0">◆</span>
+                  <span className="font-body text-on-surface text-base leading-relaxed">{point}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         {/* Enter the game CTA */}
         <div className="flex flex-col items-center justify-center py-16 px-8 rounded-xl bg-linear-to-br from-primary to-on-surface text-white mb-20">
@@ -162,6 +163,7 @@ export default async function ArticlePage({
             </div>
 
             <div className="grid md:grid-cols-2 gap-12">
+              {/* if story.historicalEvidence is undefined, use the placeholder */}
               {story.historicalEvidence && (
                 <div className="space-y-4">
                   <h4 className="font-headline font-bold text-2xl text-on-surface">
@@ -181,6 +183,7 @@ export default async function ArticlePage({
                 </div>
               )}
 
+              {/* if story.references is undefined, use the placeholder */}
               {story.references && (
                 <div className="space-y-4">
                   <div className="flex flex-col gap-1 mb-2">

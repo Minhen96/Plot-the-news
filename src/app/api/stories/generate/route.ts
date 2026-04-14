@@ -177,6 +177,9 @@ export async function POST(req: NextRequest) {
       historicalContext: storyData.historicalContext,
       historicalEvidence: storyData.historicalEvidence,
       references: refs,
+      author: storyData.author,
+      authorTitle: storyData.authorTitle,
+      impactSummary: storyData.impactSummary,
       status: "active",
       isGenerated: true,
       roles: storyData.roles.map((role, i) => ({

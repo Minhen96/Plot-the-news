@@ -31,6 +31,13 @@ Generate a complete scenario as JSON with this exact shape:
     "summary": "1 sentence connecting past to present"
   },
   "cliffhanger": "1 dramatic sentence ending the article, hooks the reader into playing",
+  "author": "A realistic fictional journalist name (e.g. Elias Thorne)",
+  "authorTitle": "A realistic fictional title (e.g. Foreign Affairs Analyst)",
+  "impactSummary": [
+    "1-sentence point on immediate impact",
+    "1-sentence point on secondary impact",
+    "1-sentence point on broader implications"
+  ],
   "roles": [
     {
       "id": "faction-slug",
