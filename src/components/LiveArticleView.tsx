@@ -149,7 +149,7 @@ export default function LiveArticleView({ slug }: Props) {
     }
 
     const q = toSearchQuery(article)
-    fetch(`/api/news/related?q=${encodeURIComponent(q)}`)
+    fetch(`/api/news/related?q=${encodeURIComponent(q)}&newsId=${encodeURIComponent(slug)}`)
       .then(r => r.json())
       .then(async d => {
         const articles: RelatedArticle[] = d.articles ?? []

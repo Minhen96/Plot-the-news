@@ -69,7 +69,7 @@ async function fetchGNews<T>(
 
   try {
     const response = await fetch(url.toString(), {
-      next: { revalidate: 3600 }, // Default cache for 1 hour
+      cache: 'no-store',
     });
 
     if (!response.ok) {
