@@ -1,8 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import type { Role } from '@/lib/types'
+
+function isPicsum(url?: string) {
+  return !url || url.includes('picsum.photos')
+}
 
 const FACTION_STYLES = [
   {
@@ -32,9 +36,24 @@ interface Props {
   roles: Role[]
 }
 
-export default function RoleSelector({ storyId, roles }: Props) {
+export default function RoleSelector({ storyId, roles: initialRoles }: Props) {
   const router = useRouter()
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [roles, setRoles] = useState<Role[]>(initialRoles)
+  const [generatingPortraits, setGeneratingPortraits] = useState(false)
+
+  // Lazy image generation: if portraits are Picsum placeholders, fetch real ones
+  useEffect(() => {
+    const needsImages = initialRoles.some(r => isPicsum(r.portraitUrl))
+    if (!needsImages) return
+
+    setGeneratingPortraits(true)
+    fetch(`/api/stories/${storyId}/generate-images`, { method: 'POST' })
+      .then(r => r.ok ? r.json() : null)
+      .then(data => { if (data?.roles) setRoles(data.roles) })
+      .catch(() => {})
+      .finally(() => setGeneratingPortraits(false))
+  }, [storyId, initialRoles])
 
   function handleSelect(roleId: string) {
     setSelectedId(roleId)
@@ -42,7 +61,8 @@ export default function RoleSelector({ storyId, roles }: Props) {
 
   function handleStart() {
     if (!selectedId) return
-    sessionStorage.setItem('prediction', JSON.stringify({ storyId, roleId: selectedId }))
+    // key matches what PlayClient and DirectivesClient read
+    sessionStorage.setItem('game_role', JSON.stringify({ storyId, roleId: selectedId }))
     router.push(`/story/${storyId}/play`)
   }
 
@@ -66,7 +86,7 @@ export default function RoleSelector({ storyId, roles }: Props) {
               <div className="bg-surface-container-lowest rounded-[1.85rem] h-full overflow-hidden flex flex-col">
                 {/* Portrait */}
                 <div className="relative h-96 overflow-hidden">
-                  {role.portraitUrl ? (
+                  {role.portraitUrl && !isPicsum(role.portraitUrl) ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={role.portraitUrl}
@@ -78,7 +98,16 @@ export default function RoleSelector({ storyId, roles }: Props) {
                       i === 0
                         ? 'from-primary/30 via-surface-container to-primary-container/40'
                         : 'from-tertiary/30 via-surface-container to-tertiary-container/40'
-                    } transition-transform duration-700 group-hover:scale-105`} />
+                    } transition-transform duration-700 group-hover:scale-105`}>
+                      {generatingPortraits && (
+                        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
+                          <div className="w-6 h-6 border-2 border-primary/40 border-t-primary rounded-full animate-spin" />
+                          <span className="font-headline text-[9px] font-black uppercase tracking-widest text-primary/60">
+                            Generating portrait...
+                          </span>
+                        </div>
+                      )}
+                    </div>
                   )}
                   <div className="absolute inset-0 bg-linear-to-t from-surface-container-lowest via-transparent to-transparent" />
                   <span className={`absolute top-6 left-6 ${style.badge} px-4 py-1 rounded-full font-headline text-[10px] font-bold uppercase tracking-widest`}>

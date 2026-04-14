@@ -28,6 +28,14 @@ export async function POST(
     return NextResponse.json({ error: "Story not found" }, { status: 404 });
   }
 
+  // If all portraits and backgrounds are already real (non-Picsum), skip generation
+  const isPicsum = (url?: string) => !url || url.includes('picsum.photos')
+  const allPortraitsReal = story.roles.every(r => !isPicsum(r.portraitUrl))
+  const allBgsReal = story.panels.every(p => !isPicsum(p.backgroundUrl))
+  if (allPortraitsReal && allBgsReal) {
+    return NextResponse.json({ id, panels: story.panels, roles: story.roles, coverUrl: story.imageUrl, cached: true })
+  }
+
   // Build prompts — use stored bgPrompt/portraitPrompt, fall back to dialogue/name
   const panelPrompts = story.panels.map((p) => ({
     bgPrompt:

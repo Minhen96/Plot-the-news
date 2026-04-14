@@ -4,7 +4,7 @@ import RoleSelector from '@/components/RoleSelector'
 import { getStory } from '@/data/stories'
 import { getStoryById } from '@/lib/stories'
 
-export const revalidate = 3600
+export const revalidate = 60
 
 export default async function RoleSelectionPage({
   params,

@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import type { Scene, Role } from '@/lib/types'
-import SimulationLoading from '@/components/SimulationLoading'
 
 interface Props {
   storyId: string
@@ -17,8 +16,6 @@ export default function PlayClient({ storyId, panels: initialPanels, roles: init
 
   const [activePanels, setActivePanels] = useState<Scene[]>(initialPanels)
   const [activeRoles, setActiveRoles] = useState<Role[]>(initialRoles)
-  const [generatingImages, setGeneratingImages] = useState(false)
-  const [isPicsum, setIsPicsum] = useState(false)
   const [currentPanel, setCurrentPanel] = useState(0)
   const [displayed, setDisplayed] = useState('')
   const [isTyping, setIsTyping] = useState(true)
@@ -34,6 +31,22 @@ export default function PlayClient({ storyId, panels: initialPanels, roles: init
       if (stored) setRoleId(JSON.parse(stored).roleId)
     } catch { /* ignore */ }
   }, [])
+
+  // Lazy image generation: swap Picsum placeholders for real FAL.ai images silently
+  useEffect(() => {
+    const hasPicsum = initialPanels.some(p =>
+      !p.backgroundUrl || p.backgroundUrl.includes('picsum.photos')
+    )
+    if (!hasPicsum) return
+
+    fetch(`/api/stories/${storyId}/generate-images`, { method: 'POST' })
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (data?.panels) setActivePanels(data.panels)
+        if (data?.roles) setActiveRoles(data.roles)
+      })
+      .catch(() => {})
+  }, [storyId, initialPanels])
 
   const activeRole = activeRoles.find((r: Role) => r.id === roleId) ?? activeRoles[0]
 
@@ -67,10 +80,6 @@ export default function PlayClient({ storyId, panels: initialPanels, roles: init
       router.push(`/story/${storyId}/predict`)
     }
   }, [isTyping, currentPanel, activePanels.length, panel.dialogue, storyId, router])
-
-  if (generatingImages) {
-    return <SimulationLoading />
-  }
 
   return (
     <div
