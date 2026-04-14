@@ -6,6 +6,7 @@ interface HeaderProps {
   brand?: 'editorial' | 'futurelens'
   variant?: 'hub' | 'article'
   activeCategory?: string
+  isGeneratedFilter?: boolean
 }
 
 const NAV_TABS = [
@@ -20,15 +21,17 @@ const NAV_TABS = [
   { label: 'Entertainment', href: '/?category=entertainment',   category: 'entertainment' },
 ]
 
-function NavTabs({ activeCategory }: { activeCategory?: string }) {
+function NavTabs({ activeCategory, isGeneratedFilter }: { activeCategory?: string, isGeneratedFilter?: boolean }) {
   return (
     <>
       {NAV_TABS.map((tab) => {
         const isActive = tab.category !== null && tab.category === activeCategory
+        // Preserve the generated filter when switching categories
+        const queryParams = isGeneratedFilter ? `${tab.href}&generated=true` : tab.href
         return (
           <Link
             key={tab.href}
-            href={tab.href}
+            href={queryParams}
             className={`transition-colors ${
               isActive
                 ? 'text-primary border-b-2 border-primary pb-1'
@@ -71,7 +74,7 @@ function ArticleNav({ brand }: { brand: 'editorial' | 'futurelens' }) {
 }
 
 // Full broadsheet masthead — used on Chronicle Hub only
-function HubMasthead({ brand, activeCategory }: { brand: 'editorial' | 'futurelens'; activeCategory?: string }) {
+function HubMasthead({ brand, activeCategory, isGeneratedFilter }: { brand: 'editorial' | 'futurelens'; activeCategory?: string, isGeneratedFilter?: boolean }) {
   const date = new Date().toLocaleDateString('en-US', {
     weekday: 'long',
     year: 'numeric',
@@ -102,15 +105,29 @@ function HubMasthead({ brand, activeCategory }: { brand: 'editorial' | 'futurele
       </h1>
       <div className="border-t border-on-background mb-4" />
       {brand === 'editorial' && (
-        <nav className="hidden md:flex flex-wrap justify-center gap-x-8 gap-y-2 font-label uppercase text-[10px] md:text-xs tracking-[0.2em] font-black border-b border-on-background/10 pb-4">
-          <NavTabs activeCategory={activeCategory ?? 'world'} />
-        </nav>
+        <div className="relative hidden md:flex items-center justify-center border-b border-on-background/10 pb-4">
+          <nav className="flex flex-wrap justify-center gap-x-8 gap-y-2 font-label uppercase text-[10px] md:text-xs tracking-[0.2em] font-black">
+            <NavTabs activeCategory={activeCategory ?? 'world'} isGeneratedFilter={isGeneratedFilter} />
+          </nav>
+          <div className="absolute right-0 top-0 bottom-0 flex items-start mt-0.5">
+            <Link 
+              href={`/?category=${activeCategory ?? 'world'}${!isGeneratedFilter ? '&generated=true' : ''}`}
+              className={`flex items-center gap-2 text-[10px] font-label uppercase tracking-widest font-black transition-colors ${isGeneratedFilter ? 'text-primary' : 'text-on-background/40 hover:text-on-background/80'}`}
+              title="Show only simulated missions"
+            >
+              <div className={`w-3 h-3 rounded-full border flex items-center justify-center ${isGeneratedFilter ? 'bg-primary border-primary' : 'border-current'}`}>
+                {isGeneratedFilter && <div className="w-1.5 h-1.5 bg-background rounded-full" />}
+              </div>
+              Simulated Only
+            </Link>
+          </div>
+        </div>
       )}
     </header>
   )
 }
 
-export default function Header({ brand = 'editorial', variant = 'hub', activeCategory }: HeaderProps) {
+export default function Header({ brand = 'editorial', variant = 'hub', activeCategory, isGeneratedFilter }: HeaderProps) {
   if (variant === 'article') return <ArticleNav brand={brand} />
-  return <HubMasthead brand={brand} activeCategory={activeCategory} />
+  return <HubMasthead brand={brand} activeCategory={activeCategory} isGeneratedFilter={isGeneratedFilter} />
 }

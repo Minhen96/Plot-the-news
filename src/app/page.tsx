@@ -172,20 +172,21 @@ function StoryItem({ story }: { story: Story }) {
 export default async function ChronicleHub({
   searchParams,
 }: {
-  searchParams: Promise<{ category?: string }>
+  searchParams: Promise<{ category?: string, generated?: string }>
 }) {
-  const { category } = await searchParams
+  const { category, generated } = await searchParams
   const activeCategory = category && CATEGORY_MAP[category] ? category : 'world'
+  const isGeneratedFilter = generated === 'true'
 
   return (
     <div className="max-w-[1400px] mx-auto px-6 lg:px-12 py-6">
-      <Header brand="editorial" activeCategory={activeCategory} />
+      <Header brand="editorial" activeCategory={activeCategory} isGeneratedFilter={isGeneratedFilter} />
 
       <main className="mt-8">
         <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-8 items-start">
           
           <Suspense fallback={<MainFeedSkeleton />}>
-            <MainNewsFeed activeCategory={activeCategory} />
+            <MainNewsFeed activeCategory={activeCategory} generatedOnly={isGeneratedFilter} />
           </Suspense>
 
           <Suspense fallback={<SidebarSkeleton />}>
@@ -219,16 +220,20 @@ export default async function ChronicleHub({
 
 // ── STREAMING WRAPPERS (Async Components) ─────────────────────────────────────
 
-async function MainNewsFeed({ activeCategory }: { activeCategory: string }) {
+async function MainNewsFeed({ activeCategory, generatedOnly }: { activeCategory: string, generatedOnly: boolean }) {
   // Level 1: Check Database (Deep Intelligence)
-  const dbStories = await (activeCategory === 'world' 
+  let dbStories = await (activeCategory === 'world' 
     ? getAllStories() 
     : getStoriesByCategory(CATEGORY_MAP[activeCategory] || 'World', 12)
   ).catch(() => []) as Story[]
 
+  if (generatedOnly) {
+    dbStories = dbStories.filter(s => s.isGenerated)
+  }
+
   // Level 2: Fallback to Live Dispatch if DB is empty for this category
   let stories = dbStories
-  if (stories.length === 0) {
+  if (!generatedOnly && stories.length === 0) {
     const live = await fetchLatestNews(activeCategory, 10).catch(() => ({ articles: [] }))
     stories = live.articles.map(a => ({
       id: toStorySlug(a.title),
