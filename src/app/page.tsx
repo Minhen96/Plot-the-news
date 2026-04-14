@@ -148,7 +148,7 @@ export default async function ChronicleHub({
   const isGeneratedFilter = generated === 'true'
 
   return (
-    <div className="max-w-[1400px] mx-auto px-6 lg:px-12 py-6">
+    <div className="max-w-[1400px] mx-auto px-4 md:px-6 lg:px-12 py-6">
       <Header brand="editorial" activeCategory={activeCategory} isGeneratedFilter={isGeneratedFilter} />
 
       <main className="mt-8">
@@ -244,7 +244,7 @@ async function MainNewsFeed({ activeCategory, generatedOnly }: { activeCategory:
   return (
     <div className="relative border-r border-outline/15 pr-4">
       <div
-        className="max-h-[calc(100vh-100px)] overflow-y-auto overscroll-contain custom-scrollbar pr-6 scroll-smooth"
+        className="max-h-none overflow-y-visible lg:max-h-[calc(100vh-100px)] lg:overflow-y-auto overscroll-contain custom-scrollbar pr-6 scroll-smooth"
         style={{ scrollbarGutter: 'stable' }}
       >
         <div className="flex flex-col gap-10">

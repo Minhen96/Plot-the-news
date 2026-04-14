@@ -85,7 +85,7 @@ export default function RoleSelector({ storyId, roles: initialRoles }: Props) {
             >
               <div className="bg-surface-container-lowest rounded-[1.85rem] h-full overflow-hidden flex flex-col">
                 {/* Portrait */}
-                <div className="relative h-96 overflow-hidden">
+                <div className="relative h-64 md:h-96 overflow-hidden">
                   {role.portraitUrl && !isPicsum(role.portraitUrl) ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
@@ -121,7 +121,7 @@ export default function RoleSelector({ storyId, roles: initialRoles }: Props) {
                 </div>
 
                 {/* Body */}
-                <div className="p-10 flex-1 flex flex-col">
+                <div className="p-6 md:p-10 flex-1 flex flex-col">
                   <h2 className={`font-headline text-3xl font-extrabold ${style.accent} mb-2`}>
                     {role.name}
                   </h2>

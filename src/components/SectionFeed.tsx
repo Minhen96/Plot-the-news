@@ -98,7 +98,7 @@ export default function SectionFeed({ initialArticles, nextPage: initialNextPage
 
   return (
     // Fixed-height scrollable container — nested scroll, does not expand the page
-    <div ref={containerRef} className="h-[480px] overflow-y-auto pr-2 scrollbar-thin">
+    <div ref={containerRef} className="h-[360px] md:h-[480px] overflow-y-auto pr-2 scrollbar-thin">
       <div className="divide-y divide-outline/15">
         {articles.map(a => <ArticleRow key={a.url} article={a} />)}
         {loading && (

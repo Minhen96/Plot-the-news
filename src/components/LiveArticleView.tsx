@@ -247,7 +247,7 @@ export default function LiveArticleView({ slug, initialData }: Props) {
 
   if (!ready) {
     return (
-      <main className="max-w-4xl mx-auto px-6 pt-12 pb-24 animate-pulse">
+      <main className="max-w-4xl mx-auto px-4 md:px-6 pt-12 pb-24 animate-pulse">
         <div className="mb-10 flex flex-col gap-4">
           <div className="h-3 w-32 bg-on-surface/10 rounded" />
           <div className="h-10 w-3/4 bg-on-surface/10 rounded" />
@@ -274,7 +274,7 @@ export default function LiveArticleView({ slug, initialData }: Props) {
 
   if (!article) {
     return (
-      <div className="max-w-4xl mx-auto px-6 pt-24 pb-24 text-center">
+      <div className="max-w-4xl mx-auto px-4 md:px-6 pt-24 pb-24 text-center">
         <p className="font-headline font-bold text-2xl text-on-surface/40 mb-6">Article not found</p>
         <Link href="/" className="text-[10px] font-label font-black uppercase tracking-widest text-primary border-b border-primary/30 hover:border-primary transition-colors">
           ← Back to Chronicle
@@ -307,7 +307,7 @@ export default function LiveArticleView({ slug, initialData }: Props) {
       {/* Confirmation Modal */}
       {showConfirm && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-surface/80 backdrop-blur-xl animate-in fade-in duration-500">
-          <div className="max-w-md w-full bg-surface-container-high p-8 rounded-3xl shadow-[0_32px_64px_-15px_rgba(0,0,0,0.2)] border border-primary/10 mx-4">
+          <div className="max-w-md w-full bg-surface-container-high p-6 md:p-8 rounded-3xl shadow-[0_32px_64px_-15px_rgba(0,0,0,0.2)] border border-primary/10 mx-4">
             <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center text-primary text-2xl mb-6">
               🛰️
             </div>
@@ -335,7 +335,7 @@ export default function LiveArticleView({ slug, initialData }: Props) {
         </div>
       )}
 
-      <main className="max-w-4xl mx-auto px-6 pt-12 pb-24">
+      <main className="max-w-4xl mx-auto px-4 md:px-6 pt-12 pb-24">
         {/* Breadcrumb */}
         <div className="mb-10 flex flex-col gap-4">
           <div className="flex items-center gap-2 text-on-surface/50 font-label text-xs uppercase tracking-widest font-bold">
@@ -344,7 +344,7 @@ export default function LiveArticleView({ slug, initialData }: Props) {
             <span className="text-primary">{article.source.name}</span>
           </div>
 
-          <h2 className="font-headline text-4xl md:text-5xl font-extrabold text-on-surface leading-[1.1] tracking-tight">
+          <h2 className="font-headline text-3xl md:text-4xl lg:text-5xl font-extrabold text-on-surface leading-[1.1] tracking-tight">
             {article.title}
           </h2>
 
@@ -402,7 +402,7 @@ export default function LiveArticleView({ slug, initialData }: Props) {
                 key={i}
                 className={`font-body leading-relaxed text-on-surface/90 ${
                   i === 0
-                    ? 'text-xl md:text-2xl first-letter:text-7xl first-letter:font-bold first-letter:text-primary first-letter:mr-4 first-letter:float-left first-letter:font-headline first-letter:leading-none'
+                    ? 'text-xl md:text-2xl first-letter:text-5xl md:first-letter:text-7xl first-letter:font-bold first-letter:text-primary first-letter:mr-4 first-letter:float-left first-letter:font-headline first-letter:leading-none'
                     : 'text-lg italic:mb-4'
                 }`}
               >
@@ -432,8 +432,8 @@ export default function LiveArticleView({ slug, initialData }: Props) {
         </article>
 
         {/* Launch Interactive CTA */}
-        <div className="flex flex-col items-center justify-center py-16 px-8 bg-linear-to-br from-primary to-on-surface text-white mb-20">
-          <h4 className="font-headline text-3xl font-bold mb-4 text-center">
+        <div className="flex flex-col items-center justify-center py-16 px-6 md:px-8 bg-linear-to-br from-primary to-on-surface text-white mb-20">
+          <h4 className="font-headline text-2xl md:text-3xl font-bold mb-4 text-center">
             Inside the Shadow War
           </h4>
           <p className="font-body text-lg opacity-90 text-center mb-10 max-w-lg leading-relaxed">

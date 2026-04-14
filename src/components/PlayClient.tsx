@@ -136,10 +136,10 @@ export default function PlayClient({ storyId, panels: initialPanels, roles: init
 
         {/* Main content area */}
         <main className="relative z-10 w-full max-w-6xl mx-auto px-8 h-full flex flex-col justify-end pb-32 pt-16">
-          <div className="flex items-end gap-6">
+          <div className="flex flex-col md:flex-row md:items-end gap-4 md:gap-6">
 
             {/* Character portrait */}
-            <div className="shrink-0 w-48 md:w-64 h-[400px] relative">
+            <div className="shrink-0 w-32 md:w-64 h-[250px] md:h-[400px] relative mx-auto md:mx-0">
               <div className="absolute bottom-0 w-full aspect-3/4 rounded-t-full overflow-hidden bg-surface-container-high shadow-lg">
                 {(activeRole?.portraitUrl || panel.characterPortrait) ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -163,9 +163,9 @@ export default function PlayClient({ storyId, panels: initialPanels, roles: init
 
             {/* Speech bubble */}
             <div className="grow mb-4">
-              <div className="relative bg-surface-container-lowest/90 backdrop-blur-xl p-8 md:p-10 rounded-2xl md:rounded-3xl shadow-[0_32px_64px_-15px_rgba(53,58,38,0.12)] border-l-8 border-primary">
+              <div className="relative bg-surface-container-lowest/90 backdrop-blur-xl p-5 md:p-10 rounded-2xl md:rounded-3xl shadow-[0_32px_64px_-15px_rgba(53,58,38,0.12)] border-l-8 border-primary">
                 <div className="max-w-3xl">
-                  <p className="font-body text-xl md:text-2xl leading-relaxed text-on-surface min-h-[80px]">
+                  <p className="font-body text-lg md:text-2xl leading-relaxed text-on-surface min-h-[80px]">
                     {displayed}
                     {isTyping && <span className="animate-pulse">▍</span>}
                   </p>

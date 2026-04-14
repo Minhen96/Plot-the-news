@@ -242,7 +242,7 @@ function LoadingScreen({ progress, briefingCards, briefingIndex, onBriefingChang
 
         {/* Title + progress */}
         <section className="flex flex-col items-center gap-6 w-full">
-          <h1 className="font-headline text-4xl md:text-5xl font-extrabold text-on-surface tracking-tighter leading-tight">
+          <h1 className="font-headline text-3xl md:text-4xl lg:text-5xl font-extrabold text-on-surface tracking-tighter leading-tight">
             Generating Future
             <br />
             <span className="text-primary italic font-body font-medium">Simulation...</span>
@@ -282,7 +282,7 @@ function LoadingScreen({ progress, briefingCards, briefingIndex, onBriefingChang
               ‹
             </button>
 
-            <div className="w-full max-w-2xl bg-surface-container-low rounded-xl p-8 md:p-12 border border-outline-variant/10 shadow-lg text-left transition-all hover:-translate-y-1">
+            <div className="w-full max-w-2xl bg-surface-container-low rounded-xl p-6 md:p-12 border border-outline-variant/10 shadow-lg text-left transition-all hover:-translate-y-1">
               <div className="flex items-center gap-4 mb-6">
                 <div className="w-12 h-12 rounded-full bg-secondary-container flex items-center justify-center text-xl">
                   {card.icon}
@@ -493,7 +493,7 @@ function PhaseScreen({
           </div>
 
           {/* Dialogue card */}
-          <div className="bg-surface-container-lowest p-8 rounded-xl shadow-[0_32px_64px_-20px_rgba(53,58,38,0.06)] relative border border-outline-variant/15">
+          <div className="bg-surface-container-lowest p-6 md:p-8 rounded-xl shadow-[0_32px_64px_-20px_rgba(53,58,38,0.06)] relative border border-outline-variant/15">
             {/* Speech bubble tail */}
             <div className="absolute left-20 -top-4 w-8 h-8 bg-surface-container-lowest rotate-45 border-l border-t border-outline-variant/15" />
 
@@ -502,7 +502,7 @@ function PhaseScreen({
                 <span className="text-xs">✓</span>
                 {characterName.toUpperCase()}
               </h4>
-              <p className="font-body text-xl md:text-2xl leading-relaxed text-on-surface">
+              <p className="font-body text-lg md:text-2xl leading-relaxed text-on-surface">
                 &ldquo;{phaseData.event}&rdquo;
               </p>
             </div>
@@ -569,7 +569,7 @@ function SummaryScreen({ storyId, storyTitle, timeline, prediction }: SummaryScr
         </nav>
       </header>
 
-      <main className="flex-grow pt-28 pb-40 px-6 max-w-4xl mx-auto w-full space-y-6">
+      <main className="flex-grow pt-28 pb-40 px-4 md:px-6 max-w-4xl mx-auto w-full space-y-6">
 
         {/* Completion badge */}
         <div className="text-center space-y-3">
@@ -581,7 +581,7 @@ function SummaryScreen({ storyId, storyTitle, timeline, prediction }: SummaryScr
 
         {/* On-chain proof */}
         {prediction?.txHash && (
-          <div className="bg-surface-container-lowest border border-outline-variant/20 rounded-2xl p-6 shadow-sm">
+          <div className="bg-surface-container-lowest border border-outline-variant/20 rounded-2xl p-5 md:p-6 shadow-sm">
             <div className="flex items-center gap-3 mb-4">
               <span className="text-2xl">⛓️</span>
               <div>

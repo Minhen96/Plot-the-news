@@ -20,13 +20,13 @@ export default async function RoleSelectionPage({
     <>
       <Header variant="article" brand="editorial" />
 
-      <main className="pt-12 pb-32 px-6 max-w-7xl mx-auto">
+      <main className="pt-12 pb-32 px-4 md:px-6 max-w-7xl mx-auto">
         {/* Hero header */}
         <header className="mb-16 text-center">
           <span className="font-headline text-primary font-bold tracking-widest text-[11px] uppercase mb-4 block">
             Deployment Selection
           </span>
-          <h1 className="font-headline text-4xl md:text-6xl font-extrabold tracking-tighter text-on-background mb-6">
+          <h1 className="font-headline text-3xl md:text-4xl lg:text-6xl font-extrabold tracking-tighter text-on-background mb-6">
             {story.title}
           </h1>
           <p className="font-body text-lg md:text-xl text-on-background/60 max-w-2xl mx-auto italic">
