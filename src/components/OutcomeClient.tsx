@@ -37,6 +37,7 @@ interface StoredPrediction {
   optionLabel: string
   confidence: number
   txHash?: string
+  predictionId?: string
 }
 
 const FALLBACK_TIMELINE: SimulationPhase[] = [
@@ -121,6 +122,7 @@ export default function OutcomeClient({
         optionLabel: 'Strategic De-escalation',
         roleId: 'analyst',
         confidence: 75,
+        predictionId: undefined,
       }
 
       // Animate progress 0 → 95% over 4 seconds
@@ -141,6 +143,7 @@ export default function OutcomeClient({
             optionLabel: payload.optionLabel,
             roleId: payload.roleId,
             isCustom: payload.optionId === 'custom',
+            predictionId: payload.predictionId,
           }),
         })
           .then(r => r.ok ? r.json() : Promise.reject())

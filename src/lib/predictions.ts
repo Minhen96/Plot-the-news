@@ -1,4 +1,4 @@
-import { Prediction, LeaderboardEntry } from "@/lib/types";
+import { Prediction, LeaderboardEntry, SimulationPhase } from "@/lib/types";
 import { db } from "@/db";
 import { predictions, profiles } from "@/db/schema";
 import { eq, desc, and } from "drizzle-orm";
@@ -21,6 +21,31 @@ export async function addPrediction(prediction: Omit<Prediction, 'id'>): Promise
     .returning();
 
   return mapDbPredictionToType(result);
+}
+
+/**
+ * Gets a single prediction by its UUID
+ */
+export async function getPredictionById(id: string): Promise<Prediction | undefined> {
+  const [result] = await db
+    .select()
+    .from(predictions)
+    .where(eq(predictions.id, id))
+    .limit(1);
+  return result ? mapDbPredictionToType(result) : undefined;
+}
+
+/**
+ * Saves the simulated outcome timeline against a prediction row
+ */
+export async function saveSimulatedTimeline(
+  predictionId: string,
+  timeline: SimulationPhase[]
+): Promise<void> {
+  await db
+    .update(predictions)
+    .set({ simulatedTimeline: timeline })
+    .where(eq(predictions.id, predictionId));
 }
 
 /**
@@ -128,5 +153,6 @@ function mapDbPredictionToType(p: any): Prediction {
     txHash: p.txHash,
     resolved: p.resolved || false,
     correct: p.correct === null ? undefined : p.correct,
+    simulatedTimeline: p.simulatedTimeline ?? undefined,
   };
 }

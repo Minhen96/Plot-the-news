@@ -21,7 +21,17 @@ export default async function ArticlePage({
     return (
       <>
         <Header variant="article" brand="editorial" />
-        <LiveArticleView slug={id} />
+        <LiveArticleView
+          slug={id}
+          initialData={story ? {
+            title: story.title,
+            summary: story.summary,
+            imageUrl: story.imageUrl,
+            date: story.date,
+            articleBody: story.articleBody,
+            sourceUrl: story.sourceUrl,
+          } : undefined}
+        />
       </>
     )
   }

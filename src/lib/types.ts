@@ -148,6 +148,7 @@ export interface Prediction {
   txHash?: string
   resolved: boolean
   correct?: boolean
+  simulatedTimeline?: SimulationPhase[]
 }
 
 // --- News Article (newsdata.io) ---

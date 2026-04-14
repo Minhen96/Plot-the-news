@@ -6,8 +6,18 @@ import Header from '@/components/Header'
 import SimulationLoading from '@/components/SimulationLoading'
 import type { NewsArticle } from '@/lib/types'
 
+interface InitialArticleData {
+  title: string
+  summary?: string
+  imageUrl?: string
+  date?: string
+  articleBody?: string[]
+  sourceUrl?: string
+}
+
 interface Props {
   slug: string
+  initialData?: InitialArticleData
 }
 
 interface RelatedArticle {
@@ -58,14 +68,40 @@ function toSearchQuery(article: NewsArticle): string {
   return clean || article.title.slice(0, 30)
 }
 
-export default function LiveArticleView({ slug }: Props) {
-  // Synchronous initialization to avoid blank frame
+export default function LiveArticleView({ slug, initialData }: Props) {
+  // Synchronous initialization — sessionStorage first, then server-passed data, then null
   const [article, setArticle] = useState<NewsArticle | null>(() => {
-    if (typeof window === 'undefined') return null
+    if (typeof window === 'undefined') {
+      // SSR: seed from initialData so the shell renders with content
+      if (initialData) {
+        return {
+          title: initialData.title,
+          description: initialData.summary ?? '',
+          url: initialData.sourceUrl ?? '',
+          image: initialData.imageUrl ?? null,
+          publishedAt: initialData.date ?? new Date().toISOString(),
+          source: { name: initialData.sourceUrl ? new URL(initialData.sourceUrl).hostname : 'Intelligence', url: '' },
+          articleBody: initialData.articleBody,
+        } as any
+      }
+      return null
+    }
     try {
       const raw = sessionStorage.getItem(`article:${slug}`)
       if (raw) return JSON.parse(raw) as NewsArticle
     } catch { /* ignore */ }
+    // Seed from server data so we can render immediately
+    if (initialData) {
+      return {
+        title: initialData.title,
+        description: initialData.summary ?? '',
+        url: initialData.sourceUrl ?? '',
+        image: initialData.imageUrl ?? null,
+        publishedAt: initialData.date ?? new Date().toISOString(),
+        source: { name: initialData.sourceUrl ? new URL(initialData.sourceUrl).hostname : 'Intelligence', url: '' },
+        articleBody: initialData.articleBody,
+      } as any
+    }
     return null
   })
 
@@ -83,7 +119,7 @@ export default function LiveArticleView({ slug }: Props) {
     const maxRetries = 3
 
     async function loadArticle() {
-      // If we already have the full body in the cached article, we're done
+      // If we already have the full body (from cache, sessionStorage, or initialData), we're done
       if (article && (article as any).articleBody && (article as any).articleBody.length > 0) {
         setReady(true)
         setIsCrawling(false)
@@ -185,6 +221,7 @@ export default function LiveArticleView({ slug }: Props) {
 
   async function activateMission() {
     setIsGenerating(true)
+    setShowConfirm(false)
     setGenStep('Initializing Satellite Uplink...')
     
     try {
@@ -208,7 +245,32 @@ export default function LiveArticleView({ slug }: Props) {
     }
   }
 
-  if (!ready) return null
+  if (!ready) {
+    return (
+      <main className="max-w-4xl mx-auto px-6 pt-12 pb-24 animate-pulse">
+        <div className="mb-10 flex flex-col gap-4">
+          <div className="h-3 w-32 bg-on-surface/10 rounded" />
+          <div className="h-10 w-3/4 bg-on-surface/10 rounded" />
+          <div className="h-10 w-1/2 bg-on-surface/10 rounded" />
+          <div className="flex items-center gap-4 mt-2">
+            <div className="w-10 h-10 rounded-full bg-on-surface/10 shrink-0" />
+            <div className="flex flex-col gap-1.5">
+              <div className="h-3 w-28 bg-on-surface/10 rounded" />
+              <div className="h-3 w-20 bg-on-surface/10 rounded" />
+            </div>
+          </div>
+        </div>
+        <div className="aspect-video w-full bg-on-surface/10 rounded mb-12" />
+        <div className="max-w-2xl mx-auto space-y-4">
+          <div className="h-4 bg-on-surface/10 rounded w-full" />
+          <div className="h-4 bg-on-surface/10 rounded w-5/6" />
+          <div className="h-4 bg-on-surface/10 rounded w-4/6" />
+          <div className="h-4 bg-on-surface/10 rounded w-full" />
+          <div className="h-4 bg-on-surface/10 rounded w-3/4" />
+        </div>
+      </main>
+    )
+  }
 
   if (!article) {
     return (
@@ -237,14 +299,14 @@ export default function LiveArticleView({ slug }: Props) {
     <>
       {/* Simulation Activation Overlay */}
       {isGenerating && (
-        <div className="fixed inset-0 z-200 bg-background overflow-hidden animate-in fade-in duration-500">
+        <div className="fixed inset-0 z-[200] bg-background overflow-hidden animate-in fade-in duration-500">
           <SimulationLoading />
         </div>
       )}
 
       {/* Confirmation Modal */}
       {showConfirm && (
-        <div className="fixed inset-0 z-100 flex items-center justify-center bg-surface/80 backdrop-blur-xl animate-in fade-in duration-500">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-surface/80 backdrop-blur-xl animate-in fade-in duration-500">
           <div className="max-w-md w-full bg-surface-container-high p-8 rounded-3xl shadow-[0_32px_64px_-15px_rgba(0,0,0,0.2)] border border-primary/10 mx-4">
             <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center text-primary text-2xl mb-6">
               🛰️

@@ -14,6 +14,7 @@
 import { NextResponse } from "next/server";
 import { getStory } from "@/data/stories";
 import { getStoryById } from "@/lib/stories";
+import { getPredictionById, saveSimulatedTimeline } from "@/lib/predictions";
 import { db } from "@/db";
 import { stories } from "@/db/schema";
 import { eq } from "drizzle-orm";
@@ -194,13 +195,21 @@ const GENERIC_FALLBACK: SimulationPhase[] = [
 
 export async function POST(request: Request) {
   const body = await request.json();
-  const { storyId, optionId, optionLabel, roleId, isCustom } = body;
+  const { storyId, optionId, optionLabel, roleId, isCustom, predictionId } = body;
 
   if (!storyId || !optionId) {
     return NextResponse.json(
       { error: "Missing required fields" },
       { status: 400 }
     );
+  }
+
+  // If we have a predictionId, check if this prediction already has a cached timeline
+  if (predictionId) {
+    const existing = await getPredictionById(predictionId).catch(() => undefined);
+    if (existing?.simulatedTimeline?.length) {
+      return NextResponse.json({ timeline: existing.simulatedTimeline, cached: true });
+    }
   }
 
   // Get story for context and cache check
@@ -211,21 +220,26 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Story not found" }, { status: 404 });
   }
 
-  // For preset options: check DB cache first
+  // For preset options: check story-level cache (shared across all users)
   if (!isCustom) {
     const cached = (
       story.simulations as Record<string, SimulationPhase[]> | undefined
     )?.[optionId];
     if (cached?.length) {
+      // Also backfill the prediction row so future visits skip this lookup
+      if (predictionId) {
+        saveSimulatedTimeline(predictionId, cached).catch(() => {});
+      }
       return NextResponse.json({ timeline: cached, cached: true });
     }
 
     // Demo story: use hardcoded fallback (no DeepSeek needed for judges)
     if (storyId === "strait-of-hormuz" && DEMO_SIMULATIONS[optionId]) {
-      return NextResponse.json({
-        timeline: DEMO_SIMULATIONS[optionId],
-        cached: false,
-      });
+      const timeline = DEMO_SIMULATIONS[optionId];
+      if (predictionId) {
+        saveSimulatedTimeline(predictionId, timeline).catch(() => {});
+      }
+      return NextResponse.json({ timeline, cached: false });
     }
   }
 
@@ -238,7 +252,7 @@ export async function POST(request: Request) {
       story.cliffhanger
     );
 
-    // Cache preset simulation in DB so subsequent users see it instantly
+    // Cache preset simulation at story level so all users who pick the same option benefit
     if (!isCustom) {
       const currentSims =
         (story.simulations as Record<string, SimulationPhase[]>) ?? {};
@@ -250,14 +264,20 @@ export async function POST(request: Request) {
         .catch(() => {});
     }
 
+    // Always save to the prediction row (custom predictions especially need this)
+    if (predictionId) {
+      saveSimulatedTimeline(predictionId, timeline).catch(() => {});
+    }
+
     return NextResponse.json({ timeline, cached: false });
   } catch {
     // Fallback: demo story hardcoded data, or generic fallback
     if (storyId === "strait-of-hormuz" && DEMO_SIMULATIONS[optionId]) {
-      return NextResponse.json({
-        timeline: DEMO_SIMULATIONS[optionId],
-        cached: false,
-      });
+      const timeline = DEMO_SIMULATIONS[optionId];
+      if (predictionId) {
+        saveSimulatedTimeline(predictionId, timeline).catch(() => {});
+      }
+      return NextResponse.json({ timeline, cached: false });
     }
     return NextResponse.json({ timeline: GENERIC_FALLBACK, cached: false });
   }

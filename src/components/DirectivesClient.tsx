@@ -50,6 +50,10 @@ export default function DirectivesClient({
   }, [])
 
   const effectiveId = selectedId ?? (customText ? 'custom' : null)
+  const effectiveLabel =
+    effectiveId === 'custom'
+      ? customText
+      : predictionOptions.find(o => o.id === effectiveId)?.label ?? ''
 
   async function handleLock() {
     if (!effectiveId) return
@@ -64,19 +68,26 @@ export default function DirectivesClient({
     await delay(800)
     setLockPhase('submitting')
 
-    // Save prediction to DB (fire-and-forget)
-    fetch('/api/predict', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        storyId,
-        optionId: effectiveId,
-        optionLabel: effectiveLabel,
-        userAddress,
-        confidence,
-        justification: effectiveId === 'custom' ? customText : undefined,
-      }),
-    }).catch(() => { /* ignore */ })
+    // Save prediction to DB — capture the returned id for outcome page
+    let predictionId: string | undefined
+    try {
+      const res = await fetch('/api/predict', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          storyId,
+          optionId: effectiveId,
+          optionLabel: effectiveLabel,
+          userAddress,
+          confidence,
+          justification: effectiveId === 'custom' ? customText : undefined,
+        }),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        predictionId = data.prediction?.id
+      }
+    } catch { /* ignore */ }
 
     // Attempt on-chain registration in the background — update txHash if it succeeds
     if (user?.wallet?.address) {
@@ -112,6 +123,7 @@ export default function DirectivesClient({
         confidence,
         customText: effectiveId === 'custom' ? customText : undefined,
         txHash: localHash,
+        predictionId,
       }))
     } catch { /* ignore */ }
 

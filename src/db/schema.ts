@@ -91,6 +91,7 @@ export const predictions = plotNewsSchema.table('predictions', {
   txHash: text('tx_hash'),
   resolved: boolean('resolved').default(false),
   correct: boolean('correct'),
+  simulatedTimeline: jsonb('simulated_timeline'),        // SimulationPhase[] — cached outcome for this prediction
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 });
 
