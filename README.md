@@ -7,8 +7,6 @@
 
 **Read a real editorial → pick a faction → live a visual novel → lock your prediction on-chain → watch an AI-simulated future unfold.**
 
-Built for NottsHack 2026 (48h, DCAI sponsor prize $1800 USDT).
-
 ---
 
 ## How It Works
@@ -41,6 +39,29 @@ Home page → reads DB stories (falls back to live newsdata if DB empty, paginat
 /profile                    User Journal — prediction history + reputation
 ```
 
+## Screenshots
+
+### Home Page
+<img width="1910" height="858" alt="Home Page" src="https://github.com/user-attachments/assets/9de3a4f4-d0bb-4c6b-a487-7a7a174d1964" />
+
+### Article Page
+<img width="501" height="873" alt="Article Page" src="https://github.com/user-attachments/assets/8d5bdc43-3bdf-411c-b66d-1f5eb3c8c466" />
+
+### Choose the Role
+<img width="676" height="870" alt="Choose the Role" src="https://github.com/user-attachments/assets/c1cb8674-5f2d-4463-a262-98e25014226d" />
+
+### Play (Visual Novel)
+<img width="1911" height="863" alt="Play Phase" src="https://github.com/user-attachments/assets/5911eef4-5711-43fc-9803-2ceaf7c91e5e" />
+
+### Prediction
+<img width="1895" height="870" alt="Prediction Phase" src="https://github.com/user-attachments/assets/41354188-863b-486d-a1c1-d22014815450" />
+
+### Outcome Simulation
+<img width="1904" height="861" alt="Outcome" src="https://github.com/user-attachments/assets/aed37e9a-d8e5-435f-b23f-c0c0c0295f48" />
+
+### Summary
+<img width="628" height="793" alt="Summary Profile" src="https://github.com/user-attachments/assets/03de6d71-dd35-4955-a7f3-25c7da43e561" />
+
 ---
 
 ## Image Generation
@@ -68,7 +89,7 @@ The `/api/stories/[id]/generate-images` route has an early exit: if all portrait
 
 ---
 
-## Cron Jobs
+## Cron Jobs (Removed now)
 
 The cron runs via an HTTP route protected by `Authorization: Bearer $CRON_SECRET`.
 
