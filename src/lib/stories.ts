@@ -11,12 +11,14 @@ import { db } from "@/db";
 import { news, stories } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 
-export async function getAllStories(): Promise<Story[]> {
+export async function getAllStories(limit = 20, offset = 0): Promise<Story[]> {
   const result = await db
     .select()
     .from(news)
     .leftJoin(stories, eq(stories.id, news.id))
-    .orderBy(desc(news.createdAt));
+    .orderBy(desc(news.createdAt))
+    .limit(limit)
+    .offset(offset);
 
   return result.map((r) => mapJoinToStory(r.news, r.stories || null));
 }
@@ -24,14 +26,15 @@ export async function getAllStories(): Promise<Story[]> {
 /**
  * Filter stories by category (e.g. 'Finance', 'Technology', 'World')
  */
-export async function getStoriesByCategory(category: string, limit = 10): Promise<Story[]> {
+export async function getStoriesByCategory(category: string, limit = 20, offset = 0): Promise<Story[]> {
   const result = await db
     .select()
     .from(news)
     .leftJoin(stories, eq(stories.id, news.id))
     .where(eq(news.category, category))
     .orderBy(desc(news.createdAt))
-    .limit(limit);
+    .limit(limit)
+    .offset(offset);
 
   return result.map((r) => mapJoinToStory(r.news, r.stories || null));
 }

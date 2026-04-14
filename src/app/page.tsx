@@ -3,10 +3,11 @@ import Link from 'next/link'
 import Header from '@/components/Header'
 import SectionFeed from '@/components/SectionFeed'
 import ArticleLink from '@/components/ArticleLink'
+import FeedLoader from '@/components/FeedLoader'
 import { fetchLatestNews, fetchLastWeekNews, fetchMarketNews, fetchCryptoNews } from '@/lib/newsdata'
 import { LAST_WEEK_FALLBACK } from '@/data/news'
 import { getAllStories, getStoriesByCategory } from '@/lib/stories'
-import type { NewsArticle, Story } from '@/lib/types'
+import type { NewsArticle, Story, FeedItem } from '@/lib/types'
 import { toStorySlug } from '@/lib/utils'
 
 // Revalidate the hub every 5 minutes
@@ -135,38 +136,6 @@ function FeaturedStory({ story }: { story: Story }) {
   )
 }
 
-function StoryItem({ story }: { story: Story }) {
-  const article: NewsArticle = {
-    title: story.title,
-    description: story.summary || '',
-    url: `/story/${story.id}`,
-    image: story.imageUrl,
-    publishedAt: story.date,
-    source: { name: story.category, url: '' }
-  }
-  return (
-    <ArticleLink article={article} className="group block py-4 border-b border-outline/15 last:border-0">
-      <div className="flex gap-3">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1.5 mb-1">
-            <span className="text-[9px] font-label font-black uppercase tracking-widest text-primary/60">
-              {story.isGenerated ? `${story.coverEmoji} ${story.category}` : '🛰️ Live Dispatch'}
-            </span>
-          </div>
-          <h4 className="font-headline font-bold text-sm leading-snug mb-1 group-hover:text-primary transition-colors line-clamp-2">
-            {story.title}
-          </h4>
-        </div>
-        {story.imageUrl && (
-          <div className="w-14 h-14 shrink-0 overflow-hidden ring-1 ring-outline/10">
-            <ArticleImage src={story.imageUrl} alt={story.title} className="w-full h-full object-cover" />
-          </div>
-        )}
-      </div>
-    </ArticleLink>
-  )
-}
-
 // ── MAIN HUB (Server Component) ─────────────────────────────────────────────
 
 export default async function ChronicleHub({
@@ -221,17 +190,17 @@ export default async function ChronicleHub({
 // ── STREAMING WRAPPERS (Async Components) ─────────────────────────────────────
 
 async function MainNewsFeed({ activeCategory, generatedOnly }: { activeCategory: string, generatedOnly: boolean }) {
-  // Level 1: Check Database (Deep Intelligence)
-  let dbStories = await (activeCategory === 'world' 
-    ? getAllStories() 
-    : getStoriesByCategory(CATEGORY_MAP[activeCategory] || 'World', 12)
+  // Fetch first 20 — fast initial load, FeedLoader handles the rest
+  let dbStories = await (activeCategory === 'world'
+    ? getAllStories(20)
+    : getStoriesByCategory(CATEGORY_MAP[activeCategory] || 'World', 20)
   ).catch(() => []) as Story[]
 
   if (generatedOnly) {
     dbStories = dbStories.filter(s => s.isGenerated)
   }
 
-  // Level 2: Fallback to Live Dispatch if DB is empty for this category
+  // Fallback to live news API if DB has nothing for this category
   let stories = dbStories
   if (!generatedOnly && stories.length === 0) {
     const live = await fetchLatestNews(activeCategory, 10).catch(() => ({ articles: [] }))
@@ -260,9 +229,21 @@ async function MainNewsFeed({ activeCategory, generatedOnly }: { activeCategory:
     )
   }
 
+  const feedItems: FeedItem[] = stories.slice(1).map(s => ({
+    id: s.id,
+    title: s.title,
+    summary: s.summary,
+    imageUrl: s.imageUrl,
+    date: s.date,
+    category: s.category,
+    isGenerated: s.isGenerated,
+    coverEmoji: s.coverEmoji,
+    crisisLevel: s.crisisLevel,
+  }))
+
   return (
     <div className="relative border-r border-outline/15 pr-4">
-      <div 
+      <div
         className="max-h-[calc(100vh-100px)] overflow-y-auto overscroll-contain custom-scrollbar pr-6 scroll-smooth"
         style={{ scrollbarGutter: 'stable' }}
       >
@@ -274,24 +255,11 @@ async function MainNewsFeed({ activeCategory, generatedOnly }: { activeCategory:
             <FeaturedStory story={stories[0]} />
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-10 items-start pb-12">
-            <div className="flex flex-col gap-4">
-              <h4 className="font-headline font-black uppercase text-[10px] tracking-widest opacity-40">Dispatch Briefs</h4>
-              <div className="flex flex-col">
-                {stories.slice(1, Math.ceil((stories.length - 1) / 2) + 1).map((story) => (
-                  <StoryItem key={story.id} story={story} />
-                ))}
-              </div>
-            </div>
-            <div className="lg:border-l lg:border-outline/10 lg:pl-10 flex flex-col gap-4">
-              <h4 className="font-headline font-black uppercase text-[10px] tracking-widest opacity-40">Active Scenarios</h4>
-              <div className="flex flex-col">
-                {stories.slice(Math.ceil((stories.length - 1) / 2) + 1).map((story) => (
-                  <StoryItem key={story.id} story={story} />
-                ))}
-              </div>
-            </div>
-          </div>
+          <FeedLoader
+            initialItems={feedItems}
+            category={activeCategory}
+            initialHasMore={!generatedOnly && stories.length === 20}
+          />
         </div>
       </div>
       <div className="absolute bottom-0 left-0 right-0 h-12 bg-linear-to-t from-background to-transparent pointer-events-none z-10" />

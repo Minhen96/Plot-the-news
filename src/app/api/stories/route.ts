@@ -1,28 +1,48 @@
 import { NextResponse } from "next/server";
-import { getAllStories } from "@/lib/stories";
-import { getStoryPredictionStats } from "@/lib/predictions";
+import { getAllStories, getStoriesByCategory } from "@/lib/stories";
+import type { FeedItem } from "@/lib/types";
 
-export async function GET() {
-  const storyList = await getAllStories();
+const CATEGORY_MAP: Record<string, string> = {
+  world:         'World',
+  breaking:      'Breaking',
+  crime:         'Crime',
+  politics:      'Politics',
+  economy:       'Finance',
+  tech:          'Tech',
+  health:        'Health',
+  sports:        'Sports',
+  entertainment: 'Entertainment',
+}
 
-  const result = await Promise.all(
-    storyList.map(async (story) => {
-      const stats = await getStoryPredictionStats(story.id);
-      return {
-        id: story.id,
-        title: story.title,
-        summary: story.summary,
-        category: story.category,
-        imageUrl: story.imageUrl,
-        coverEmoji: story.coverEmoji,
-        date: story.date,
-        status: story.status,
-        crisisLevel: story.crisisLevel,
-        predictionCount: stats.totalPredictions,
-        controversyScore: story.controversyScore,
-      };
-    })
-  );
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url)
+  const category = searchParams.get('category') ?? 'world'
+  const limit = Math.min(Number(searchParams.get('limit') ?? 10), 50)
+  const offset = Number(searchParams.get('offset') ?? 0)
 
-  return NextResponse.json(result);
+  // Fetch one extra to determine if there are more pages
+  const fetchLimit = limit + 1
+  const dbCategory = CATEGORY_MAP[category]
+
+  const rows = await (dbCategory && category !== 'world'
+    ? getStoriesByCategory(dbCategory, fetchLimit, offset)
+    : getAllStories(fetchLimit, offset)
+  ).catch(() => [])
+
+  const hasMore = rows.length === fetchLimit
+  const stories = rows.slice(0, limit)
+
+  const items: FeedItem[] = stories.map(s => ({
+    id: s.id,
+    title: s.title,
+    summary: s.summary,
+    imageUrl: s.imageUrl,
+    date: s.date,
+    category: s.category,
+    isGenerated: s.isGenerated,
+    coverEmoji: s.coverEmoji,
+    crisisLevel: s.crisisLevel,
+  }))
+
+  return NextResponse.json({ stories: items, hasMore })
 }

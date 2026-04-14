@@ -3,10 +3,13 @@ import { db } from "@/db";
 import { predictions, profiles } from "@/db/schema";
 import { eq, desc, and } from "drizzle-orm";
 
-export async function addPrediction(prediction: Omit<Prediction, 'id'>): Promise<Prediction> {
+export async function addPrediction(
+  prediction: Omit<Prediction, 'id'> & { id?: string }
+): Promise<Prediction> {
   const [result] = await db
     .insert(predictions)
     .values({
+      ...(prediction.id ? { id: prediction.id } : {}),
       storyId: prediction.storyId,
       userAddress: prediction.userAddress,
       optionId: prediction.optionId,

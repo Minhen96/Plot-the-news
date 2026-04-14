@@ -64,30 +64,28 @@ export default function DirectivesClient({
     const localHash = hashPrediction(storyId, effectiveId, userAddress, timestamp)
     setTxHash(localHash)
 
+    // Generate prediction ID client-side so we can store it immediately
+    // without blocking on the API response
+    const predictionId = crypto.randomUUID()
+
     setLockPhase('hashing')
     await delay(800)
     setLockPhase('submitting')
 
-    // Save prediction to DB — capture the returned id for outcome page
-    let predictionId: string | undefined
-    try {
-      const res = await fetch('/api/predict', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          storyId,
-          optionId: effectiveId,
-          optionLabel: effectiveLabel,
-          userAddress,
-          confidence,
-          justification: effectiveId === 'custom' ? customText : undefined,
-        }),
-      })
-      if (res.ok) {
-        const data = await res.json()
-        predictionId = data.prediction?.id
-      }
-    } catch { /* ignore */ }
+    // Save prediction to DB — fire-and-forget, predictionId already known
+    fetch('/api/predict', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        storyId,
+        optionId: effectiveId,
+        optionLabel: effectiveLabel,
+        userAddress,
+        confidence,
+        justification: effectiveId === 'custom' ? customText : undefined,
+        predictionId,
+      }),
+    }).catch(() => { /* ignore */ })
 
     // Attempt on-chain registration in the background — update txHash if it succeeds
     if (user?.wallet?.address) {

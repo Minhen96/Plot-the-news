@@ -123,6 +123,11 @@ export interface Story {
   controversyScore?: number
 }
 
+// --- Feed item (minimal shape for the news feed / pagination API) ---
+export type FeedItem = Pick<Story,
+  'id' | 'title' | 'summary' | 'imageUrl' | 'date' | 'category' | 'isGenerated' | 'coverEmoji' | 'crisisLevel'
+>
+
 // --- Session state (stored in sessionStorage) ---
 
 export interface SessionPrediction {

@@ -3,6 +3,8 @@ import { getStory } from '@/data/stories'
 import { getStoryById } from '@/lib/stories'
 import DirectivesClient from '@/components/DirectivesClient'
 
+export const revalidate = 3600
+
 export default async function PredictPage({
   params,
 }: {

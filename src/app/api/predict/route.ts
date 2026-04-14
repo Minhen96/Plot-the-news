@@ -11,7 +11,7 @@ import { v4 as uuidv4 } from "uuid";
 
 export async function POST(request: Request) {
   const body = await request.json();
-  const { storyId, optionId, userAddress, confidence, justification } = body;
+  const { storyId, optionId, userAddress, confidence, justification, predictionId } = body;
 
   if (!storyId || !optionId || !userAddress) {
     return NextResponse.json(
@@ -92,6 +92,7 @@ export async function POST(request: Request) {
   const storyHash = hashStory(storyId);
 
   const prediction = await addPrediction({
+    ...(predictionId ? { id: predictionId } : {}),
     storyId,
     userAddress,
     optionId: finalOptionId,
@@ -99,7 +100,7 @@ export async function POST(request: Request) {
     confidence: confidence ?? 75,
     justification: justification ?? null,
     timestamp,
-    txHash: undefined, // TODO: Store real transaction hash after on-chain record
+    txHash: undefined,
     resolved: false,
     correct: undefined,
   });
