@@ -88,7 +88,7 @@ export default function PlayClient({ storyId, panels: initialPanels, roles: init
       style={{ cursor: 'pointer' }}
     >
         {/* Background image */}
-        <div className="absolute inset-0 z-0">
+        <div className="absolute top-0 w-full h-[60vh] md:h-full z-0">
           {panel.backgroundUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -100,7 +100,7 @@ export default function PlayClient({ storyId, panels: initialPanels, roles: init
           ) : (
             <div className="w-full h-full bg-on-surface" />
           )}
-          <div className="absolute inset-0 bg-linear-to-t from-surface via-transparent to-transparent opacity-40" />
+          <div className="absolute inset-0 bg-gradient-to-t from-surface via-transparent to-transparent opacity-100 md:opacity-40" />
         </div>
 
         {/* Header */}

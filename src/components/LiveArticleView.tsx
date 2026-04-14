@@ -338,13 +338,13 @@ export default function LiveArticleView({ slug, initialData }: Props) {
       <main className="max-w-4xl mx-auto px-4 md:px-6 pt-12 pb-24">
         {/* Breadcrumb */}
         <div className="mb-10 flex flex-col gap-4">
-          <div className="flex items-center gap-2 text-on-surface/50 font-label text-xs uppercase tracking-widest font-bold">
-            <Link href="/" className="hover:text-primary transition-colors">The Chronicle</Link>
-            <span>›</span>
-            <span className="text-primary">{article.source.name}</span>
+          <div className="flex items-center gap-2 text-on-surface/50 font-label text-[10px] sm:text-xs uppercase tracking-widest font-bold min-w-0">
+            <Link href="/" className="hover:text-primary transition-colors shrink-0">The Chronicle</Link>
+            <span className="shrink-0">›</span>
+            <span className="text-primary truncate">{article.source.name}</span>
           </div>
 
-          <h2 className="font-headline text-3xl md:text-4xl lg:text-5xl font-extrabold text-on-surface leading-[1.1] tracking-tight">
+          <h2 className="font-headline text-3xl md:text-4xl lg:text-5xl font-extrabold text-on-surface leading-[1.1] tracking-tight break-words">
             {article.title}
           </h2>
 

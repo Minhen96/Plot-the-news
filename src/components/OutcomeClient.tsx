@@ -423,14 +423,14 @@ function PhaseScreen({
       <main className="relative flex-grow w-full h-full pt-20 flex flex-col items-center justify-end overflow-hidden">
 
         {/* Background image */}
-        <div className="absolute inset-0 z-0">
+        <div className="absolute top-0 w-full h-[60vh] md:h-full z-0">
           {backgroundUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={backgroundUrl} alt="" className="w-full h-full object-cover" />
           ) : (
             <div className="w-full h-full bg-on-surface/80" />
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-surface via-transparent to-transparent opacity-90" />
+          <div className="absolute inset-0 bg-gradient-to-t from-surface via-transparent to-transparent opacity-100 md:opacity-90" />
         </div>
 
         {/* Intel Analysis — right sidebar, desktop */}

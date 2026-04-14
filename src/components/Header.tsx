@@ -50,14 +50,14 @@ function NavTabs({ activeCategory, isGeneratedFilter }: { activeCategory?: strin
 function ArticleNav({ brand }: { brand: 'editorial' | 'futurelens' }) {
   const wordmark = brand === 'editorial' ? 'The Illuminated Editorial' : 'FutureLens'
   return (
-    <nav className="w-full sticky top-0 z-50 bg-surface-container-low border-b border-outline-variant/10 py-5 px-4 md:px-6 lg:px-12">
+    <nav className="w-full sticky top-0 z-50 bg-surface-container-low border-b border-outline-variant/10 py-4 md:py-5 px-4 md:px-6 lg:px-12">
       <div className="flex flex-col items-center gap-4 max-w-screen-2xl mx-auto">
-        <div className="flex items-center justify-between w-full">
-          <Link href="/" className="text-on-surface hover:text-primary transition-all flex items-center gap-2 font-label font-black uppercase tracking-[0.2em] text-[10px]">
+        <div className="flex items-center justify-between w-full min-w-0 gap-2">
+          <Link href="/" className="text-on-surface hover:text-primary transition-all flex items-center gap-2 font-label font-black uppercase tracking-[0.2em] text-[10px] shrink-0">
             <span className="text-lg">←</span> 
           </Link>
-          <Link href="/">
-            <h1 className="text-2xl md:text-3xl lg:text-5xl font-black text-on-surface font-body italic truncate px-2">
+          <Link href="/" className="min-w-0 flex-1 flex justify-center">
+            <h1 className="text-[1.3rem] sm:text-2xl md:text-3xl lg:text-5xl font-black text-on-surface font-body italic truncate px-2">
               {wordmark}
             </h1>
           </Link>
