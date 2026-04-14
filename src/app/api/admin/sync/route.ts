@@ -5,7 +5,7 @@ export async function POST(req: NextRequest) {
     const baseUrl = req.nextUrl.origin;
     
     // Call the internal batch generation endpoint
-    const res = await fetch(`${baseUrl}/api/stories/generate-batch`, {
+    const res = await fetch(`${baseUrl}/api/stories/generate-batch?force=true`, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${process.env.CRON_SECRET}`,

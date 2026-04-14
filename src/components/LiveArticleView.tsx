@@ -429,7 +429,7 @@ export default function LiveArticleView({ slug }: Props) {
                             {ref.title}
                           </span>
                           <span className="font-label text-[10px] uppercase tracking-widest text-tertiary mt-1">
-                            {typeof ref.source === 'string' ? ref.source : (ref.source as any)?.name || 'News'} · {new Date(ref.publishedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                            {typeof ref.source === 'string' ? ref.source : (ref.source as any)?.name || 'News'}{ref.publishedAt ? ` · ${new Date(ref.publishedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` : ''}
                           </span>
                         </div>
                       </div>

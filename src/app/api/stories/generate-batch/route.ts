@@ -13,7 +13,6 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 import { fetchLatestNews } from "@/lib/newsdata";
-import { hybridSearch } from "@/lib/research";
 import { db } from "@/db";
 import { news } from "@/db/schema";
 import { inArray } from "drizzle-orm";
@@ -30,7 +29,8 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  if (!isEnabled) {
+  const isForced = req.nextUrl.searchParams.get('force') === 'true';
+  if (!isEnabled && !isForced) {
     return NextResponse.json({ message: "Cron sync is currently disabled via ENABLE_CRON" });
   }
 
@@ -124,18 +124,9 @@ export async function GET(req: NextRequest) {
         continue;
       }
 
-      // 2. Intelligence: Fetch real-world hybrid references (GNews first, fallback NewsData)
-      // Clean query for better hit rate
-      const query = article.title.replace(/[^\w\s]/gi, ' ').split(' ').slice(0, 8).join(' ');
-      
-      let gNewsRefs = await hybridSearch(query, 3).catch(() => []);
+      // 2. References are fetched lazily at article view time (GNews has 100 req/day limit —
+      //    exhausting it during a bulk sync prevents refs from loading for users).
 
-      // Fallback: If no refs found by title, try a broader search
-      if (gNewsRefs.length === 0) {
-        const fallbackQuery = (article.keywords?.slice(0, 3).join(' ') || article.title.slice(0, 30));
-        gNewsRefs = await hybridSearch(fallbackQuery, 2).catch(() => []);
-      }
-      
       const displayCat = urlToCategory.get(article.url) || 'World';
 
       await db.insert(news).values({
@@ -148,7 +139,7 @@ export async function GET(req: NextRequest) {
         sourceUrl: article.url,
         isGenerated: false,
         articleBody,
-        refs: gNewsRefs,
+        refs: [],
       }).onConflictDoNothing();
       
       saved++;

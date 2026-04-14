@@ -19,7 +19,10 @@ export default function ManualSyncButton() {
       const data = await res.json()
       
       if (res.ok) {
-        setStatus(`Generated ${data.generated.length} new stories! Reloading...`)
+        const msg = data.processed > 0
+          ? `Ingested ${data.processed} new articles!`
+          : 'Feed is up to date — no new articles.'
+        setStatus(msg)
         setTimeout(() => {
           router.refresh()
           setStatus(null)
